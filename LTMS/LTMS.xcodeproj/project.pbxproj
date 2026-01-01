@@ -7,24 +7,24 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		F381D8D42F042E9E00E2CA43 /* LTMS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LTMS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F371085A2F0650D4002635CC /* LTMS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LTMS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		F381D8E62F042E9F00E2CA43 /* Exceptions for "LTMS" folder in "LTMS" target */ = {
+		F37108712F0650D5002635CC /* Exceptions for "LTMS" folder in "LTMS" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = F381D8D32F042E9E00E2CA43 /* LTMS */;
+			target = F37108592F0650D4002635CC /* LTMS */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		F381D8D62F042E9E00E2CA43 /* LTMS */ = {
+		F371085C2F0650D4002635CC /* LTMS */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				F381D8E62F042E9F00E2CA43 /* Exceptions for "LTMS" folder in "LTMS" target */,
+				F37108712F0650D5002635CC /* Exceptions for "LTMS" folder in "LTMS" target */,
 			);
 			path = LTMS;
 			sourceTree = "<group>";
@@ -32,7 +32,7 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		F381D8D12F042E9E00E2CA43 /* Frameworks */ = {
+		F37108572F0650D4002635CC /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -42,18 +42,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		F381D8CB2F042E9E00E2CA43 = {
+		F37108512F0650D4002635CC = {
 			isa = PBXGroup;
 			children = (
-				F381D8D62F042E9E00E2CA43 /* LTMS */,
-				F381D8D52F042E9E00E2CA43 /* Products */,
+				F371085C2F0650D4002635CC /* LTMS */,
+				F371085B2F0650D4002635CC /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		F381D8D52F042E9E00E2CA43 /* Products */ = {
+		F371085B2F0650D4002635CC /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				F381D8D42F042E9E00E2CA43 /* LTMS.app */,
+				F371085A2F0650D4002635CC /* LTMS.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -61,64 +61,63 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		F381D8D32F042E9E00E2CA43 /* LTMS */ = {
+		F37108592F0650D4002635CC /* LTMS */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = F381D8E72F042E9F00E2CA43 /* Build configuration list for PBXNativeTarget "LTMS" */;
+			buildConfigurationList = F37108722F0650D5002635CC /* Build configuration list for PBXNativeTarget "LTMS" */;
 			buildPhases = (
-				F381D8D02F042E9E00E2CA43 /* Sources */,
-				F381D8D12F042E9E00E2CA43 /* Frameworks */,
-				F381D8D22F042E9E00E2CA43 /* Resources */,
+				F37108562F0650D4002635CC /* Sources */,
+				F37108572F0650D4002635CC /* Frameworks */,
+				F37108582F0650D4002635CC /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				F381D8D62F042E9E00E2CA43 /* LTMS */,
+				F371085C2F0650D4002635CC /* LTMS */,
 			);
 			name = LTMS;
 			packageProductDependencies = (
 			);
 			productName = LTMS;
-			productReference = F381D8D42F042E9E00E2CA43 /* LTMS.app */;
+			productReference = F371085A2F0650D4002635CC /* LTMS.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		F381D8CC2F042E9E00E2CA43 /* Project object */ = {
+		F37108522F0650D4002635CC /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2610;
 				LastUpgradeCheck = 2610;
 				TargetAttributes = {
-					F381D8D32F042E9E00E2CA43 = {
+					F37108592F0650D4002635CC = {
 						CreatedOnToolsVersion = 26.1.1;
 					};
 				};
 			};
-			buildConfigurationList = F381D8CF2F042E9E00E2CA43 /* Build configuration list for PBXProject "LTMS" */;
+			buildConfigurationList = F37108552F0650D4002635CC /* Build configuration list for PBXProject "LTMS" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = F381D8CB2F042E9E00E2CA43;
+			mainGroup = F37108512F0650D4002635CC;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = F381D8D52F042E9E00E2CA43 /* Products */;
+			productRefGroup = F371085B2F0650D4002635CC /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				F381D8D32F042E9E00E2CA43 /* LTMS */,
+				F37108592F0650D4002635CC /* LTMS */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		F381D8D22F042E9E00E2CA43 /* Resources */ = {
+		F37108582F0650D4002635CC /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -128,7 +127,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		F381D8D02F042E9E00E2CA43 /* Sources */ = {
+		F37108562F0650D4002635CC /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -138,7 +137,7 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		F381D8E82F042E9F00E2CA43 /* Debug */ = {
+		F37108732F0650D5002635CC /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -160,16 +159,12 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.shubham.LTMS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
-		F381D8E92F042E9F00E2CA43 /* Release */ = {
+		F37108742F0650D5002635CC /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -191,16 +186,12 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.shubham.LTMS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
-		F381D8EA2F042E9F00E2CA43 /* Debug */ = {
+		F37108752F0650D5002635CC /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -258,12 +249,10 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
 		};
-		F381D8EB2F042E9F00E2CA43 /* Release */ = {
+		F37108762F0650D5002635CC /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -314,7 +303,6 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
-				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -322,25 +310,25 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		F381D8CF2F042E9E00E2CA43 /* Build configuration list for PBXProject "LTMS" */ = {
+		F37108552F0650D4002635CC /* Build configuration list for PBXProject "LTMS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				F381D8EA2F042E9F00E2CA43 /* Debug */,
-				F381D8EB2F042E9F00E2CA43 /* Release */,
+				F37108752F0650D5002635CC /* Debug */,
+				F37108762F0650D5002635CC /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		F381D8E72F042E9F00E2CA43 /* Build configuration list for PBXNativeTarget "LTMS" */ = {
+		F37108722F0650D5002635CC /* Build configuration list for PBXNativeTarget "LTMS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				F381D8E82F042E9F00E2CA43 /* Debug */,
-				F381D8E92F042E9F00E2CA43 /* Release */,
+				F37108732F0650D5002635CC /* Debug */,
+				F37108742F0650D5002635CC /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = F381D8CC2F042E9E00E2CA43 /* Project object */;
+	rootObject = F37108522F0650D4002635CC /* Project object */;
 }
