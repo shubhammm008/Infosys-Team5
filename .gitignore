@@ -1,0 +1,16 @@
+# Xcode build files
+DerivedData/
+build/
+
+# User specific Xcode files
+*.xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+
+# macOS
+.DS_Store
+
+# Dependency managers
+Pods/
+Carthage/
+
