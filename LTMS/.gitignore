@@ -1,0 +1,19 @@
+# Xcode build files
+DerivedData/
+build/
+
+# User specific Xcode files
+*.xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+
+# macOS
+.DS_Store
+
+# Dependency managers
+Pods/
+Carthage/
+
+# IMPORTANT: Credentials and sensitive files
+GoogleService-Info.plist
+Supabase-Info.plist
