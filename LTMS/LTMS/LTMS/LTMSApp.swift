@@ -9,23 +9,14 @@ import SwiftUI
 
 @main
 struct LTMSApp: App {
+<<<<<<< HEAD:LTMS/LTMS/LTMS/LTMSApp.swift
     @StateObject private var authService = SupabaseAuthService.shared
     
+=======
+>>>>>>> parent of fefeb7e (Merge pull request #1 from shubhammm008/Gupil):LTMS/LTMS/LTMSApp.swift
     var body: some Scene {
         WindowGroup {
-            if authService.isAuthenticated, let user = authService.currentUser {
-                // Role-based navigation
-                switch user.role {
-                case .admin:
-                    AdminDashboardView()
-                case .educator:
-                    EducatorDashboardView()
-                case .learner:
-                    LearnerDashboardView()
-                }
-            } else {
-                UnifiedAuthView()
-            }
+            ContentView()
         }
     }
 }

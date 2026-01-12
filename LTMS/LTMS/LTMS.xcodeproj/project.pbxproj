@@ -6,6 +6,7 @@
 	objectVersion = 77;
 	objects = {
 
+<<<<<<< HEAD:LTMS/LTMS/LTMS.xcodeproj/project.pbxproj
 /* Begin PBXBuildFile section */
 		B9449E802F128C460049FE16 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = B9449E7F2F128C460049FE16 /* Auth */; };
 		B9449E822F128C460049FE16 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = B9449E812F128C460049FE16 /* Functions */; };
@@ -19,6 +20,8 @@
 		F3AA6CC82F0957CD00B04A63 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = F3AA6CC72F0957CD00B04A63 /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
+=======
+>>>>>>> parent of fefeb7e (Merge pull request #1 from shubhammm008/Gupil):LTMS/LTMS.xcodeproj/project.pbxproj
 /* Begin PBXFileReference section */
 		F3AA6CB02F0957CB00B04A63 /* LTMS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LTMS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F3AA6CC72F0957CD00B04A63 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
@@ -37,6 +40,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+<<<<<<< HEAD:LTMS/LTMS/LTMS.xcodeproj/project.pbxproj
 				B9449E862F128C460049FE16 /* Realtime in Frameworks */,
 				B9449E842F128C460049FE16 /* PostgREST in Frameworks */,
 				B9449E822F128C460049FE16 /* Functions in Frameworks */,
@@ -46,6 +50,8 @@
 				B9C78B502F0E890900206126 /* FirebaseFirestore in Frameworks */,
 				B9449E802F128C460049FE16 /* Auth in Frameworks */,
 				B9C78B4F2F0E890900206126 /* FirebaseAuth in Frameworks */,
+=======
+>>>>>>> parent of fefeb7e (Merge pull request #1 from shubhammm008/Gupil):LTMS/LTMS.xcodeproj/project.pbxproj
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -89,6 +95,7 @@
 			);
 			name = LTMS;
 			packageProductDependencies = (
+<<<<<<< HEAD:LTMS/LTMS/LTMS.xcodeproj/project.pbxproj
 				F3AA6CC12F0957CD00B04A63 /* FirebaseAuth */,
 				F3AA6CC32F0957CD00B04A63 /* FirebaseFirestore */,
 				F3AA6CC52F0957CD00B04A63 /* FirebaseStorage */,
@@ -98,6 +105,8 @@
 				B9449E852F128C460049FE16 /* Realtime */,
 				B9449E872F128C460049FE16 /* Storage */,
 				B9449E892F128C460049FE16 /* Supabase */,
+=======
+>>>>>>> parent of fefeb7e (Merge pull request #1 from shubhammm008/Gupil):LTMS/LTMS.xcodeproj/project.pbxproj
 			);
 			productName = LTMS;
 			productReference = F3AA6CB02F0957CB00B04A63 /* LTMS.app */;
@@ -127,10 +136,13 @@
 			);
 			mainGroup = F3AA6CA72F0957CB00B04A63;
 			minimizedProjectReferenceProxies = 1;
+<<<<<<< HEAD:LTMS/LTMS/LTMS.xcodeproj/project.pbxproj
 			packageReferences = (
 				F3AA6CC02F0957CD00B04A63 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				B9449E7E2F128C460049FE16 /* XCRemoteSwiftPackageReference "supabase-swift" */,
 			);
+=======
+>>>>>>> parent of fefeb7e (Merge pull request #1 from shubhammm008/Gupil):LTMS/LTMS.xcodeproj/project.pbxproj
 			preferredProjectObjectVersion = 77;
 			productRefGroup = F3AA6CB12F0957CB00B04A63 /* Products */;
 			projectDirPath = "";
@@ -366,6 +378,7 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+<<<<<<< HEAD:LTMS/LTMS/LTMS.xcodeproj/project.pbxproj
 
 /* Begin XCRemoteSwiftPackageReference section */
 		B9449E7E2F128C460049FE16 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
@@ -433,6 +446,8 @@
 			productName = FirebaseStorage;
 		};
 /* End XCSwiftPackageProductDependency section */
+=======
+>>>>>>> parent of fefeb7e (Merge pull request #1 from shubhammm008/Gupil):LTMS/LTMS.xcodeproj/project.pbxproj
 	};
 	rootObject = F3AA6CA82F0957CB00B04A63 /* Project object */;
 }
