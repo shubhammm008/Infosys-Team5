@@ -1,0 +1,336 @@
+//
+//  LessonViewerView.swift
+//  LTMS
+//
+//  Created for Lesson Content Viewing
+//
+
+import SwiftUI
+import Combine
+
+@MainActor
+class LessonViewerViewModel: ObservableObject {
+    @Published var contents: [Content] = []
+    @Published var currentProgress: Progress?
+    @Published var isLoading = false
+    @Published var errorMessage: String?
+    @Published var showError = false
+    
+    let lesson: Lesson
+    let courseId: String
+    let enrollmentId: String?
+    
+    init(lesson: Lesson, courseId: String, enrollmentId: String?) {
+        self.lesson = lesson
+        self.courseId = courseId
+        self.enrollmentId = enrollmentId
+    }
+    
+    func loadLessonContent() async {
+        guard let lessonId = lesson.id else { return }
+        isLoading = true
+        defer { isLoading = false }
+        
+        do {
+            // Load contents
+            contents = try await ContentService.shared.fetchContentsByLesson(lessonId: lessonId)
+            
+            // Load progress
+            if let enrollmentId = enrollmentId {
+                currentProgress = try await ContentService.shared.fetchProgressByLesson(
+                    enrollmentId: enrollmentId,
+                    lessonId: lessonId
+                )
+            }
+            
+            print("✅ Loaded \(contents.count) contents for lesson")
+        } catch {
+            print("❌ Error loading lesson content: \(error)")
+            errorMessage = error.localizedDescription
+            showError = true
+        }
+    }
+    
+    func markLessonComplete() async {
+        guard let lessonId = lesson.id,
+              let enrollmentId = enrollmentId else { return }
+        
+        do {
+            try await ContentService.shared.markLessonComplete(
+                enrollmentId: enrollmentId,
+                lessonId: lessonId
+            )
+            
+            // Reload progress
+            currentProgress = try await ContentService.shared.fetchProgressByLesson(
+                enrollmentId: enrollmentId,
+                lessonId: lessonId
+            )
+        } catch {
+            errorMessage = "Failed to mark lesson complete: \(error.localizedDescription)"
+            showError = true
+        }
+    }
+}
+
+struct LessonViewerView: View {
+    @StateObject private var viewModel: LessonViewerViewModel
+    @State private var showCompleteConfirmation = false
+    
+    init(lesson: Lesson, courseId: String, enrollmentId: String?) {
+        _viewModel = StateObject(wrappedValue: LessonViewerViewModel(
+            lesson: lesson,
+            courseId: courseId,
+            enrollmentId: enrollmentId
+        ))
+    }
+    
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                // Lesson Header
+                lessonHeader
+                
+                // Learning Objectives
+                if let objectives = viewModel.lesson.learningObjectives, !objectives.isEmpty {
+                    objectivesSection(objectives)
+                }
+                
+                // Prerequisites
+                if let prerequisites = viewModel.lesson.prerequisites, !prerequisites.isEmpty {
+                    prerequisitesSection(prerequisites)
+                }
+                
+                // Learning Materials
+                if viewModel.isLoading {
+                    HStack {
+                        Spacer()
+                        ProgressView()
+                        Spacer()
+                    }
+                    .padding()
+                } else if viewModel.contents.isEmpty {
+                    emptyContentState
+                } else {
+                    materialsSection
+                }
+                
+                // Mark Complete Button
+                if viewModel.enrollmentId != nil {
+                    markCompleteButton
+                }
+            }
+            .padding()
+        }
+        .background(Color.ltmsBackground)
+        .navigationTitle("Lesson")
+        .navigationBarTitleDisplayMode(.inline)
+        .alert("Error", isPresented: $viewModel.showError) {
+            Button("OK") { }
+        } message: {
+            Text(viewModel.errorMessage ?? "An error occurred")
+        }
+        .alert("Lesson Complete!", isPresented: $showCompleteConfirmation) {
+            Button("OK") { }
+        } message: {
+            Text("Great job! You've completed this lesson.")
+        }
+        .task {
+            await viewModel.loadLessonContent()
+        }
+    }
+    
+    // MARK: - Lesson Header
+    
+    private var lessonHeader: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if let isCompleted = viewModel.currentProgress?.isCompleted, isCompleted {
+                HStack {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                    Text("Completed")
+                        .font(.subheadline)
+                        .foregroundColor(.green)
+                        .fontWeight(.semibold)
+                }
+            }
+            
+            Text(viewModel.lesson.title)
+                .font(.title2)
+                .fontWeight(.bold)
+            
+            Text(viewModel.lesson.lessonDescription)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        .padding()
+        .background(Color.ltmsCardBackground)
+        .cornerRadius(16)
+    }
+    
+    // MARK: - Objectives Section
+    
+    private func objectivesSection(_ objectives: String) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Learning Objectives", systemImage: "target")
+                .font(.headline)
+                .foregroundColor(.ltmsPrimary)
+            
+            Text(objectives)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        .padding()
+        .background(Color.blue.opacity(0.1))
+        .cornerRadius(12)
+    }
+    
+    // MARK: - Prerequisites Section
+    
+    private func prerequisitesSection(_ prerequisites: String) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Prerequisites", systemImage: "checkmark.circle")
+                .font(.headline)
+                .foregroundColor(.orange)
+            
+            Text(prerequisites)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        .padding()
+        .background(Color.orange.opacity(0.1))
+        .cornerRadius(12)
+    }
+    
+    // MARK: - Materials Section
+    
+    private var materialsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Learning Materials")
+                .font(.headline)
+            
+            VStack(spacing: 12) {
+                ForEach(viewModel.contents) { content in
+                    NavigationLink(destination: ContentPlayerView(
+                        content: content,
+                        courseId: viewModel.courseId
+                    )) {
+                        ContentCard(content: content)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+    
+    private var emptyContentState: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "doc.text")
+                .font(.system(size: 50))
+                .foregroundColor(.secondary)
+            Text("No materials available yet")
+                .font(.headline)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 40)
+    }
+    
+    // MARK: - Mark Complete Button
+    
+    private var markCompleteButton: some View {
+        Button {
+            Task {
+                await viewModel.markLessonComplete()
+                showCompleteConfirmation = true
+            }
+        } label: {
+            Group {
+                HStack {
+                    Image(systemName: viewModel.currentProgress?.isCompleted == true ? "checkmark.circle.fill" : "circle")
+                    Text(viewModel.currentProgress?.isCompleted == true ? "Completed" : "Mark as Complete")
+                        .fontWeight(.semibold)
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+            }
+            .background(
+                Group {
+                    if viewModel.currentProgress?.isCompleted == true {
+                        Color.green.opacity(0.2)
+                    } else {
+                        LinearGradient(
+                            colors: [.ltmsPrimary, .ltmsSecondary],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    }
+                }
+            )
+            .foregroundColor(viewModel.currentProgress?.isCompleted == true ? .green : .white)
+            .cornerRadius(12)
+        }
+        .disabled(viewModel.currentProgress?.isCompleted == true)
+    }
+}
+
+// MARK: - Content Card
+
+struct ContentCard: View {
+    let content: Content
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            // Content Type Icon
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(content.contentType.color.opacity(0.2))
+                    .frame(width: 60, height: 60)
+                
+                Image(systemName: content.contentType.icon)
+                    .font(.title2)
+                    .foregroundColor(content.contentType.color)
+            }
+            
+            // Content Info
+            VStack(alignment: .leading, spacing: 4) {
+                Text(content.title)
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                
+                Text(content.contentType.displayName)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            Spacer()
+            
+            Image(systemName: "play.circle.fill")
+                .font(.title2)
+                .foregroundColor(.ltmsPrimary)
+        }
+        .padding()
+        .background(Color.ltmsCardBackground)
+        .cornerRadius(12)
+    }
+}
+
+#Preview {
+    NavigationStack {
+        LessonViewerView(
+            lesson: Lesson(
+                id: "1",
+                moduleId: "module1",
+                title: "Introduction to Variables",
+                lessonDescription: "Learn about variables and constants in Swift",
+                orderIndex: 0,
+                learningObjectives: "Understand the difference between var and let",
+                prerequisites: "Basic programming knowledge",
+                createdAt: Date(),
+                updatedAt: Date()
+            ),
+            courseId: "course1",
+            enrollmentId: "enrollment1"
+        )
+    }
+}
