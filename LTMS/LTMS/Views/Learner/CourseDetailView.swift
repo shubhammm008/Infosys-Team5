@@ -191,11 +191,17 @@ struct CourseDetailView: View {
             defer { isEnrolling = false }
             
             do {
-                _ = try await ContentService.shared.enrollInCourse(learnerId: userId, courseId: courseId)
+                // Enroll user and save to database
+                let enrollment = try await ContentService.shared.enrollInCourse(learnerId: userId, courseId: courseId)
+                print("✅ Enrollment saved to database: \(enrollment.id ?? "N/A")")
+                print("   Course: \(course.title)")
+                print("   Learner: \(userId)")
+                print("   Enrollment Date: \(enrollment.enrollmentDate)")
+                
                 isEnrolled = true
                 showEnrollmentSuccess = true
             } catch {
-                print("Error enrolling: \(error)")
+                print("❌ Error enrolling: \(error)")
             }
         }
     }
@@ -239,7 +245,12 @@ struct DetailItem: View {
             createdById: "user1",
             assignedEducatorId: "educator1",
             createdAt: Date(),
-            updatedAt: Date()
+            updatedAt: Date(),
+            scheduledStartDate: nil,
+            scheduledEndDate: nil,
+            enrollmentDeadline: nil,
+            maxEnrollments: nil,
+            isVisibleInCatalog: true
         ))
     }
 }

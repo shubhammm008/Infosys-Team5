@@ -11,6 +11,8 @@ import Combine
 @MainActor
 class LessonViewerViewModel: ObservableObject {
     @Published var contents: [Content] = []
+    @Published var quizzes: [Quiz] = []
+    @Published var quizSubmissions: [String: QuizSubmission] = [:]  // quizId -> submission
     @Published var currentProgress: Progress?
     @Published var isLoading = false
     @Published var errorMessage: String?
@@ -19,6 +21,7 @@ class LessonViewerViewModel: ObservableObject {
     let lesson: Lesson
     let courseId: String
     let enrollmentId: String?
+    private var userId: String? { SupabaseAuthService.shared.currentUser?.id }
     
     init(lesson: Lesson, courseId: String, enrollmentId: String?) {
         self.lesson = lesson
@@ -41,6 +44,19 @@ class LessonViewerViewModel: ObservableObject {
                     enrollmentId: enrollmentId,
                     lessonId: lessonId
                 )
+            }
+            
+            // Load quizzes for this lesson
+            quizzes = try await QuizService.shared.fetchQuizzesByLesson(lessonId: lessonId)
+            print("✅ Loaded \(quizzes.count) quizzes for lesson")
+            
+            // Load user's quiz submissions
+            if let userId = userId {
+                let allSubmissions = try await QuizService.shared.fetchSubmissionsByUser(userId: userId)
+                for submission in allSubmissions {
+                    quizSubmissions[submission.assessmentId] = submission
+                }
+                print("✅ Loaded \(quizSubmissions.count) quiz submissions")
             }
             
             print("✅ Loaded \(contents.count) contents for lesson")
@@ -113,6 +129,11 @@ struct LessonViewerView: View {
                     emptyContentState
                 } else {
                     materialsSection
+                }
+                
+                // Quizzes Section
+                if !viewModel.quizzes.isEmpty {
+                    quizzesSection
                 }
                 
                 // Mark Complete Button
@@ -236,6 +257,28 @@ struct LessonViewerView: View {
         .padding(.vertical, 40)
     }
     
+    // MARK: - Quizzes Section
+    
+    private var quizzesSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Label("Quizzes", systemImage: "questionmark.circle.fill")
+                .font(.headline)
+                .foregroundColor(.purple)
+            
+            VStack(spacing: 12) {
+                ForEach(viewModel.quizzes) { quiz in
+                    LearnerQuizCard(
+                        quiz: quiz,
+                        submission: viewModel.quizSubmissions[quiz.id ?? ""],
+                        onRefresh: {
+                            Task { await viewModel.loadLessonContent() }
+                        }
+                    )
+                }
+            }
+        }
+    }
+    
     // MARK: - Mark Complete Button
     
     private var markCompleteButton: some View {
@@ -308,6 +351,57 @@ struct ContentCard: View {
             Image(systemName: "play.circle.fill")
                 .font(.title2)
                 .foregroundColor(.ltmsPrimary)
+        }
+        .padding()
+        .background(Color.ltmsCardBackground)
+        .cornerRadius(12)
+    }
+}
+
+// MARK: - Quiz Card
+
+struct QuizCard: View {
+    let quiz: Quiz
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            // Quiz Icon
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.purple.opacity(0.2))
+                    .frame(width: 60, height: 60)
+                
+                Image(systemName: "questionmark.circle.fill")
+                    .font(.title2)
+                    .foregroundColor(.purple)
+            }
+            
+            // Quiz Info
+            VStack(alignment: .leading, spacing: 4) {
+                Text(quiz.title)
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                
+                HStack(spacing: 8) {
+                    Text(quiz.passingScoreDisplay)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    if quiz.timeLimitMinutes != nil {
+                        Text("•")
+                            .foregroundColor(.secondary)
+                        Text(quiz.timeLimitDisplay)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundColor(.secondary)
         }
         .padding()
         .background(Color.ltmsCardBackground)

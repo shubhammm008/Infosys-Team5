@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Combine
 
 enum EnrollmentStatus: String, Codable, CaseIterable {
     case active
@@ -37,6 +38,11 @@ struct Enrollment: Codable, Identifiable {
     var status: EnrollmentStatus
     var lastAccessed: Date?
     
+    // Enrollment metadata
+    var enrolledBy: String? // 'self' or admin userId
+    var completedAt: Date?
+    var certificateIssued: Bool
+    
     enum CodingKeys: String, CodingKey {
         case id
         case learnerId = "learner_id"
@@ -45,5 +51,8 @@ struct Enrollment: Codable, Identifiable {
         case completionPercentage = "completion_percentage"
         case status
         case lastAccessed = "last_accessed"
+        case enrolledBy = "enrolled_by"
+        case completedAt = "completed_at"
+        case certificateIssued = "certificate_issued"
     }
 }

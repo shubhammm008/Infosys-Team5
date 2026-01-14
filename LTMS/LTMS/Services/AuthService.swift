@@ -78,7 +78,8 @@ class AuthService: ObservableObject {
             isActive: true,
             createdAt: Date(),
             updatedAt: Date(),
-            lastLogin: Date()
+            lastLogin: Date(),
+            loginCount: 1
         )
         self.currentUser = mockUser
         self.isAuthenticated = true
@@ -170,7 +171,8 @@ class AuthService: ObservableObject {
                 isActive: true,
                 createdAt: Date(),
                 updatedAt: Date(),
-                lastLogin: Date()
+                lastLogin: Date(),
+                loginCount: 1
             )
             
             // Save to MockDataService so it appears in user management (with password)
@@ -201,7 +203,8 @@ class AuthService: ObservableObject {
                 isActive: true,
                 createdAt: Date(),
                 updatedAt: Date(),
-                lastLogin: Date()
+                lastLogin: Date(),
+                loginCount: 0
             )
             
             print("🔵 Saving user to Firestore...")

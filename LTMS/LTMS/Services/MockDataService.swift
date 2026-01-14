@@ -94,7 +94,8 @@ class MockDataService: ObservableObject {
             isActive: true,
             createdAt: Date(),
             updatedAt: Date(),
-            lastLogin: Date()
+            lastLogin: Date(),
+            loginCount: 0
         )
         mockUsers.append(adminUser)
         // Store admin credentials (fixed)

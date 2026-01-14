@@ -201,7 +201,10 @@ class SupabaseService {
             enrollmentDate: Date(),
             completionPercentage: 0.0,
             status: .active,
-            lastAccessed: nil
+            lastAccessed: nil,
+            enrolledBy: "self",
+            completedAt: nil,
+            certificateIssued: false
         )
         
         return try await create(enrollment, in: SupabaseConstants.enrollments)

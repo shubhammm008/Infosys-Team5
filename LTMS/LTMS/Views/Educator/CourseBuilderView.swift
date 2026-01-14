@@ -77,86 +77,28 @@ struct CourseBuilderView: View {
     }
     
     var body: some View {
-        List {
-            Section {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(viewModel.course.title)
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    
-                    Text(viewModel.course.courseDescription)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                    
-                    HStack(spacing: 12) {
-                        Label("\(viewModel.course.durationHours)h", systemImage: "clock")
-                        Text(viewModel.course.level.displayName)
-                    }
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                }
-                .padding(.vertical, 8)
+        ScrollView {
+            VStack(spacing: 20) {
+                // Course Info Card
+                courseInfoCard
+                
+                // Action Cards Section
+                actionCardsSection
+                
+                // Modules Section
+                modulesSection
             }
-            
-            Section {
-                if viewModel.isLoading {
-                    HStack {
-                        Spacer()
-                        ProgressView()
-                        Spacer()
-                    }
-                } else if viewModel.modules.isEmpty {
-                    VStack(spacing: 12) {
-                        Image(systemName: "square.stack.3d.up.slash")
-                            .font(.largeTitle)
-                            .foregroundColor(.secondary)
-                        Text("No modules yet")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
-                        Button("Add First Module") {
-                            showAddModule = true
-                        }
-                        .buttonStyle(.borderedProminent)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 40)
-                } else {
-                    ForEach(viewModel.modules) { module in
-                        NavigationLink(destination: ModuleLessonEditorView(module: module, courseId: viewModel.course.id ?? "")) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(module.title)
-                                    .font(.headline)
-                                Text(module.moduleDescription)
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                                    .lineLimit(2)
-                            }
-                            .padding(.vertical, 4)
-                        }
-                    }
-                }
-            } header: {
-                Text("Modules")
-            }
+            .padding()
         }
+        .background(Color.ltmsBackground)
         .navigationTitle("Course Builder")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Button {
-                        showCourseDetails = true
-                    } label: {
-                        Label("Course Details", systemImage: "list.bullet.clipboard")
-                    }
-                    
-                    Button {
-                        showAddModule = true
-                    } label: {
-                        Label("Add Module", systemImage: "plus.square")
-                    }
+                Button {
+                    showCourseDetails = true
                 } label: {
-                    Image(systemName: "ellipsis.circle")
+                    Image(systemName: "gearshape")
                         .font(.title3)
                 }
             }
@@ -177,6 +119,195 @@ struct CourseBuilderView: View {
         } message: {
             Text(viewModel.errorMessage ?? "An error occurred")
         }
+    }
+    
+    // MARK: - Course Info Card
+    
+    private var courseInfoCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(viewModel.course.title)
+                .font(.title2)
+                .fontWeight(.bold)
+            
+            Text(viewModel.course.courseDescription)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            
+            HStack(spacing: 12) {
+                Label("\(viewModel.course.durationHours)h", systemImage: "clock")
+                Text(viewModel.course.level.displayName)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.ltmsPrimary.opacity(0.2))
+                    .foregroundColor(.ltmsPrimary)
+                    .cornerRadius(6)
+            }
+            .font(.caption)
+            .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(Color.ltmsCardBackground)
+        .cornerRadius(16)
+    }
+    
+    // MARK: - Action Cards Section
+    
+    private var actionCardsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Quick Actions")
+                .font(.headline)
+                .foregroundColor(.secondary)
+            
+            // Add Module Card (full width since Quizzes is now per-lesson)
+            Button {
+                showAddModule = true
+            } label: {
+                HStack {
+                    Image(systemName: "plus.rectangle.fill")
+                        .font(.title2)
+                        .foregroundColor(.blue)
+                        .frame(width: 44, height: 44)
+                        .background(Color.blue.opacity(0.2))
+                        .cornerRadius(10)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Add Module")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.primary)
+                        Text("Create new module with lessons")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(.blue)
+                }
+                .padding()
+                .background(Color.ltmsCardBackground)
+                .cornerRadius(12)
+            }
+            .buttonStyle(.plain)
+            
+            // Info Note
+//            HStack(spacing: 8) {
+//                Image(systemName: "info.circle")
+//                    .foregroundColor(.purple)
+//                Text("Quizzes are now created within each lesson")
+//                    .font(.caption)
+//                    .foregroundColor(.secondary)
+//            }
+            .padding(.horizontal, 4)
+        }
+    }
+    
+    // MARK: - Modules Section
+    
+    private var modulesSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Modules")
+                    .font(.headline)
+                    .foregroundColor(.secondary)
+                Spacer()
+                Text("\(viewModel.modules.count)")
+                    .font(.caption)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.ltmsPrimary.opacity(0.2))
+                    .foregroundColor(.ltmsPrimary)
+                    .cornerRadius(6)
+            }
+            
+            if viewModel.isLoading {
+                HStack {
+                    Spacer()
+                    ProgressView()
+                    Spacer()
+                }
+                .padding(.vertical, 40)
+            } else if viewModel.modules.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "square.stack.3d.up.slash")
+                        .font(.largeTitle)
+                        .foregroundColor(.secondary)
+                    Text("No modules yet")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                    Text("Tap 'Add Module' above to get started")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 40)
+                .background(Color.ltmsCardBackground)
+                .cornerRadius(16)
+            } else {
+                VStack(spacing: 8) {
+                    ForEach(viewModel.modules) { module in
+                        NavigationLink(destination: ModuleLessonEditorView(module: module, courseId: viewModel.course.id ?? "")) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(module.title)
+                                        .font(.headline)
+                                        .foregroundColor(.primary)
+                                    Text(module.moduleDescription)
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                        .lineLimit(2)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            .padding()
+                            .background(Color.ltmsCardBackground)
+                            .cornerRadius(12)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Action Card Component
+
+struct ActionCard: View {
+    let title: String
+    let subtitle: String
+    let icon: String
+    let color: Color
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Image(systemName: icon)
+                .font(.title)
+                .foregroundColor(color)
+                .frame(width: 44, height: 44)
+                .background(color.opacity(0.2))
+                .cornerRadius(10)
+            
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundColor(.primary)
+            
+            Text(subtitle)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .lineLimit(2)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(Color.ltmsCardBackground)
+        .cornerRadius(12)
     }
 }
 
@@ -247,7 +378,12 @@ struct AddModuleView: View {
             createdById: "user1",
             assignedEducatorId: "educator1",
             createdAt: Date(),
-            updatedAt: Date()
+            updatedAt: Date(),
+            scheduledStartDate: nil,
+            scheduledEndDate: nil,
+            enrollmentDeadline: nil,
+            maxEnrollments: nil,
+            isVisibleInCatalog: true
         ))
     }
 }

@@ -21,6 +21,18 @@ struct EditCourseView: View {
     @State private var isPublished: Bool
     @State private var selectedEducatorId: String?
     
+    // Scheduling fields
+    @State private var enableScheduling: Bool
+    @State private var scheduledStartDate: Date
+    @State private var scheduledEndDate: Date
+    @State private var enableEnrollmentDeadline: Bool
+    @State private var enrollmentDeadline: Date
+    
+    // Enrollment management
+    @State private var enableMaxEnrollments: Bool
+    @State private var maxEnrollments: Int
+    @State private var isVisibleInCatalog: Bool
+    
     @State private var educators: [User] = []
     @State private var isLoading = false
     @State private var showError = false
@@ -37,6 +49,18 @@ struct EditCourseView: View {
         _durationHours = State(initialValue: course.durationHours)
         _isPublished = State(initialValue: course.isPublished)
         _selectedEducatorId = State(initialValue: course.assignedEducatorId)
+        
+        // Initialize scheduling
+        _enableScheduling = State(initialValue: course.scheduledStartDate != nil || course.scheduledEndDate != nil)
+        _scheduledStartDate = State(initialValue: course.scheduledStartDate ?? Date())
+        _scheduledEndDate = State(initialValue: course.scheduledEndDate ?? Date().addingTimeInterval(86400 * 30))
+        _enableEnrollmentDeadline = State(initialValue: course.enrollmentDeadline != nil)
+        _enrollmentDeadline = State(initialValue: course.enrollmentDeadline ?? Date().addingTimeInterval(86400 * 7))
+        
+        // Initialize enrollment management
+        _enableMaxEnrollments = State(initialValue: course.maxEnrollments != nil)
+        _maxEnrollments = State(initialValue: course.maxEnrollments ?? 50)
+        _isVisibleInCatalog = State(initialValue: course.isVisibleInCatalog)
     }
     
     var body: some View {
@@ -85,6 +109,42 @@ struct EditCourseView: View {
                 
                 Section("Publishing") {
                     Toggle("Published", isOn: $isPublished)
+                    Toggle("Visible in Catalog", isOn: $isVisibleInCatalog)
+                }
+                
+                Section {
+                    Toggle("Enable Scheduling", isOn: $enableScheduling)
+                    
+                    if enableScheduling {
+                        DatePicker("Start Date", selection: $scheduledStartDate, displayedComponents: [.date, .hourAndMinute])
+                        DatePicker("End Date", selection: $scheduledEndDate, displayedComponents: [.date, .hourAndMinute])
+                    }
+                } header: {
+                    Text("Course Scheduling")
+                } footer: {
+                    if enableScheduling {
+                        Text("Course will only be available between the start and end dates")
+                    }
+                }
+                
+                Section {
+                    Toggle("Set Enrollment Deadline", isOn: $enableEnrollmentDeadline)
+                    
+                    if enableEnrollmentDeadline {
+                        DatePicker("Deadline", selection: $enrollmentDeadline, displayedComponents: [.date, .hourAndMinute])
+                    }
+                    
+                    Toggle("Limit Enrollments", isOn: $enableMaxEnrollments)
+                    
+                    if enableMaxEnrollments {
+                        Stepper("Max Enrollments: \(maxEnrollments)", value: $maxEnrollments, in: 1...1000)
+                    }
+                } header: {
+                    Text("Enrollment Management")
+                } footer: {
+                    if enableMaxEnrollments {
+                        Text("Course enrollment will be closed when limit is reached")
+                    }
                 }
                 
                 Section {
@@ -161,6 +221,11 @@ struct EditCourseView: View {
                 updatedCourse.isPublished = isPublished
                 updatedCourse.assignedEducatorId = selectedEducatorId
                 updatedCourse.updatedAt = Date()
+                updatedCourse.scheduledStartDate = enableScheduling ? scheduledStartDate : nil
+                updatedCourse.scheduledEndDate = enableScheduling ? scheduledEndDate : nil
+                updatedCourse.enrollmentDeadline = enableEnrollmentDeadline ? enrollmentDeadline : nil
+                updatedCourse.maxEnrollments = enableMaxEnrollments ? maxEnrollments : nil
+                updatedCourse.isVisibleInCatalog = isVisibleInCatalog
                 
                 // Update in Supabase
                 _ = try await SupabaseService.shared.update(updatedCourse, id: courseId, in: SupabaseConstants.courses)
@@ -192,7 +257,12 @@ struct EditCourseView: View {
         createdById: "admin",
         assignedEducatorId: nil,
         createdAt: Date(),
-        updatedAt: Date()
+        updatedAt: Date(),
+        scheduledStartDate: nil,
+        scheduledEndDate: nil,
+        enrollmentDeadline: nil,
+        maxEnrollments: nil,
+        isVisibleInCatalog: true
     )) {
         print("Updated")
     }

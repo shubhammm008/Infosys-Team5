@@ -191,7 +191,8 @@ class SupabaseAuthService: ObservableObject {
                 isActive: true,
                 createdAt: Date(),
                 updatedAt: Date(),
-                lastLogin: Date()
+                lastLogin: Date(),
+                loginCount: 0
             )
             
             print("🔵 Saving user profile to database...")
@@ -253,17 +254,16 @@ class SupabaseAuthService: ObservableObject {
                 isActive: true,
                 createdAt: Date(),
                 updatedAt: Date(),
-                lastLogin: nil
+                lastLogin: nil,
+                loginCount: 0
             )
             
-            print("🔵 Saving user profile to database...")
-            _ = try await service.create(user, in: SupabaseConstants.users)
-            
-            print("✅ User created by admin successfully!")
-            print("⚠️ Note: Admin should manually confirm email in Supabase Dashboard if needed")
+            print("� Saving user profile to database...")
+            let createdUser = try await service.create(user, in: SupabaseConstants.users)
+            print("🔵 User created successfully by admin: \(createdUser.email)")
             
         } catch {
-            print("🔴 Admin user creation error: \(error)")
+            print("�🔴 Admin user creation error: \(error.localizedDescription)")
             throw mapAuthError(error)
         }
     }
@@ -346,7 +346,8 @@ class SupabaseAuthService: ObservableObject {
             isActive: true,
             createdAt: Date(),
             updatedAt: Date(),
-            lastLogin: Date()
+            lastLogin: Date(),
+            loginCount: 1
         )
         
         // Save to MockDataService
@@ -426,7 +427,8 @@ class SupabaseAuthService: ObservableObject {
                 isActive: true,
                 createdAt: Date(),
                 updatedAt: Date(),
-                lastLogin: Date()
+                lastLogin: Date(),
+                loginCount: 0
             )
             
             let createdUser = try await service.create(user, in: SupabaseConstants.users)

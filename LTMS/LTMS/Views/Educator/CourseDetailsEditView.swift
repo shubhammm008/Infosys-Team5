@@ -174,7 +174,12 @@ struct CourseDetailsEditView: View {
         prerequisites: ["Basic programming"],
         learningObjectives: ["Learn Swift"],
         createdAt: Date(),
-        updatedAt: Date()
+        updatedAt: Date(),
+        scheduledStartDate: nil,
+        scheduledEndDate: nil,
+        enrollmentDeadline: nil,
+        maxEnrollments: nil,
+        isVisibleInCatalog: true
     )) {
         print("Saved")
     }

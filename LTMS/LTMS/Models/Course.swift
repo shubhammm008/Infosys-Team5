@@ -33,6 +33,15 @@ struct Course: Codable, Identifiable {
     var createdAt: Date
     var updatedAt: Date
     
+    // Scheduling fields
+    var scheduledStartDate: Date?
+    var scheduledEndDate: Date?
+    var enrollmentDeadline: Date?
+    
+    // Enrollment management
+    var maxEnrollments: Int?
+    var isVisibleInCatalog: Bool
+    
     enum CodingKeys: String, CodingKey {
         case id
         case organizationId = "organization_id"
@@ -48,5 +57,33 @@ struct Course: Codable, Identifiable {
         case learningObjectives = "learning_objectives"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
+        case scheduledStartDate = "scheduled_start_date"
+        case scheduledEndDate = "scheduled_end_date"
+        case enrollmentDeadline = "enrollment_deadline"
+        case maxEnrollments = "max_enrollments"
+        case isVisibleInCatalog = "is_visible_in_catalog"
+    }
+    
+    // Computed properties for scheduling status
+    var isScheduled: Bool {
+        scheduledStartDate != nil || scheduledEndDate != nil
+    }
+    
+    var isCurrentlyAvailable: Bool {
+        guard isPublished else { return false }
+        let now = Date()
+        
+        if let start = scheduledStartDate, start > now {
+            return false
+        }
+        if let end = scheduledEndDate, end < now {
+            return false
+        }
+        return true
+    }
+    
+    var enrollmentStatus: String {
+        guard let deadline = enrollmentDeadline else { return "Open" }
+        return deadline > Date() ? "Open" : "Closed"
     }
 }

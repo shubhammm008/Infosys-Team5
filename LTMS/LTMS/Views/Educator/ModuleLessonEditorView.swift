@@ -10,10 +10,10 @@ import Combine
 
 @MainActor
 class ModuleLessonViewModel: ObservableObject {
+    @Published var module: Module
     @Published var lessons: [Lesson] = []
     @Published var isLoading = false
     
-    let module: Module
     let courseId: String
     
     init(module: Module, courseId: String) {
@@ -51,11 +51,40 @@ class ModuleLessonViewModel: ObservableObject {
         _ = try await CourseService.shared.createLesson(lesson)
         await loadLessons()
     }
+    
+    func updateModule(title: String, description: String) async throws {
+        guard let moduleId = module.id else { return }
+        
+        var updatedModule = module
+        updatedModule.title = title
+        updatedModule.moduleDescription = description
+        updatedModule.updatedAt = Date()
+        
+        try await CourseService.shared.updateModule(updatedModule)
+        self.module = updatedModule
+    }
+    
+    func updateLesson(lesson: Lesson, title: String, description: String, objectives: String?, prerequisites: String?) async throws {
+        guard let lessonId = lesson.id else { return }
+        
+        var updatedLesson = lesson
+        updatedLesson.title = title
+        updatedLesson.lessonDescription = description
+        updatedLesson.learningObjectives = objectives
+        updatedLesson.prerequisites = prerequisites
+        updatedLesson.updatedAt = Date()
+        
+        try await CourseService.shared.updateLesson(updatedLesson)
+        await loadLessons()
+    }
 }
 
 struct ModuleLessonEditorView: View {
     @StateObject private var viewModel: ModuleLessonViewModel
     @State private var showAddLesson = false
+    @State private var showEditModule = false
+    @State private var showEditLesson = false
+    @State private var selectedLesson: Lesson?
     
     init(module: Module, courseId: String) {
         _viewModel = StateObject(wrappedValue: ModuleLessonViewModel(module: module, courseId: courseId))
@@ -65,9 +94,22 @@ struct ModuleLessonEditorView: View {
         List {
             Section {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(viewModel.module.title)
-                        .font(.title3)
-                        .fontWeight(.semibold)
+                    HStack {
+                        Text(viewModel.module.title)
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                        
+                        Spacer()
+                        
+                        Button {
+                            showEditModule = true
+                        } label: {
+                            Image(systemName: "pencil.circle.fill")
+                                .font(.title2)
+                                .foregroundColor(.ltmsPrimary)
+                        }
+                    }
+                    
                     Text(viewModel.module.moduleDescription)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
@@ -129,6 +171,14 @@ struct ModuleLessonEditorView: View {
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showAddLesson) {
             AddLessonView(viewModel: viewModel)
+        }
+        .sheet(isPresented: $showEditModule) {
+            EditModuleView(viewModel: viewModel)
+        }
+        .sheet(isPresented: $showEditLesson) {
+            if let lesson = selectedLesson {
+                EditLessonView(viewModel: viewModel, lesson: lesson)
+            }
         }
         .task {
             await viewModel.loadLessons()

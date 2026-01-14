@@ -22,23 +22,41 @@ struct AdminDashboardView: View {
                 }
                 .tag(0)
             
+            AnalyticsDashboardView()
+                .tabItem {
+                    Label("Analytics", systemImage: "chart.bar.fill")
+                }
+                .tag(1)
+            
             UserManagementView(preselectedRole: $selectedUserRole)
                 .tabItem {
                     Label("Users", systemImage: "person.3.fill")
                 }
-                .tag(1)
+                .tag(2)
             
             CourseManagementView()
                 .tabItem {
                     Label("Courses", systemImage: "book.fill")
                 }
-                .tag(2)
+                .tag(3)
+            
+            EnrollmentManagementView()
+                .tabItem {
+                    Label("Enrollments", systemImage: "person.badge.plus")
+                }
+                .tag(4)
+            
+            ReportsView()
+                .tabItem {
+                    Label("Reports", systemImage: "doc.text.fill")
+                }
+                .tag(5)
             
             AdminProfileView()
                 .tabItem {
                     Label("Profile", systemImage: "person.circle.fill")
                 }
-                .tag(3)
+                .tag(6)
         }
         .tint(.ltmsPrimary)
     }
@@ -122,7 +140,7 @@ struct AdminHomeView: View {
                             color: .blue
                         ) {
                             selectedUserRole = nil
-                            selectedTab = 1
+                            selectedTab = 2
                         }
                         
                         StatCard(
@@ -131,7 +149,7 @@ struct AdminHomeView: View {
                             icon: "book.fill",
                             color: .purple
                         ) {
-                            selectedTab = 2
+                            selectedTab = 3
                         }
                         
                         StatCard(
@@ -141,7 +159,7 @@ struct AdminHomeView: View {
                             color: .orange
                         ) {
                             selectedUserRole = .educator
-                            selectedTab = 1
+                            selectedTab = 2
                         }
                         
                         StatCard(
@@ -151,7 +169,7 @@ struct AdminHomeView: View {
                             color: .green
                         ) {
                             selectedUserRole = .learner
-                            selectedTab = 1
+                            selectedTab = 2
                         }
                     }
                     
@@ -176,6 +194,30 @@ struct AdminHomeView: View {
                                 color: .purple
                             ) {
                                 showCreateCourse = true
+                            }
+                            
+                            QuickActionButton(
+                                title: "View Analytics Dashboard",
+                                icon: "chart.bar.fill",
+                                color: .green
+                            ) {
+                                selectedTab = 1
+                            }
+                            
+                            QuickActionButton(
+                                title: "Manage Enrollments",
+                                icon: "person.badge.plus",
+                                color: .orange
+                            ) {
+                                selectedTab = 4
+                            }
+                            
+                            QuickActionButton(
+                                title: "Generate Reports",
+                                icon: "doc.text.fill",
+                                color: .red
+                            ) {
+                                selectedTab = 5
                             }
                         }
                     }

@@ -208,6 +208,65 @@ struct CourseCard: View {
                         .foregroundColor(.orange)
                         .cornerRadius(6)
                 }
+                
+                if !course.isVisibleInCatalog {
+                    Text("Hidden")
+                        .font(.caption)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.gray.opacity(0.2))
+                        .foregroundColor(.gray)
+                        .cornerRadius(6)
+                }
+            }
+            
+            // Scheduling and Enrollment Info
+            if course.isScheduled || course.maxEnrollments != nil || course.enrollmentDeadline != nil {
+                VStack(alignment: .leading, spacing: 8) {
+                    if let startDate = course.scheduledStartDate, let endDate = course.scheduledEndDate {
+                        HStack(spacing: 8) {
+                            Image(systemName: "calendar")
+                                .font(.caption)
+                                .foregroundColor(.blue)
+                            Text("Scheduled: \(formatDate(startDate)) - \(formatDate(endDate))")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        if !course.isCurrentlyAvailable && course.isPublished {
+                            HStack(spacing: 4) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .font(.caption2)
+                                Text(availabilityStatus)
+                                    .font(.caption2)
+                            }
+                            .foregroundColor(.orange)
+                        }
+                    }
+                    
+                    if let maxEnrollments = course.maxEnrollments {
+                        HStack(spacing: 8) {
+                            Image(systemName: "person.2.fill")
+                                .font(.caption)
+                                .foregroundColor(.purple)
+                            Text("Max Enrollments: \(maxEnrollments)")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    
+                    if let deadline = course.enrollmentDeadline {
+                        HStack(spacing: 8) {
+                            Image(systemName: "hourglass")
+                                .font(.caption)
+                                .foregroundColor(deadline > Date() ? .green : .red)
+                            Text("Enrollment \(course.enrollmentStatus): \(formatDate(deadline))")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+                .padding(.top, 4)
             }
         }
         .padding()
@@ -238,6 +297,27 @@ struct CourseCard: View {
         case .intermediate: return .orange
         case .advanced: return .red
         }
+    }
+    
+    private var availabilityStatus: String {
+        guard let start = course.scheduledStartDate, let end = course.scheduledEndDate else {
+            return ""
+        }
+        
+        let now = Date()
+        if start > now {
+            return "Starts \(formatDate(start))"
+        } else if end < now {
+            return "Ended"
+        }
+        return "Available"
+    }
+    
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter.string(from: date)
     }
 }
 

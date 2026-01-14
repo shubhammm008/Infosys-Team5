@@ -20,6 +20,9 @@ struct User: Codable, Identifiable {
     var updatedAt: Date
     var lastLogin: Date?
     
+    // Usage tracking
+    var loginCount: Int
+    
     var fullName: String {
         "\(firstName) \(lastName)"
     }
@@ -36,5 +39,6 @@ struct User: Codable, Identifiable {
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case lastLogin = "last_login"
+        case loginCount = "login_count"
     }
 }

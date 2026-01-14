@@ -35,6 +35,13 @@ class CourseContentViewModel: ObservableObject {
             let enrollments = try await ContentService.shared.fetchEnrollmentsByLearner(learnerId: learnerId)
             enrollment = enrollments.first { $0.courseId == courseId }
             
+            // Update last accessed time if enrolled
+            if var enrollmentToUpdate = enrollment {
+                enrollmentToUpdate.lastAccessed = Date()
+                try await ContentService.shared.updateEnrollment(enrollmentToUpdate)
+                enrollment = enrollmentToUpdate
+            }
+            
             // Load modules
             modules = try await CourseService.shared.fetchModulesByCourse(courseId: courseId)
             
@@ -109,6 +116,11 @@ struct CourseContentView: View {
                 // Course Overview
                 if !viewModel.isLoading {
                     courseOverview
+                }
+                
+                // Quizzes Section
+                if !viewModel.isLoading {
+                    quizzesSection
                 }
                 
                 // Course Content (Modules & Lessons)
@@ -207,6 +219,49 @@ struct CourseContentView: View {
     
     private var totalLessons: Int {
         viewModel.lessonsByModule.values.reduce(0) { $0 + $1.count }
+    }
+    
+    // MARK: - Quizzes Section
+    
+    private var quizzesSection: some View {
+        NavigationLink(destination: CourseQuizzesView(course: viewModel.course)) {
+            HStack(spacing: 16) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(
+                            LinearGradient(
+                                colors: [.orange, .red],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 50, height: 50)
+                    
+                    Image(systemName: "questionmark.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(.white)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Course Quizzes")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    Text("Test your knowledge")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.secondary)
+            }
+            .padding()
+            .background(Color.ltmsCardBackground)
+            .cornerRadius(16)
+        }
+        .buttonStyle(.plain)
     }
     
     // MARK: - Course Syllabus
@@ -452,7 +507,12 @@ struct StatBadge: View {
             prerequisites: ["Basic Swift knowledge"],
             learningObjectives: ["Build iOS apps", "Master SwiftUI"],
             createdAt: Date(),
-            updatedAt: Date()
+            updatedAt: Date(),
+            scheduledStartDate: nil,
+            scheduledEndDate: nil,
+            enrollmentDeadline: nil,
+            maxEnrollments: nil,
+            isVisibleInCatalog: true
         ))
     }
 }

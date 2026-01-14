@@ -162,7 +162,10 @@ class ContentService: ObservableObject {
             enrollmentDate: Date(),
             completionPercentage: 0.0,
             status: .active,
-            lastAccessed: Date()
+            lastAccessed: Date(),
+            enrolledBy: "self",
+            completedAt: nil,
+            certificateIssued: false
         )
         
         return try await SupabaseService.shared.create(enrollment, in: SupabaseConstants.enrollments)
@@ -227,6 +230,44 @@ class ContentService: ObservableObject {
             ]
         )
         return allProgress.first
+    }
+    
+    func updateContentProgress(enrollmentId: String, lessonId: String, timeSpent: Int, position: String?) async throws {
+        // Get or create progress record
+        var progress: Progress
+        
+        if let existing = try await fetchProgressByLesson(enrollmentId: enrollmentId, lessonId: lessonId) {
+            progress = existing
+            progress.timeSpentSeconds += timeSpent
+            progress.lastPosition = position
+            progress.updatedAt = Date()
+        } else {
+            progress = Progress(
+                id: nil,
+                enrollmentId: enrollmentId,
+                lessonId: lessonId,
+                isCompleted: false,
+                timeSpentSeconds: timeSpent,
+                lastPosition: position,
+                completedAt: nil,
+                updatedAt: Date()
+            )
+        }
+        
+        try await createOrUpdateProgress(progress)
+        
+        // Update enrollment last accessed
+        let enrollments: [Enrollment] = try await SupabaseService.shared.client
+            .from(SupabaseConstants.enrollments)
+            .select()
+            .eq("id", value: enrollmentId)
+            .execute()
+            .value
+        
+        if var enrollment = enrollments.first {
+            enrollment.lastAccessed = Date()
+            try await updateEnrollment(enrollment)
+        }
     }
     
     func markLessonComplete(enrollmentId: String, lessonId: String) async throws {
@@ -303,6 +344,14 @@ class ContentService: ObservableObject {
         var updatedEnrollment = enrollment
         updatedEnrollment.completionPercentage = percentage
         updatedEnrollment.lastAccessed = Date()
+        
+        // Auto-complete course if 100% done
+        if percentage >= 100.0 && updatedEnrollment.status != .completed {
+            updatedEnrollment.status = .completed
+            updatedEnrollment.completedAt = Date()
+            updatedEnrollment.certificateIssued = true
+            print("🎉 Course completed! Certificate issued.")
+        }
         
         try await updateEnrollment(updatedEnrollment)
         

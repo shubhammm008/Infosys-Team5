@@ -20,6 +20,18 @@ struct CreateCourseView: View {
     @State private var showError = false
     @State private var errorMessage = ""
     
+    // Scheduling fields
+    @State private var enableScheduling = false
+    @State private var scheduledStartDate = Date()
+    @State private var scheduledEndDate = Date().addingTimeInterval(86400 * 30) // 30 days later
+    @State private var enableEnrollmentDeadline = false
+    @State private var enrollmentDeadline = Date().addingTimeInterval(86400 * 7) // 7 days later
+    
+    // Enrollment management
+    @State private var enableMaxEnrollments = false
+    @State private var maxEnrollments = 50
+    @State private var isVisibleInCatalog = true
+    
     var body: some View {
         NavigationStack {
             Form {
@@ -40,6 +52,43 @@ struct CreateCourseView: View {
                 
                 Section("Publishing") {
                     Toggle("Publish Immediately", isOn: $isPublished)
+                    Toggle("Visible in Catalog", isOn: $isVisibleInCatalog)
+                }
+                
+                Section {
+                    Toggle("Enable Scheduling", isOn: $enableScheduling)
+                    
+                    if enableScheduling {
+                        DatePicker("Start Date", selection: $scheduledStartDate, displayedComponents: [.date, .hourAndMinute])
+                        DatePicker("End Date", selection: $scheduledEndDate, displayedComponents: [.date, .hourAndMinute])
+                            .disabled(!enableScheduling)
+                    }
+                } header: {
+                    Text("Course Scheduling")
+                } footer: {
+                    if enableScheduling {
+                        Text("Course will only be available between the start and end dates")
+                    }
+                }
+                
+                Section {
+                    Toggle("Set Enrollment Deadline", isOn: $enableEnrollmentDeadline)
+                    
+                    if enableEnrollmentDeadline {
+                        DatePicker("Deadline", selection: $enrollmentDeadline, displayedComponents: [.date, .hourAndMinute])
+                    }
+                    
+                    Toggle("Limit Enrollments", isOn: $enableMaxEnrollments)
+                    
+                    if enableMaxEnrollments {
+                        Stepper("Max Enrollments: \(maxEnrollments)", value: $maxEnrollments, in: 1...1000)
+                    }
+                } header: {
+                    Text("Enrollment Management")
+                } footer: {
+                    if enableMaxEnrollments {
+                        Text("Course enrollment will be closed when limit is reached")
+                    }
                 }
                 
                 Section {
@@ -100,7 +149,12 @@ struct CreateCourseView: View {
                     prerequisites: nil,
                     learningObjectives: nil,
                     createdAt: Date(),
-                    updatedAt: Date()
+                    updatedAt: Date(),
+                    scheduledStartDate: enableScheduling ? scheduledStartDate : nil,
+                    scheduledEndDate: enableScheduling ? scheduledEndDate : nil,
+                    enrollmentDeadline: enableEnrollmentDeadline ? enrollmentDeadline : nil,
+                    maxEnrollments: enableMaxEnrollments ? maxEnrollments : nil,
+                    isVisibleInCatalog: isVisibleInCatalog
                 )
                 
                 // Save to Supabase

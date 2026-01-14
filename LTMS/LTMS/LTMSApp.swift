@@ -18,13 +18,17 @@ struct LTMSApp: App {
                 switch user.role {
                 case .admin:
                     AdminDashboardView()
+                        .environmentObject(authService)
                 case .educator:
                     EducatorDashboardView()
+                        .environmentObject(authService)
                 case .learner:
                     LearnerDashboardView()
+                        .environmentObject(authService)
                 }
             } else {
                 UnifiedAuthView()
+                    .environmentObject(authService)
             }
         }
     }
