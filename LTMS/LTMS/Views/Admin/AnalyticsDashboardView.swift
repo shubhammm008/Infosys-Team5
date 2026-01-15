@@ -5,6 +5,9 @@
 
 import SwiftUI
 import Combine
+import Charts
+
+
 
 @MainActor
 class AnalyticsDashboardViewModel: ObservableObject {
@@ -16,6 +19,8 @@ class AnalyticsDashboardViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var selectedDays = 30
+    
+
     
     private let analyticsService = AnalyticsService()
     
@@ -48,6 +53,12 @@ struct AnalyticsDashboardView: View {
     @StateObject private var viewModel = AnalyticsDashboardViewModel()
     @EnvironmentObject var authService: SupabaseAuthService
     
+    
+    @State private var showCourseManagement = false
+    @State private var showUserManagement = false
+    @State private var selectedUserRole: UserRole? = nil
+
+    
     var body: some View {
         NavigationView {
             ScrollView {
@@ -72,14 +83,21 @@ struct AnalyticsDashboardView: View {
                 } else {
                     VStack(spacing: 24) {
                         // Platform Overview
-                        if let metrics = viewModel.platformMetrics {
-                            platformOverviewSection(metrics: metrics)
+                        // Platform Usage (TOP PRIORITY)
+                        platformUsageChart
+                        if !viewModel.enrollmentTrends.isEmpty {
+                            platformUsageChart
                         }
+
+
+//                        if let metrics = viewModel.platformMetrics {
+//                            platformOverviewSection(metrics: metrics)
+//                        }
                         
                         // Enrollment Trends
-                        if !viewModel.enrollmentTrends.isEmpty {
-                            enrollmentTrendsSection
-                        }
+//                        if !viewModel.enrollmentTrends.isEmpty {
+//                            enrollmentTrendsSection
+//                        }
                         
                         // Popular Courses
                         if !viewModel.popularCourses.isEmpty {
@@ -100,7 +118,7 @@ struct AnalyticsDashboardView: View {
                 }
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("Analytics Dashboard")
+            .navigationTitle("Analytics")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
@@ -114,6 +132,7 @@ struct AnalyticsDashboardView: View {
             }
             .task {
                 await loadData()
+                print("Enrollment trends:", viewModel.enrollmentTrends.count)
             }
         }
     }
@@ -125,134 +144,182 @@ struct AnalyticsDashboardView: View {
     }
     
     @ViewBuilder
-    private func platformOverviewSection(metrics: PlatformMetrics) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Platform Overview")
+    private var platformUsageChart: some View {
+        let trends = viewModel.enrollmentTrends
+
+        // GUARANTEED drawable dataset
+        let chartData: [EnrollmentTrend] = trends.isEmpty
+            ? (0..<7).map {
+                EnrollmentTrend(
+                    date: Calendar.current.date(byAdding: .day, value: -$0, to: Date())!,
+                    enrollmentCount: 0,
+                    completionCount: 0
+                )
+            }.reversed()
+            : trends.sorted { $0.date < $1.date }.suffix(7)
+
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Platform Usage")
                 .font(.title2)
                 .fontWeight(.bold)
-            
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                MetricCard(
-                    title: "Total Users",
-                    value: "\(metrics.totalUsers)",
-                    icon: "person.3.fill",
-                    color: .blue
+
+            Chart(chartData, id: \.date) {
+                LineMark(
+                    x: .value("Date", $0.date),
+                    y: .value("Enrollments", $0.enrollmentCount)
                 )
-                
-//                MetricCard(
-//                    title: "Active (7 days)",
-//                    value: "\(metrics.activeUsersLast7Days)",
-//                    icon: "person.wave.2.fill",
-//                    color: .green
-//                )
-                
-                MetricCard(
-                    title: "Total Courses",
-                    value: "\(metrics.totalCourses)",
-                    icon: "book.fill",
-                    color: .purple
+                .foregroundStyle(.blue)
+
+                LineMark(
+                    x: .value("Date", $0.date),
+                    y: .value("Completions", $0.completionCount)
                 )
-                
-                MetricCard(
-                    title: "Enrollments",
-                    value: "\(metrics.totalEnrollments)",
-                    icon: "person.badge.plus",
-                    color: .orange
-                )
-                
-//                MetricCard(
-//                    title: "Learning Hours",
-//                    value: String(format: "%.1f", metrics.totalLearningTimeHours),
-//                    icon: "clock.fill",
-//                    color: .red
-//                )
-                
-                MetricCard(
-                    title: "Avg Completion",
-                    value: String(format: "%.1f%%", metrics.averageCompletionRate),
-                    icon: "chart.line.uptrend.xyaxis",
-                    color: .teal
-                )
+                .foregroundStyle(.green)
             }
-        }
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(16)
-    }
-    
-    @ViewBuilder
-    private var enrollmentTrendsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Text("Enrollment Trends")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                
-                Spacer()
-                
-                Picker("Period", selection: $viewModel.selectedDays) {
-                    Text("7 days").tag(7)
-                    Text("30 days").tag(30)
-                    Text("90 days").tag(90)
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 200)
-                .onChange(of: viewModel.selectedDays) {
-                    Task {
-                        await loadData()
-                    }
-                }
-            }
-            
-            if viewModel.enrollmentTrends.isEmpty {
-                Text("No enrollment data available")
+            .frame(height: 220)
+
+            if trends.isEmpty {
+                Text("No enrollments yet. This chart will update automatically.")
+                    .font(.caption)
                     .foregroundColor(.secondary)
-                    .padding()
-            } else {
-                // Simple trend visualization
-                VStack(alignment: .leading, spacing: 8) {
-                    ForEach(viewModel.enrollmentTrends.suffix(10), id: \.date) { trend in
-                        HStack {
-                            Text(formatDate(trend.date))
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .frame(width: 80, alignment: .leading)
-                            
-                            HStack(spacing: 8) {
-                                Label("\(trend.enrollmentCount)", systemImage: "arrow.up.circle.fill")
-                                    .font(.caption)
-                                    .foregroundColor(.blue)
-                                
-                                Label("\(trend.completionCount)", systemImage: "checkmark.circle.fill")
-                                    .font(.caption)
-                                    .foregroundColor(.green)
-                            }
-                            
-                            Spacer()
-                            
-                            // Simple bar visualization
-                            Rectangle()
-                                .fill(Color.blue.opacity(0.3))
-                                .frame(width: CGFloat(trend.enrollmentCount * 5), height: 20)
-                                .cornerRadius(4)
-                        }
-                    }
-                }
             }
         }
         .padding()
         .background(Color(.systemBackground))
         .cornerRadius(16)
     }
+
+
+
+    
+    
+//    @ViewBuilder
+//    private func platformOverviewSection(metrics: PlatformMetrics) -> some View {
+//        VStack(alignment: .leading, spacing: 16) {
+//            Text("Platform Overview")
+//                .font(.title2)
+//                .fontWeight(.bold)
+//            
+//            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+//                MetricCard(
+//                    title: "Total Users",
+//                    value: "\(metrics.totalUsers)",
+//                    icon: "person.3.fill",
+//                    color: .blue
+//                )
+//                
+//                MetricCard(
+//                    title: "Total Courses",
+//                    value: "\(metrics.totalCourses)",
+//                    icon: "book.fill",
+//                    color: .purple
+//                )
+//                
+//                MetricCard(
+//                    title: "Enrollments",
+//                    value: "\(metrics.totalEnrollments)",
+//                    icon: "person.badge.plus",
+//                    color: .orange
+//                )
+//                
+//                MetricCard(
+//                    title: "Avg Completion",
+//                    value: String(format: "%.1f%%", metrics.averageCompletionRate),
+//                    icon: "chart.line.uptrend.xyaxis",
+//                    color: .teal
+//                )
+//            }
+//        }
+//        .padding()
+//        .background(Color(.systemBackground))
+//        .cornerRadius(16)
+//    }
+    
+    
+    
+//    @ViewBuilder
+//    private var enrollmentTrendsSection: some View {
+//        VStack(alignment: .leading, spacing: 16) {
+//            HStack {
+//                Text("Enrollment Trends")
+//                    .font(.title2)
+//                    .fontWeight(.bold)
+//                
+//                Spacer()
+//                
+//                Picker("Period", selection: $viewModel.selectedDays) {
+//                    Text("7 days").tag(7)
+//                    Text("30 days").tag(30)
+//                    Text("90 days").tag(90)
+//                }
+//                .pickerStyle(.segmented)
+//                .frame(width: 200)
+//                .onChange(of: viewModel.selectedDays) {
+//                    Task {
+//                        await loadData()
+//                    }
+//                }
+//            }
+//            
+//            if viewModel.enrollmentTrends.isEmpty {
+//                Text("No enrollment data available")
+//                    .foregroundColor(.secondary)
+//                    .padding()
+//            } else {
+//                // Simple trend visualization
+//                VStack(alignment: .leading, spacing: 8) {
+//                    ForEach(viewModel.enrollmentTrends.suffix(10), id: \.date) { trend in
+//                        HStack {
+//                            Text(formatDate(trend.date))
+//                                .font(.caption)
+//                                .foregroundColor(.secondary)
+//                                .frame(width: 80, alignment: .leading)
+//                            
+//                            HStack(spacing: 8) {
+//                                Label("\(trend.enrollmentCount)", systemImage: "arrow.up.circle.fill")
+//                                    .font(.caption)
+//                                    .foregroundColor(.blue)
+//                                
+//                                Label("\(trend.completionCount)", systemImage: "checkmark.circle.fill")
+//                                    .font(.caption)
+//                                    .foregroundColor(.green)
+//                            }
+//                            
+//                            Spacer()
+//                            
+//                            // Simple bar visualization
+//                            Rectangle()
+//                                .fill(Color.blue.opacity(0.3))
+//                                .frame(width: CGFloat(trend.enrollmentCount * 5), height: 20)
+//                                .cornerRadius(4)
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//        .padding()
+//        .background(Color(.systemBackground))
+//        .cornerRadius(16)
+//    }
     
     @ViewBuilder
     private var popularCoursesSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Most Popular Courses")
-                .font(.title2)
-                .fontWeight(.bold)
+            HStack {
+                Text("Most Popular Courses")
+                    .font(.title2)
+                    .fontWeight(.bold)
+
+                Spacer()
+
+                Button("View All") {
+                    showCourseManagement = true
+                }
+                .font(.caption)
+            }
+
             
-            ForEach(viewModel.popularCourses.prefix(5), id: \.courseId) { course in
+            ForEach(viewModel.popularCourses.prefix(3), id: \.courseId) { course in
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(course.courseTitle)
@@ -275,16 +342,29 @@ struct AnalyticsDashboardView: View {
         .padding()
         .background(Color(.systemBackground))
         .cornerRadius(16)
+        .sheet(isPresented: $showCourseManagement) {
+            CourseManagementView()
+        }
+
     }
     
     @ViewBuilder
     private var courseCompletionSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Course Completion Rates")
-                .font(.title2)
-                .fontWeight(.bold)
+            HStack {
+                Text("Course Completion Rates")
+                    .font(.title2)
+                    .fontWeight(.bold)
+
+                Spacer()
+
+                Button("View All") {
+                    
+                }
+                .font(.caption)
+            }
             
-            ForEach(viewModel.courseCompletionStats.sorted { $0.completionRate > $1.completionRate }.prefix(10), id: \.courseId) { stat in
+            ForEach(viewModel.courseCompletionStats.sorted { $0.completionRate > $1.completionRate }.prefix(3), id: \.courseId) { stat in
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Text(stat.courseTitle)
@@ -347,11 +427,22 @@ struct AnalyticsDashboardView: View {
     @ViewBuilder
     private var topUsersSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Most Active Learners")
-                .font(.title2)
-                .fontWeight(.bold)
+            HStack {
+                Text("Most Active Learners")
+                    .font(.title2)
+                    .fontWeight(.bold)
+
+                Spacer()
+
+                Button("View All") {
+                    selectedUserRole = .learner
+                    showUserManagement = true
+                }
+
+            }
+
             
-            ForEach(viewModel.userActivityMetrics.prefix(10), id: \.userId) { metric in
+            ForEach(viewModel.userActivityMetrics.prefix(3), id: \.userId) { metric in
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(metric.userName)
@@ -387,6 +478,10 @@ struct AnalyticsDashboardView: View {
         .padding()
         .background(Color(.systemBackground))
         .cornerRadius(16)
+        .sheet(isPresented: $showUserManagement) {
+            UserManagementView(preselectedRole: $selectedUserRole)
+        }
+
     }
     
     private func completionColor(_ rate: Double) -> Color {

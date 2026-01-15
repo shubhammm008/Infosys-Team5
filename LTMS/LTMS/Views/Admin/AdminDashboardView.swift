@@ -2,46 +2,95 @@
 //  AdminDashboardView.swift
 //  LTMS
 //
-//  Created by Shubham Singh on 07/01/26.
-//
 
 import SwiftUI
 import Combine
 
+extension Color {
+
+    // MARK: - Backgrounds
+    // Soft academic paper tone
+    static let dashboardBg = LinearGradient(
+        colors: [
+            Color(hex: "#FBF6F3"), // warm off-white
+            Color(hex: "#F2E9E6")  // subtle cream
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+
+    // MARK: - Card Surfaces
+    static let dashboardCard = Color(hex: "#FFFFFF")      // reading surface
+    static let dashboardCardAlt = Color(hex: "#F7EFEA")   // grouped sections
+
+    // MARK: - Text
+    static let dashboardTextPrimary = Color(hex: "#2B1E1E")   // deep wine-black
+    static let dashboardTextSecondary = Color(hex: "#6B4A4A") // muted maroon
+
+    // MARK: - Brand Accents (from design you shared)
+    static let accentPrimary = Color(hex: "#7A2E3A")   // main maroon
+    static let accentSecondary = Color(hex: "#9C4A55") // lighter wine
+
+    // MARK: - Status
+    static let accentSuccess = Color(hex: "#4F8A6F")   // calm green
+    static let accentWarning = Color(hex: "#C08A5A")   // warm alert
+    static let accentHighlight = Color(hex: "#F2E0D8") // subtle emphasis
+}
+
+// MARK: - Hex Support
+extension Color {
+    init(hex: String) {
+        let hex = hex.replacingOccurrences(of: "#", with: "")
+        var rgb: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&rgb)
+
+        self.init(
+            red: Double((rgb >> 16) & 0xFF) / 255,
+            green: Double((rgb >> 8) & 0xFF) / 255,
+            blue: Double(rgb & 0xFF) / 255
+        )
+    }
+}
+
+
+
+
+// MARK: - Root Dashboard
+
 struct AdminDashboardView: View {
-    @StateObject private var authService = SupabaseAuthService.shared
     @State private var selectedTab = 0
-    
     @State private var selectedUserRole: UserRole?
-    
+
     var body: some View {
         TabView(selection: $selectedTab) {
-            AdminHomeView(selectedTab: $selectedTab, selectedUserRole: $selectedUserRole)
-                .tabItem {
-                    Label("Dashboard", systemImage: "rectangle.grid.2x2.fill")
-                }
-                .tag(0)
 
-            
+            AdminHomeView(
+                selectedTab: $selectedTab,
+                selectedUserRole: $selectedUserRole
+            )
+            .tabItem {
+                Label("Dashboard", systemImage: "rectangle.grid.2x2.fill")
+            }
+            .tag(0)
+
             AnalyticsDashboardView()
                 .tabItem {
                     Label("Analytics", systemImage: "chart.bar.fill")
                 }
                 .tag(1)
-            
-            
+
             ReportsView()
                 .tabItem {
                     Label("Reports", systemImage: "doc.text.fill")
                 }
                 .tag(2)
-
         }
-        .tint(.ltmsPrimary)
+        .tint(.accentPrimary)   // ✅ education green
     }
 }
 
-// MARK: - Admin Home View
+
+// MARK: - ViewModel
 
 @MainActor
 class AdminHomeViewModel: ObservableObject {
@@ -50,102 +99,89 @@ class AdminHomeViewModel: ObservableObject {
     @Published var totalLearners = 0
     @Published var totalCourses = 0
     @Published var isLoading = false
-    
+
     func loadStats() async {
         isLoading = true
         defer { isLoading = false }
-        
+
         do {
-            // Fetch all users from Supabase
             let users: [User] = try await SupabaseService.shared.fetchAll(from: SupabaseConstants.users)
             totalUsers = users.count
-            
-            // Use server-side filtering for better performance
+
             let educators: [User] = try await SupabaseService.shared.fetchUsersByRole(.educator, in: AppConstants.defaultOrganizationId)
             totalEducators = educators.count
-            
+
             let learners: [User] = try await SupabaseService.shared.fetchUsersByRole(.learner, in: AppConstants.defaultOrganizationId)
             totalLearners = learners.count
-            
-            // Fetch all courses from Supabase
+
             let courses: [Course] = try await SupabaseService.shared.fetchAll(from: SupabaseConstants.courses)
             totalCourses = courses.count
-            
-            print("✅ Loaded stats: \(totalUsers) users (\(totalEducators) educators, \(totalLearners) learners), \(totalCourses) courses")
         } catch {
             print("❌ Error loading stats: \(error)")
         }
     }
 }
 
+// MARK: - Admin Home View
+
 struct AdminHomeView: View {
     @StateObject private var authService = SupabaseAuthService.shared
     @StateObject private var viewModel = AdminHomeViewModel()
-    
+
     @State private var showCreateUser = false
     @State private var showCreateCourse = false
     @State private var showAdminProfile = false
     @State private var showUserManagement = false
     @State private var showCourseManagement = false
     @State private var showEnrollmentManagement = false
+
     @State private var pendingPublishCount = 2
     @State private var draftCoursesCount = 1
 
-
-
-    
     @Binding var selectedTab: Int
     @Binding var selectedUserRole: UserRole?
-    
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 28) {
-                    
-                    // MARK: - Admin Context Header
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Welcome Back")
-                            .font(.default)
-                            .foregroundColor(.secondary)
 
-                        HStack {
-                            Text("Admin")
-                                .font(.title.bold())
+    var body: some View { NavigationStack { ScrollView { VStack(spacing: 24) { // MARK: - Admin Context Header
+        VStack(alignment: .leading, spacing: 4){
+            Text("Welcome Back")
+                .font(.default)
+                .foregroundColor(.dashboardTextSecondary)
+            HStack {
+                Text("Admin")
+                    .font(.title.bold())
+                    .foregroundColor(.dashboardTextPrimary)
+                Spacer()
+                Button {
+                    showAdminProfile = true
+                }
+                label: {
+                    Image(systemName: "person.circle.fill")
+                        .font(.system(size: 42))
+                        .foregroundColor(.dashboardTextPrimary)
+                }
+            }
+        }
+        .sheet(isPresented: $showAdminProfile) {
+            AdminProfileView()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        
 
-
-                            Spacer()
-
-                            Button {
-                                showAdminProfile = true
-                            } label: {
-                                Image(systemName: "person.circle.fill")
-                                    .font(.system(size: 42))
-                                    .foregroundColor(.ltmsPrimary)
-                            }
-
-                        }
-
-                    }
-                    .sheet(isPresented: $showAdminProfile) {
-                        AdminProfileView()
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    
-                    
-                    // MARK: - Needs Attention
+                    // MARK: Needs Attention
                     if pendingPublishCount > 0 || draftCoursesCount > 0 {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Needs Attention")
                                 .font(.headline)
+                                .foregroundColor(.dashboardTextPrimary)
 
-                            VStack(spacing: 8) {
-
+                            VStack(spacing: 10) {
                                 if pendingPublishCount > 0 {
                                     AttentionRow(
                                         title: "Courses awaiting approval",
                                         subtitle: "Publish requests from educators",
                                         count: pendingPublishCount,
-                                        icon: "clock.fill"
+                                        icon: "clock.fill",
+                                        tint: .orange
                                     ) {
                                         showCourseManagement = true
                                     }
@@ -156,7 +192,8 @@ struct AdminHomeView: View {
                                         title: "Draft courses",
                                         subtitle: "Created but not published",
                                         count: draftCoursesCount,
-                                        icon: "doc.text.fill"
+                                        icon: "doc.text.fill",
+                                        tint: .accentSecondary
                                     ) {
                                         showCourseManagement = true
                                     }
@@ -165,202 +202,110 @@ struct AdminHomeView: View {
                         }
                     }
 
-                    
-                    
-                    // MARK: - Attention Required
+                    // MARK: System Overview
                     VStack(alignment: .leading, spacing: 12) {
                         Text("System Overview")
                             .font(.headline)
-                        
-                        LazyVGrid(
-                            columns: [GridItem(.flexible()), GridItem(.flexible())],
-                            spacing: 16
-                        ) {
-                            AttentionCard(
+                            .foregroundColor(.dashboardTextPrimary)
+
+                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+
+                            StatCard(
                                 title: "Users",
-                                value: viewModel.totalUsers,
+                                value: "\(viewModel.totalUsers)",
                                 icon: "person.3.fill",
-                                color: .blue
+                                gradient: [.accentPrimary, .accentSecondary]
                             ) {
                                 selectedUserRole = nil
                                 showUserManagement = true
                             }
-                            
-                            AttentionCard(
+
+                            StatCard(
                                 title: "Courses",
-                                value: viewModel.totalCourses,
+                                value: "\(viewModel.totalCourses)",
                                 icon: "book.fill",
-                                color: .purple
+                                gradient: [.accentPrimary, .accentSecondary]
                             ) {
                                 showCourseManagement = true
                             }
                         }
                     }
-                    .sheet(isPresented: $showCourseManagement) {
-                        CourseManagementView()
-                    }
-                    .sheet(isPresented: $showUserManagement) {
-                        UserManagementView()
-                    }
-                    
-                    // MARK: - Quick Actions
+
+                    // MARK: Quick Actions
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Quick Actions")
                             .font(.headline)
-                        
+                            .foregroundColor(.dashboardTextPrimary)
+
                         VStack(spacing: 12) {
-                            PrimaryActionButton(
-                                title: "Create Course",
-                                icon: "plus.circle.fill"
-                            ) {
+                            PrimaryActionButton(title: "Create Course", icon: "plus.circle.fill") {
                                 showCreateCourse = true
                             }
-                            
-                            PrimaryActionButton(
-                                title: "Add Educator",
-                                icon: "person.badge.plus"
-                            ) {
+
+                            PrimaryActionButton(title: "Add Educator", icon: "person.badge.plus") {
                                 showCreateUser = true
-                            }
-                            
-                            PrimaryActionButton(title: "Manage Enrollments", icon: "person.badge.plus")
-                            {
-                                showEnrollmentManagement = true
                             }
                         }
                     }
                 }
                 .padding()
             }
-            .background(Color.ltmsBackground)
+            .background(Color.dashboardBg)
             .navigationTitle("Dashboard")
             .navigationBarTitleDisplayMode(.inline)
-            .refreshable {
-                await viewModel.loadStats()
-            }
-            .sheet(isPresented: $showCreateUser) {
-                CreateUserView()
-            }
-            .sheet(isPresented: $showCreateCourse) {
-                CreateCourseView()
-            }
-            .sheet(isPresented: $showEnrollmentManagement) {
-                EnrollmentManagementView()
-            }
-            .task {
-                await viewModel.loadStats()
-            }
+            .task { await viewModel.loadStats() }
+            .sheet(isPresented: $showCreateUser) { CreateUserView() }
+            .sheet(isPresented: $showCreateCourse) { CreateCourseView() }
+            .sheet(isPresented: $showCourseManagement) { CourseManagementView() }
+            .sheet(isPresented: $showUserManagement) { UserManagementView() }
+            .sheet(isPresented: $showEnrollmentManagement) { EnrollmentManagementView() }
+            .sheet(isPresented: $showAdminProfile) { AdminProfileView() }
         }
     }
 }
 
-
-// MARK: - Supporting Views
+// MARK: - Components
 
 struct AttentionRow: View {
     let title: String
     let subtitle: String
     let count: Int
     let icon: String
+    let tint: Color
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
-                    .foregroundColor(.orange)
+                    .foregroundColor(tint)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
+                        .foregroundColor(.dashboardTextPrimary)
                         .font(.subheadline)
-                        .fontWeight(.medium)
 
                     Text(subtitle)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.dashboardTextSecondary)
                 }
 
                 Spacer()
 
                 Text("\(count)")
-                    .font(.caption)
-                    .fontWeight(.semibold)
+                    .font(.caption.bold())
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
-                    .background(Color.orange.opacity(0.2))
-                    .foregroundColor(.orange)
+                    .background(tint.opacity(0.2))
+                    .foregroundColor(tint)
                     .cornerRadius(10)
 
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.dashboardTextSecondary)
             }
             .padding()
-            .background(Color.white)
-            .cornerRadius(12)
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-
-struct AttentionCard: View {
-    let title: String
-    let value: Int
-    let icon: String
-    let color: Color
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    Image(systemName: icon)
-                        .foregroundColor(color)
-                    Spacer()
-//                    Image(systemName: "chevron.right")
-//                        .font(.caption)
-//                        .foregroundColor(.secondary)
-                }
-                
-                Text("\(value)")
-                    .font(.system(size: 26, weight: .bold))
-                
-                Text(title)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-            .padding()
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.ltmsCardBackground)
-            .cornerRadius(14)
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-struct PrimaryActionButton: View {
-    let title: String
-    let icon: String
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack {
-                Image(systemName: icon)
-                    .font(.title3)
-                
-                Text(title)
-                    .fontWeight(.semibold)
-                
-                Spacer()
-                
-                Image(systemName: "arrow.right")
-                    .font(.caption)
-            }
-            .padding()
-            .background(Color.white)
-            .foregroundColor(.ltmsPrimary)
+            .background(Color.dashboardCard)
             .cornerRadius(14)
         }
         .buttonStyle(.plain)
@@ -373,77 +318,71 @@ struct StatCard: View {
     let title: String
     let value: String
     let icon: String
-    let color: Color
-    var action: (() -> Void)? = nil
-    
+    let gradient: [Color]
+    let action: () -> Void
+
     var body: some View {
-        Button(action: {
-            action?()
-        }) {
+        Button(action: action) {
             VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Image(systemName: icon)
-                        .font(.title2)
-                        .foregroundColor(color)
-                    Spacer()
-                    if action != nil {
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                
+
+                Image(systemName: icon)
+                    .font(.title3)
+                    .foregroundColor(.white.opacity(0.9))
+
                 Text(value)
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(.primary)
-                
+                    .font(.system(size: 30, weight: .bold))
+                    .foregroundColor(.white)
+
                 Text(title)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.75))
             }
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.ltmsCardBackground)
-            .cornerRadius(16)
+            .background(
+                LinearGradient(
+                    colors: gradient,
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .cornerRadius(18)
         }
         .buttonStyle(.plain)
-        .disabled(action == nil)
     }
 }
 
-struct QuickActionButton: View {
+
+
+struct PrimaryActionButton: View {
     let title: String
     let icon: String
-    let color: Color
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             HStack {
                 Image(systemName: icon)
-                    .font(.title3)
-                    .foregroundColor(color)
-                
-                Text(title)
-                    .fontWeight(.semibold)
-                
+                Text(title).fontWeight(.semibold)
                 Spacer()
-                
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.secondary)
             }
+            .foregroundColor(.accentPrimary)
             .padding()
-            .background(Color.ltmsCardBackground)
-            .cornerRadius(12)
+            .background(Color.dashboardCardAlt)
+            .cornerRadius(14)
         }
         .buttonStyle(.plain)
     }
 }
 
+
+// MARK: - Profile
+
 struct AdminProfileView: View {
     @StateObject private var authService = SupabaseAuthService.shared
     @State private var showLogoutAlert = false
-    
+
     var body: some View {
         NavigationStack {
             List {
@@ -451,28 +390,18 @@ struct AdminProfileView: View {
                     HStack {
                         Image(systemName: "person.circle.fill")
                             .font(.system(size: 60))
-                            .foregroundColor(.ltmsPrimary)
-                        
-                        VStack(alignment: .leading, spacing: 4) {
+                            .foregroundColor(.accentPrimary)
+
+                        VStack(alignment: .leading) {
                             Text(authService.currentUser?.fullName ?? "")
-                                .font(.title3)
-                                .fontWeight(.semibold)
                             Text(authService.currentUser?.email ?? "")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                            Text(authService.currentUser?.role.displayName ?? "")
                                 .font(.caption)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(Color.ltmsPrimary.opacity(0.2))
-                                .foregroundColor(.ltmsPrimary)
-                                .cornerRadius(6)
+                                .foregroundColor(.secondary)
                         }
                     }
-                    .padding(.vertical, 8)
                 }
-                
-                Section("Account") {
+
+                Section {
                     Button(role: .destructive) {
                         showLogoutAlert = true
                     } label: {
@@ -486,8 +415,6 @@ struct AdminProfileView: View {
                 Button("Sign Out", role: .destructive) {
                     Task { try? await authService.signOut() }
                 }
-            } message: {
-                Text("Are you sure you want to sign out?")
             }
         }
     }
