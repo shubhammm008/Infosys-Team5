@@ -32,6 +32,11 @@ struct CreateCourseView: View {
     @State private var maxEnrollments = 50
     @State private var isVisibleInCatalog = true
     
+    @State private var showStartDatePicker = false
+    @State private var showEndDatePicker = false
+    @State private var showDeadlinePicker = false
+
+    
     var body: some View {
         NavigationStack {
             Form {
@@ -47,22 +52,95 @@ struct CreateCourseView: View {
                         }
                     }
                     
-                    Stepper("Duration: \(durationHours) hours", value: $durationHours, in: 1...500)
+                    HStack {
+                        Text("Duration (hours)")
+                        Spacer()
+                        TextField("Hours", value: $durationHours, format: .number)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 60)
+                        Stepper("Duration", value: $durationHours, in: 1...500)
+                            .labelsHidden()
+                    }
                 }
                 
-                Section("Publishing") {
-                    Toggle("Publish Immediately", isOn: $isPublished)
-                    Toggle("Visible in Catalog", isOn: $isVisibleInCatalog)
-                }
+//                Section("Publishing") {
+//                    Toggle("Publish Immediately", isOn: $isPublished)
+//                    Toggle("Visible in Catalog", isOn: $isVisibleInCatalog)
+//                }
                 
                 Section {
                     Toggle("Enable Scheduling", isOn: $enableScheduling)
                     
                     if enableScheduling {
-                        DatePicker("Start Date", selection: $scheduledStartDate, displayedComponents: [.date, .hourAndMinute])
-                        DatePicker("End Date", selection: $scheduledEndDate, displayedComponents: [.date, .hourAndMinute])
-                            .disabled(!enableScheduling)
+
+                        Button {
+                            showStartDatePicker = true
+                        } label: {
+                            HStack {
+                                Text("Start Date")
+                                Spacer()
+                                Text(dateTimeFormatter.string(from: scheduledStartDate))
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .sheet(isPresented: $showStartDatePicker) {
+                            NavigationStack {
+                                DatePicker(
+                                    "Start Date",
+                                    selection: $scheduledStartDate,
+                                    displayedComponents: [.date, .hourAndMinute]
+                                )
+                                .datePickerStyle(.graphical)
+                                .padding()
+                                .navigationTitle("Start Date")
+                                .toolbar {
+                                    ToolbarItem(placement: .confirmationAction) {
+                                        Button("Done") {
+                                            if scheduledEndDate < scheduledStartDate {
+                                                scheduledEndDate = scheduledStartDate
+                                            }
+                                            showStartDatePicker = false
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+
+
+                        Button {
+                            showEndDatePicker = true
+                        } label: {
+                            HStack {
+                                Text("End Date")
+                                Spacer()
+                                Text(dateTimeFormatter.string(from: scheduledEndDate))
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .sheet(isPresented: $showEndDatePicker) {
+                            NavigationStack {
+                                DatePicker(
+                                    "End Date",
+                                    selection: $scheduledEndDate,
+                                    in: scheduledStartDate...,
+                                    displayedComponents: [.date, .hourAndMinute]
+                                )
+                                .datePickerStyle(.graphical)
+                                .padding()
+                                .navigationTitle("End Date")
+                                .toolbar {
+                                    ToolbarItem(placement: .confirmationAction) {
+                                        Button("Done") {
+                                            showEndDatePicker = false
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
+
                 } header: {
                     Text("Course Scheduling")
                 } footer: {
@@ -75,13 +153,50 @@ struct CreateCourseView: View {
                     Toggle("Set Enrollment Deadline", isOn: $enableEnrollmentDeadline)
                     
                     if enableEnrollmentDeadline {
-                        DatePicker("Deadline", selection: $enrollmentDeadline, displayedComponents: [.date, .hourAndMinute])
+                        Button {
+                            showDeadlinePicker = true
+                        } label: {
+                            HStack {
+                                Text("Deadline")
+                                Spacer()
+                                Text(dateTimeFormatter.string(from: enrollmentDeadline))
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .sheet(isPresented: $showDeadlinePicker) {
+                            NavigationStack {
+                                DatePicker(
+                                    "Deadline",
+                                    selection: $enrollmentDeadline,
+                                    displayedComponents: [.date, .hourAndMinute]
+                                )
+                                .datePickerStyle(.graphical)
+                                .padding()
+                                .navigationTitle("Enrollment Deadline")
+                                .toolbar {
+                                    ToolbarItem(placement: .confirmationAction) {
+                                        Button("Done") {
+                                            showDeadlinePicker = false
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                     
                     Toggle("Limit Enrollments", isOn: $enableMaxEnrollments)
                     
                     if enableMaxEnrollments {
-                        Stepper("Max Enrollments: \(maxEnrollments)", value: $maxEnrollments, in: 1...1000)
+                        HStack {
+                            Text("Max Enrollments")
+                            Spacer()
+                            TextField("Max", value: $maxEnrollments, format: .number)
+                                .keyboardType(.numberPad)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 60)
+                            Stepper("Max Enrollments", value: $maxEnrollments, in: 1...1000)
+                                .labelsHidden()
+                        }
                     }
                 } header: {
                     Text("Enrollment Management")
@@ -125,6 +240,14 @@ struct CreateCourseView: View {
         }
     }
     
+    private var dateTimeFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.dateFormat = "dd MMM yyyy, HH:mm"
+        return formatter
+    }
+
     private var isFormValid: Bool {
         !title.isEmpty && !description.isEmpty
     }
