@@ -356,63 +356,86 @@ class MyCoursesViewModel: ObservableObject {
 struct MyCoursesView: View {
     @StateObject private var authService = SupabaseAuthService.shared
     @StateObject private var viewModel = MyCoursesViewModel()
+    @State private var searchText = ""
+    
+    var filteredCourses: [(Course, Enrollment)] {
+        let paired = Array(zip(viewModel.courses, viewModel.enrollments))
+        if searchText.isEmpty {
+            return paired
+        }
+        return paired.filter { course, _ in
+            course.title.localizedCaseInsensitiveContains(searchText) ||
+            course.courseDescription.localizedCaseInsensitiveContains(searchText)
+        }
+    }
     
     var body: some View {
         NavigationStack {
-            ZStack {
-                // Background
-                Color(hex: "#F2F2F7")
-                    .ignoresSafeArea()
+            VStack(spacing: 0) {
+                // Search Bar (matching Discover Courses)
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.secondary)
+                    TextField("Search courses...", text: $searchText)
+                }
+                .padding()
+                .background(Color.ltmsCardBackground)
+                .cornerRadius(12)
+                .padding()
                 
-                if viewModel.isLoading {
-                    ProgressView()
-                } else if viewModel.courses.isEmpty {
-                    VStack(spacing: 16) {
-                        Image(systemName: "book.closed")
-                            .font(.system(size: 60))
-                            .foregroundColor(.secondary)
-                        Text("No Enrolled Courses")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
-                        Text("Explore the catalog to find courses")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                } else {
-                    ScrollView {
+                // Content
+                ZStack {
+                    // Background
+                    Color(hex: "#F2F2F7")
+                        .ignoresSafeArea()
+                    
+                    if viewModel.isLoading {
+                        ProgressView()
+                    } else if viewModel.courses.isEmpty {
                         VStack(spacing: 16) {
-                            ForEach(Array(zip(viewModel.courses, viewModel.enrollments)), id: \.0.id) { course, enrollment in
-                                let cardData = viewModel.getCourseCardData(course: course, enrollment: enrollment)
-                                
-                                NavigationLink(destination: CourseContentView(course: course)) {
-                                    PremiumCourseCard(courseData: cardData)
-                                }
-                                .buttonStyle(.plain)
-                            }
+                            Image(systemName: "book.closed")
+                                .font(.system(size: 60))
+                                .foregroundColor(.secondary)
+                            Text("No Enrolled Courses")
+                                .font(.headline)
+                                .foregroundColor(.secondary)
+                            Text("Explore the catalog to find courses")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
+                    } else if filteredCourses.isEmpty {
+                        VStack(spacing: 16) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 60))
+                                .foregroundColor(.secondary)
+                            Text("No courses found")
+                                .font(.headline)
+                                .foregroundColor(.secondary)
+                            Text("Try a different search term")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                    } else {
+                        ScrollView {
+                            VStack(spacing: 16) {
+                                ForEach(filteredCourses, id: \.0.id) { course, enrollment in
+                                    let cardData = viewModel.getCourseCardData(course: course, enrollment: enrollment)
+                                    
+                                    NavigationLink(destination: CourseContentView(course: course)) {
+                                        PremiumCourseCard(courseData: cardData)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                        }
                     }
                 }
             }
+            .background(Color.ltmsBackground)
             .navigationTitle("My Courses")
             .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Circle()
-                        .fill(LinearGradient(
-                            colors: [Color.blue.opacity(0.6), Color.purple.opacity(0.6)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ))
-                        .frame(width: 32, height: 32)
-                        .overlay(
-                            Image(systemName: "person.fill")
-                                .foregroundColor(.white)
-                                .font(.system(size: 14))
-                        )
-                }
-            }
             .task {
                 if let userId = authService.currentUser?.id {
                     await viewModel.loadEnrollments(learnerId: userId)
@@ -612,36 +635,12 @@ struct LearnerProgressView: View {
                 
                 ScrollView {
                     VStack(spacing: 24) {
-                        // Header Section
-                        HStack(alignment: .top) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("My Progress")
-                                    .font(.system(size: 34, weight: .bold, design: .rounded))
-                                    .foregroundColor(.primary)
-                                
-                                Text("Keep it up! You're doing great.")
-                                    .font(.system(size: 15, design: .rounded))
-                                    .foregroundColor(.secondary)
-                            }
-                            
-                            Spacer()
-                            
-                            // Profile Avatar
-                            Circle()
-                                .fill(LinearGradient(
-                                    colors: [Color.blue.opacity(0.6), Color.purple.opacity(0.6)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ))
-                                .frame(width: 40, height: 40)
-                                .overlay(
-                                    Image(systemName: "person.fill")
-                                        .foregroundColor(.white)
-                                        .font(.system(size: 18))
-                                )
-                        }
-                        .padding(.horizontal)
-                        .padding(.top, 8)
+                        // Subtitle Section
+                        Text("Keep it up! You're doing great.")
+                            .font(.system(size: 15, design: .rounded))
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 40)
                         
                         // Activity Rings Card
                         ActivityRingsCard(
@@ -651,25 +650,26 @@ struct LearnerProgressView: View {
                             currentStreak: currentStreak,
                             animateRings: animateRings
                         )
-                        .padding(.horizontal)
+                        .padding(.horizontal, 20)
                         
                         // Weekly Chart Card
                         WeeklyChartCard(
                             weeklyHours: weeklyHours,
                             animateBars: animateBars
                         )
-                        .padding(.horizontal)
+                        .padding(.horizontal, 20)
                         
                         // Achievements Section
                         AchievementsSection()
-                            .padding(.horizontal)
+                            .padding(.horizontal, 20)
                         
                         Spacer(minLength: 100)
                     }
                     .padding(.vertical)
                 }
             }
-            .navigationBarHidden(true)
+            .navigationTitle("My Progress")
+            .navigationBarTitleDisplayMode(.large)
             .onAppear {
                 withAnimation(.spring(response: 1.2, dampingFraction: 0.7)) {
                     animateRings = true
@@ -742,7 +742,7 @@ struct ActivityRingsCard: View {
                 VStack(alignment: .leading, spacing: 16) {
                     LegendItem(
                         color: Color(hex: "#FF3B30"),
-                        label: "Courses",
+                        label: "Courses Completed",
                         value: "\(coursesCompleted)/\(totalCourses)"
                     )
                     
@@ -780,7 +780,7 @@ struct LegendItem: View {
                 .frame(width: 10, height: 10)
             
             Text(label)
-                .font(.system(size: 14, design: .rounded))
+                .font(.system(size: 12, design: .rounded))
                 .foregroundColor(.secondary)
             
             Spacer()
@@ -789,7 +789,7 @@ struct LegendItem: View {
                 .font(.system(size: 16, weight: .bold, design: .rounded))
                 .foregroundColor(color)
         }
-        .frame(maxWidth: 140)
+        .frame(maxWidth: 160)
     }
 }
 
@@ -801,12 +801,21 @@ struct WeeklyChartCard: View {
     let days = ["M", "T", "W", "T", "F", "S", "S"]
     let activeDay = 2 // Wednesday (0-indexed)
     
+    @State private var selectedBarIndex: Int? = nil
+    
     var totalHours: Double {
         weeklyHours.reduce(0, +)
     }
     
     var maxHours: Double {
         weeklyHours.max() ?? 1
+    }
+    
+    // Calculate nice Y-axis values (similar to iPhone Screen Time)
+    var yAxisValues: [Double] {
+        let roundedMax = ceil(maxHours)
+        let step = roundedMax / 4
+        return stride(from: 0, through: roundedMax, by: max(step, 1)).map { $0 }
     }
     
     var body: some View {
@@ -827,26 +836,75 @@ struct WeeklyChartCard: View {
                     .cornerRadius(12)
             }
             
-            // Bar Chart
-            HStack(alignment: .bottom, spacing: 16) {
-                ForEach(0..<7) { index in
-                    VStack(spacing: 8) {
-                        // Bar
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(index == activeDay ? Color.blue : Color.blue.opacity(0.15))
-                            .frame(
-                                width: 32,
-                                height: animateBars ? max(CGFloat(weeklyHours[index] / maxHours) * 120, 20) : 0
-                            )
-                        
-                        // Day Label
-                        Text(days[index])
-                            .font(.system(size: 12, weight: index == activeDay ? .bold : .regular, design: .rounded))
-                            .foregroundColor(index == activeDay ? .blue : .secondary)
+            // Bar Chart with Y-axis
+            HStack(alignment: .bottom, spacing: 0) {
+                // Y-axis labels
+                VStack(alignment: .trailing, spacing: 0) {
+                    ForEach(yAxisValues.reversed(), id: \.self) { value in
+                        Text("\(Int(value))h")
+                            .font(.system(size: 10, design: .rounded))
+                            .foregroundColor(.secondary.opacity(0.7))
+                            .frame(height: value == 0 ? 0 : 120 / CGFloat(yAxisValues.count - 1))
                     }
                 }
+                .frame(width: 30)
+                
+                // Bar Chart
+                HStack(alignment: .bottom, spacing: 16) {
+                    ForEach(0..<7) { index in
+                        VStack(spacing: 4) {
+                            // Tooltip showing hours
+                            if selectedBarIndex == index || (selectedBarIndex == nil && index == activeDay) {
+                                Text("\(String(format: "%.1f", weeklyHours[index]))h")
+                                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                                    .foregroundColor(.blue)
+                                    .lineLimit(1)
+                                    .fixedSize()
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color.blue.opacity(0.15))
+                                    .cornerRadius(8)
+                                    .transition(.scale.combined(with: .opacity))
+                            }
+                            
+                            // Bar
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(
+                                    selectedBarIndex == index || (selectedBarIndex == nil && index == activeDay)
+                                    ? Color.blue
+                                    : Color.blue.opacity(0.15)
+                                )
+                                .frame(
+                                    width: 32,
+                                    height: animateBars ? max(CGFloat(weeklyHours[index] / maxHours) * 120, 20) : 0
+                                )
+                                .onTapGesture {
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                        if selectedBarIndex == index {
+                                            selectedBarIndex = nil
+                                        } else {
+                                            selectedBarIndex = index
+                                        }
+                                    }
+                                }
+                            
+                            // Day Label
+                            Text(days[index])
+                                .font(.system(
+                                    size: 12,
+                                    weight: (selectedBarIndex == index || (selectedBarIndex == nil && index == activeDay)) ? .bold : .regular,
+                                    design: .rounded
+                                ))
+                                .foregroundColor(
+                                    (selectedBarIndex == index || (selectedBarIndex == nil && index == activeDay))
+                                    ? .blue
+                                    : .secondary
+                                )
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
         }
         .padding(20)
@@ -859,6 +917,8 @@ struct WeeklyChartCard: View {
 // MARK: - Achievements Section
 
 struct AchievementsSection: View {
+    @State private var showAllAchievements = false
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -868,12 +928,13 @@ struct AchievementsSection: View {
                 
                 Spacer()
                 
-                Button(action: {}) {
+                NavigationLink(destination: AllAchievementsView()) {
                     Text("See All")
                         .font(.system(size: 15, weight: .semibold, design: .rounded))
                         .foregroundColor(.blue)
                 }
             }
+            .padding(.horizontal, 20)
             
             HStack(spacing: 16) {
                 AchievementCard(
@@ -888,6 +949,7 @@ struct AchievementsSection: View {
                     backgroundColor: Color.blue.opacity(0.15)
                 )
             }
+            .padding(.horizontal, 20)
         }
     }
 }
@@ -922,7 +984,104 @@ struct AchievementCard: View {
     }
 }
 
+// MARK: - All Achievements View
+
+struct AllAchievementsView: View {
+    let allAchievements = [
+        AchievementData(emoji: "🔥", title: "7-Day Streak", description: "Learned for 7 days straight", backgroundColor: Color.orange.opacity(0.15), isUnlocked: true),
+        AchievementData(emoji: "🎓", title: "First Course", description: "Completed your first course", backgroundColor: Color.blue.opacity(0.15), isUnlocked: true),
+        AchievementData(emoji: "⚡", title: "Speed Learner", description: "Complete 5 lessons in one day", backgroundColor: Color.yellow.opacity(0.15), isUnlocked: true),
+        AchievementData(emoji: "🏆", title: "Overachiever", description: "Score 100% on 3 quizzes", backgroundColor: Color.purple.opacity(0.15), isUnlocked: false),
+        AchievementData(emoji: "📚", title: "Bookworm", description: "Complete 10 courses", backgroundColor: Color.green.opacity(0.15), isUnlocked: false),
+        AchievementData(emoji: "🌟", title: "Perfect Week", description: "Learn every day this week", backgroundColor: Color.pink.opacity(0.15), isUnlocked: false),
+        AchievementData(emoji: "💎", title: "Diamond League", description: "Reach 500 learning hours", backgroundColor: Color.cyan.opacity(0.15), isUnlocked: false),
+        AchievementData(emoji: "🎯", title: "Goal Getter", description: "Hit weekly goal 4 times", backgroundColor: Color.indigo.opacity(0.15), isUnlocked: false),
+        AchievementData(emoji: "🚀", title: "Rising Star", description: "Complete 3 courses in a month", backgroundColor: Color.teal.opacity(0.15), isUnlocked: false),
+    ]
+    
+    let columns = [
+        GridItem(.flexible(), spacing: 16),
+        GridItem(.flexible(), spacing: 16)
+    ]
+    
+    var body: some View {
+        ScrollView {
+            LazyVGrid(columns: columns, spacing: 16) {
+                ForEach(allAchievements) { achievement in
+                    DetailedAchievementCard(achievement: achievement)
+                }
+            }
+            .padding(16)
+        }
+        .background(Color(hex: "#F2F2F7").ignoresSafeArea())
+        .navigationTitle("Achievements")
+        .navigationBarTitleDisplayMode(.large)
+    }
+}
+
+// Achievement Data Model
+struct AchievementData: Identifiable {
+    let id = UUID()
+    let emoji: String
+    let title: String
+    let description: String
+    let backgroundColor: Color
+    let isUnlocked: Bool
+}
+
+// Detailed Achievement Card for All Achievements View
+struct DetailedAchievementCard: View {
+    let achievement: AchievementData
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            // Icon Container
+            ZStack {
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: 70, height: 70)
+                    .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
+                
+                Text(achievement.emoji)
+                    .font(.system(size: 36))
+                    .grayscale(achievement.isUnlocked ? 0 : 1)
+                    .opacity(achievement.isUnlocked ? 1 : 0.5)
+                
+                if !achievement.isUnlocked {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(.gray.opacity(0.5))
+                }
+            }
+            
+            VStack(spacing: 4) {
+                Text(achievement.title)
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                
+                Text(achievement.description)
+                    .font(.system(size: 12, design: .rounded))
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 20)
+        .padding(.horizontal, 12)
+        .background(achievement.isUnlocked ? achievement.backgroundColor : Color.gray.opacity(0.1))
+        .cornerRadius(20)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(achievement.isUnlocked ? Color.clear : Color.gray.opacity(0.2), lineWidth: 1)
+        )
+    }
+}
+
 // MARK: - Color Extension
+
 
 extension Color {
     init(hex: String) {
