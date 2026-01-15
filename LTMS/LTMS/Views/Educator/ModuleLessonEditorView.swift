@@ -53,7 +53,7 @@ class ModuleLessonViewModel: ObservableObject {
     }
     
     func updateModule(title: String, description: String) async throws {
-        guard let moduleId = module.id else { return }
+        guard module.id != nil else { return }
         
         var updatedModule = module
         updatedModule.title = title
@@ -65,7 +65,7 @@ class ModuleLessonViewModel: ObservableObject {
     }
     
     func updateLesson(lesson: Lesson, title: String, description: String, objectives: String?, prerequisites: String?) async throws {
-        guard let lessonId = lesson.id else { return }
+        guard lesson.id != nil else { return }
         
         var updatedLesson = lesson
         updatedLesson.title = title

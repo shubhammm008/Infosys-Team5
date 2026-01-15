@@ -51,6 +51,25 @@ extension Color {
     static let ltmsAccent = Color.orange
     static let ltmsBackground = Color(.systemGroupedBackground)
     static let ltmsCardBackground = Color(.secondarySystemGroupedBackground)
+    
+    // Dark Theme Colors
+    static let dashboardBg = LinearGradient(
+        colors: [
+            Color(red: 12/255, green: 14/255, blue: 28/255),
+            Color(red: 18/255, green: 20/255, blue: 40/255)
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+    
+    static let dashboardCard = Color(red: 24/255, green: 27/255, blue: 54/255)
+    static let dashboardCardAlt = Color(red: 32/255, green: 36/255, blue: 78/255)
+    
+    static let dashboardTextPrimary = Color.white
+    static let dashboardTextSecondary = Color.white.opacity(0.65)
+    
+    static let accentBlue = Color(red: 88/255, green: 108/255, blue: 255/255)
+    static let accentPurple = Color(red: 132/255, green: 100/255, blue: 255/255)
 }
 
 // MARK: - String Extensions

@@ -303,11 +303,23 @@ struct FilterChip: View {
         Button(action: action) {
             Text(title)
                 .font(.subheadline)
-                .fontWeight(isSelected ? .semibold : .regular)
+                .fontWeight(isSelected ? .semibold : .medium)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .background(isSelected ? Color.ltmsPrimary : Color.ltmsCardBackground)
-                .foregroundColor(isSelected ? .white : .primary)
+                .foregroundColor(isSelected ? .white : .dashboardTextSecondary)
+                .background(
+                    Group {
+                        if isSelected {
+                            LinearGradient(
+                                colors: [.accentBlue, .accentPurple],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        } else {
+                            Color.dashboardCard
+                        }
+                    }
+                )
                 .cornerRadius(20)
         }
     }

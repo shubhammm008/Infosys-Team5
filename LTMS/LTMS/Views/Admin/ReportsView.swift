@@ -158,7 +158,7 @@ struct ReportsView: View {
                         .labelsHidden()
                         .padding(.horizontal)
                         .transition(.opacity)
-                        .onChange(of: viewModel.startDate) { newValue in
+                        .onChange(of: viewModel.startDate) { oldValue, newValue in
                             // Ensure end date is not before start date
                             if viewModel.endDate < newValue {
                                 viewModel.endDate = newValue
