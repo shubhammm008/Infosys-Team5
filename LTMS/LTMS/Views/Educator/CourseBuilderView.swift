@@ -67,8 +67,10 @@ class CourseBuilderViewModel: ObservableObject {
     }
 }
 
+// MARK: - Course Builder
 struct CourseBuilderView: View {
     @StateObject private var viewModel: CourseBuilderViewModel
+    @Environment(\.dismiss) private var dismiss
     @State private var showAddModule = false
     @State private var showCourseDetails = false
     
@@ -77,47 +79,79 @@ struct CourseBuilderView: View {
     }
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // Course Info Card
-                courseInfoCard
+        NavigationStack {
+            ZStack {
+                Color.dashboardBg.ignoresSafeArea()
                 
-                // Action Cards Section
-                actionCardsSection
-                
-                // Modules Section
-                modulesSection
-            }
-            .padding()
-        }
-        .background(Color.ltmsBackground)
-        .navigationTitle("Course Builder")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showCourseDetails = true
-                } label: {
-                    Image(systemName: "gearshape")
-                        .font(.title3)
+                VStack(spacing: 0) {
+                    // Custom Header
+                    HStack {
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(.dashboardTextPrimary)
+                                .frame(width: 40, height: 40)
+                                .background(Color.dashboardCard)
+                                .clipShape(Circle())
+                        }
+                        
+                        Spacer()
+                        
+                        Text("Course Builder")
+                            .font(.headline)
+                            .foregroundColor(.dashboardTextPrimary)
+                        
+                        Spacer()
+                        
+                        Button {
+                            showCourseDetails = true
+                        } label: {
+                            Image(systemName: "plus")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(.accentBlue)
+                                .frame(width: 40, height: 40)
+                                .background(Color.dashboardCard)
+                                .clipShape(Circle())
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+                    .padding(.bottom, 16)
+                    
+                    ScrollView {
+                        VStack(spacing: 24) {
+                            // Course Info Card
+                            courseInfoCard
+                            
+                            // Action Cards Section
+                            actionCardsSection
+                            
+                            // Modules Section
+                            modulesSection
+                        }
+                        .padding()
+                    }
                 }
             }
-        }
-        .sheet(isPresented: $showAddModule) {
-            AddModuleView(viewModel: viewModel)
-        }
-        .sheet(isPresented: $showCourseDetails) {
-            CourseDetailsEditView(course: viewModel.course) {
-                // Refresh if needed
+            .navigationBarHidden(true)
+            .sheet(isPresented: $showAddModule) {
+                AddModuleView(viewModel: viewModel)
             }
-        }
-        .task {
-            await viewModel.loadModules()
-        }
-        .alert("Error", isPresented: $viewModel.showError) {
-            Button("OK") { }
-        } message: {
-            Text(viewModel.errorMessage ?? "An error occurred")
+            .sheet(isPresented: $showCourseDetails) {
+                CourseDetailsEditView(course: viewModel.course) {
+                    // Refresh if needed
+                }
+            }
+            .task {
+                await viewModel.loadModules()
+            }
+            .alert("Error", isPresented: $viewModel.showError) {
+                Button("OK") { }
+            } message: {
+                Text(viewModel.errorMessage ?? "An error occurred")
+            }
         }
     }
     
@@ -128,27 +162,28 @@ struct CourseBuilderView: View {
             Text(viewModel.course.title)
                 .font(.title2)
                 .fontWeight(.bold)
+                .foregroundColor(.dashboardTextPrimary)
             
             Text(viewModel.course.courseDescription)
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(.dashboardTextSecondary)
             
             HStack(spacing: 12) {
                 Label("\(viewModel.course.durationHours)h", systemImage: "clock")
                 Text(viewModel.course.level.displayName)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(Color.ltmsPrimary.opacity(0.2))
-                    .foregroundColor(.ltmsPrimary)
+                    .background(Color.accentBlue.opacity(0.2))
+                    .foregroundColor(.accentBlue)
                     .cornerRadius(6)
             }
             .font(.caption)
-            .foregroundColor(.secondary)
+            .foregroundColor(.dashboardTextSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
-        .background(Color.ltmsCardBackground)
-        .cornerRadius(16)
+        .background(Color.dashboardCard)
+        .cornerRadius(20)
     }
     
     // MARK: - Action Cards Section
@@ -157,51 +192,34 @@ struct CourseBuilderView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Quick Actions")
                 .font(.headline)
-                .foregroundColor(.secondary)
+                .foregroundColor(.dashboardTextSecondary)
             
-            // Add Module Card (full width since Quizzes is now per-lesson)
+            // Add Module Card
             Button {
                 showAddModule = true
             } label: {
                 HStack {
-                    Image(systemName: "plus.rectangle.fill")
-                        .font(.title2)
-                        .foregroundColor(.blue)
-                        .frame(width: 44, height: 44)
-                        .background(Color.blue.opacity(0.2))
-                        .cornerRadius(10)
-                    
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Add Module")
                             .font(.subheadline)
                             .fontWeight(.semibold)
-                            .foregroundColor(.primary)
+                            .foregroundColor(.dashboardTextPrimary)
                         Text("Create new module with lessons")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.dashboardTextSecondary)
                     }
                     
                     Spacer()
                     
                     Image(systemName: "plus.circle.fill")
                         .font(.title2)
-                        .foregroundColor(.blue)
+                        .foregroundColor(.accentBlue)
                 }
                 .padding()
-                .background(Color.ltmsCardBackground)
-                .cornerRadius(12)
+                .background(Color.dashboardCard)
+                .cornerRadius(16)
             }
             .buttonStyle(.plain)
-            
-            // Info Note
-//            HStack(spacing: 8) {
-//                Image(systemName: "info.circle")
-//                    .foregroundColor(.purple)
-//                Text("Quizzes are now created within each lesson")
-//                    .font(.caption)
-//                    .foregroundColor(.secondary)
-//            }
-            .padding(.horizontal, 4)
         }
     }
     
@@ -212,14 +230,14 @@ struct CourseBuilderView: View {
             HStack {
                 Text("Modules")
                     .font(.headline)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.dashboardTextSecondary)
                 Spacer()
                 Text("\(viewModel.modules.count)")
                     .font(.caption)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(Color.ltmsPrimary.opacity(0.2))
-                    .foregroundColor(.ltmsPrimary)
+                    .background(Color.accentBlue.opacity(0.2))
+                    .foregroundColor(.accentBlue)
                     .cornerRadius(6)
             }
             
@@ -227,47 +245,48 @@ struct CourseBuilderView: View {
                 HStack {
                     Spacer()
                     ProgressView()
+                        .tint(.accentBlue)
                     Spacer()
                 }
                 .padding(.vertical, 40)
             } else if viewModel.modules.isEmpty {
-                VStack(spacing: 12) {
+                VStack(spacing: 16) {
                     Image(systemName: "square.stack.3d.up.slash")
-                        .font(.largeTitle)
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 40))
+                        .foregroundColor(.dashboardTextSecondary)
                     Text("No modules yet")
                         .font(.headline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.dashboardTextPrimary)
                     Text("Tap 'Add Module' above to get started")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.dashboardTextSecondary)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 40)
-                .background(Color.ltmsCardBackground)
+                .background(Color.dashboardCard)
                 .cornerRadius(16)
             } else {
-                VStack(spacing: 8) {
+                VStack(spacing: 12) {
                     ForEach(viewModel.modules) { module in
                         NavigationLink(destination: ModuleLessonEditorView(module: module, courseId: viewModel.course.id ?? "")) {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(module.title)
                                         .font(.headline)
-                                        .foregroundColor(.primary)
+                                        .foregroundColor(.dashboardTextPrimary)
                                     Text(module.moduleDescription)
                                         .font(.subheadline)
-                                        .foregroundColor(.secondary)
+                                        .foregroundColor(.dashboardTextSecondary)
                                         .lineLimit(2)
                                 }
                                 Spacer()
                                 Image(systemName: "chevron.right")
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(.dashboardTextSecondary)
                             }
                             .padding()
-                            .background(Color.ltmsCardBackground)
-                            .cornerRadius(12)
+                            .background(Color.dashboardCard)
+                            .cornerRadius(16)
                         }
                         .buttonStyle(.plain)
                     }
@@ -277,7 +296,7 @@ struct CourseBuilderView: View {
     }
 }
 
-// MARK: - Action Card Component
+// MARK: - Action Card Component (Unused but kept for reference if needed elsewhere)
 
 struct ActionCard: View {
     let title: String
@@ -297,16 +316,16 @@ struct ActionCard: View {
             Text(title)
                 .font(.subheadline)
                 .fontWeight(.semibold)
-                .foregroundColor(.primary)
+                .foregroundColor(.dashboardTextPrimary)
             
             Text(subtitle)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(.dashboardTextSecondary)
                 .lineLimit(2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
-        .background(Color.ltmsCardBackground)
+        .background(Color.dashboardCard)
         .cornerRadius(12)
     }
 }
@@ -322,16 +341,20 @@ struct AddModuleView: View {
     @State private var showError = false
     
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("Module Information") {
-                    TextField("Module Title", text: $title)
-                    TextField("Description", text: $description, axis: .vertical)
-                        .lineLimit(3...6)
-                }
-                
-                Section {
-                    Button("Add Module") {
+        ZStack {
+            Color.dashboardBg.ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                // Header
+                HStack {
+                    Button("Cancel") { dismiss() }
+                        .foregroundColor(.dashboardTextSecondary)
+                    Spacer()
+                    Text("Add Module")
+                        .font(.headline)
+                        .foregroundColor(.dashboardTextPrimary)
+                    Spacer()
+                    Button("Add") {
                         Task {
                             isLoading = true
                             defer { isLoading = false }
@@ -341,49 +364,89 @@ struct AddModuleView: View {
                             } catch {
                                 errorMessage = error.localizedDescription
                                 showError = true
-                                print("❌ Failed to add module: \(error)")
                             }
                         }
                     }
+                    .fontWeight(.bold)
+                    .foregroundColor(.accentBlue)
                     .disabled(title.isEmpty || description.isEmpty || isLoading)
                 }
-            }
-            .navigationTitle("Add Module")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                .padding()
+                
+                ScrollView {
+                    VStack(spacing: 24) {
+                        VStack(alignment: .leading, spacing: 16) {
+                            customTextField(title: "Module Title", text: $title)
+                            customTextField(title: "Description", text: $description, isMultiline: true)
+                        }
+                        .padding()
+                        .background(Color.dashboardCard)
+                        .cornerRadius(20)
+                    }
+                    .padding()
                 }
             }
-            .alert("Error", isPresented: $showError) {
-                Button("OK") { }
-            } message: {
-                Text(errorMessage ?? "Failed to create module")
+        }
+        .navigationBarHidden(true)
+        .alert("Error", isPresented: $showError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(errorMessage ?? "Failed to create module")
+        }
+    }
+    
+    @ViewBuilder
+    private func customTextField(title: String, text: Binding<String>, isMultiline: Bool = false) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.dashboardTextSecondary)
+            
+            if isMultiline {
+                TextEditor(text: text)
+                    .scrollContentBackground(.hidden)
+                    .frame(minHeight: 100)
+                    .padding(12)
+                    .background(Color.white.opacity(0.05))
+                    .cornerRadius(12)
+                    .foregroundColor(.dashboardTextPrimary)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    )
+            } else {
+                TextField(title, text: text)
+                    .padding(12)
+                    .background(Color.white.opacity(0.05))
+                    .cornerRadius(12)
+                    .foregroundColor(.dashboardTextPrimary)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    )
             }
         }
     }
 }
 
 #Preview {
-    NavigationStack {
-        CourseBuilderView(course: Course(
-            id: "1",
-            organizationId: "org1",
-            title: "iOS Development",
-            courseDescription: "Learn iOS development with SwiftUI",
-            level: .beginner,
-            durationHours: 40,
-            thumbnailURL: nil,
-            isPublished: true,
-            createdById: "user1",
-            assignedEducatorId: "educator1",
-            createdAt: Date(),
-            updatedAt: Date(),
-            scheduledStartDate: nil,
-            scheduledEndDate: nil,
-            enrollmentDeadline: nil,
-            maxEnrollments: nil,
-            isVisibleInCatalog: true
-        ))
-    }
+    CourseBuilderView(course: Course(
+        id: "1",
+        organizationId: "org1",
+        title: "iOS Development",
+        courseDescription: "Learn iOS development with SwiftUI",
+        level: .beginner,
+        durationHours: 40,
+        thumbnailURL: nil,
+        isPublished: true,
+        createdById: "user1",
+        assignedEducatorId: "educator1",
+        createdAt: Date(),
+        updatedAt: Date(),
+        scheduledStartDate: nil,
+        scheduledEndDate: nil,
+        enrollmentDeadline: nil,
+        maxEnrollments: nil,
+        isVisibleInCatalog: true
+    ))
 }

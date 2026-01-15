@@ -13,6 +13,7 @@ struct QuizListView: View {
     let lesson: Lesson?  // Optional - if provided, shows quizzes for this lesson
     
     @StateObject private var authService = SupabaseAuthService.shared
+    @Environment(\.dismiss) private var dismiss
     @State private var quizzes: [Quiz] = []
     @State private var isLoading = false
     @State private var showCreateQuiz = false
@@ -25,26 +26,61 @@ struct QuizListView: View {
     }
     
     var body: some View {
-        Group {
-            if isLoading {
-                ProgressView("Loading quizzes...")
-            } else if quizzes.isEmpty {
-                emptyState
-            } else {
-                quizList
-            }
-        }
-        .navigationTitle(lesson != nil ? "Lesson Quizzes" : "Quizzes")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showCreateQuiz = true
-                } label: {
-                    Image(systemName: "plus")
+        ZStack {
+            Color.dashboardBg.ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                // Custom Header
+                HStack {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.dashboardTextPrimary)
+                            .frame(width: 40, height: 40)
+                            .background(Color.dashboardCard)
+                            .clipShape(Circle())
+                    }
+                    
+                    Spacer()
+                    
+                    Text(lesson != nil ? "Lesson Quizzes" : "Quizzes")
+                        .font(.headline)
+                        .foregroundColor(.dashboardTextPrimary)
+                    
+                    Spacer()
+                    
+                    Button {
+                        showCreateQuiz = true
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.accentBlue)
+                            .frame(width: 40, height: 40)
+                            .background(Color.dashboardCard)
+                            .clipShape(Circle())
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.top, 8)
+                .padding(.bottom, 16)
+                
+                // Content
+                if isLoading {
+                    Spacer()
+                    ProgressView()
+                        .tint(.accentBlue)
+                        .scaleEffect(1.5)
+                    Spacer()
+                } else if quizzes.isEmpty {
+                    emptyState
+                } else {
+                    quizList
                 }
             }
         }
+        .navigationBarHidden(true)
         .sheet(isPresented: $showCreateQuiz) {
             CreateQuizView(course: course, lesson: lesson) {
                 Task { await loadQuizzes() }
@@ -63,32 +99,47 @@ struct QuizListView: View {
     // MARK: - Empty State
     
     private var emptyState: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 24) {
+            Spacer()
+            
             Image(systemName: "questionmark.circle")
-                .font(.system(size: 60))
-                .foregroundColor(.secondary)
+                .font(.system(size: 70))
+                .foregroundColor(.dashboardTextSecondary.opacity(0.5))
             
-            Text("No Quizzes Yet")
-                .font(.title2)
-                .fontWeight(.semibold)
-            
-            Text("Create a quiz to test your learners' knowledge")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
+            VStack(spacing: 8) {
+                Text("No Quizzes Yet")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.dashboardTextPrimary)
+                
+                Text("Create a quiz to test your learners' knowledge")
+                    .font(.subheadline)
+                    .foregroundColor(.dashboardTextSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+            }
             
             Button {
                 showCreateQuiz = true
             } label: {
-                Label("Create Quiz", systemImage: "plus.circle.fill")
-                    .font(.headline)
-                    .padding()
+                Text("Create Quiz")
+                    .fontWeight(.bold)
                     .frame(maxWidth: 200)
-                    .background(Color.ltmsPrimary)
+                    .padding()
+                    .background(
+                        LinearGradient(
+                            colors: [Color.accentBlue, Color.accentPurple],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
                     .foregroundColor(.white)
-                    .cornerRadius(12)
+                    .cornerRadius(16)
+                    .shadow(color: Color.accentBlue.opacity(0.3), radius: 10, x: 0, y: 5)
             }
+            
+            Spacer()
+            Spacer()
         }
         .padding()
     }
@@ -96,15 +147,18 @@ struct QuizListView: View {
     // MARK: - Quiz List
     
     private var quizList: some View {
-        List {
-            ForEach(quizzes) { quiz in
-                NavigationLink(destination: QuizDetailView(quiz: quiz, onUpdate: {
-                    Task { await loadQuizzes() }
-                })) {
-                    QuizRowView(quiz: quiz)
+        ScrollView {
+            VStack(spacing: 12) {
+                ForEach(quizzes) { quiz in
+                    NavigationLink(destination: QuizDetailView(quiz: quiz, onUpdate: {
+                        Task { await loadQuizzes() }
+                    })) {
+                        QuizRowView(quiz: quiz)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
-            .onDelete(perform: deleteQuizzes)
+            .padding()
         }
         .refreshable {
             await loadQuizzes()
@@ -155,32 +209,46 @@ struct QuizRowView: View {
     let quiz: Quiz
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
+        HStack {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(quiz.title)
                     .font(.headline)
+                    .foregroundColor(.dashboardTextPrimary)
                 
-                Spacer()
+                if let description = quiz.quizDescription, !description.isEmpty {
+                    Text(description)
+                        .font(.subheadline)
+                        .foregroundColor(.dashboardTextSecondary)
+                        .lineLimit(1)
+                }
+                
+                HStack(spacing: 16) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "checkmark.circle")
+                            .foregroundColor(.accentBlue)
+                        Text(quiz.passingScoreDisplay)
+                    }
+                    
+                    HStack(spacing: 4) {
+                        Image(systemName: "clock")
+                            .foregroundColor(.accentBlue)
+                        Text(quiz.timeLimitDisplay)
+                    }
+                }
+                .font(.caption)
+                .foregroundColor(.dashboardTextSecondary)
+                .padding(.top, 4)
             }
             
-            if let description = quiz.quizDescription, !description.isEmpty {
-                Text(description)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .lineLimit(2)
-            }
+            Spacer()
             
-            HStack(spacing: 16) {
-                Label(quiz.passingScoreDisplay, systemImage: "checkmark.circle")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                Label(quiz.timeLimitDisplay, systemImage: "clock")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundColor(.dashboardTextSecondary)
         }
-        .padding(.vertical, 4)
+        .padding()
+        .background(Color.dashboardCard)
+        .cornerRadius(16)
     }
 }
 
@@ -198,6 +266,7 @@ struct QuizDetailView: View {
     @State private var questionToEdit: QuizQuestion?
     @State private var showError = false
     @State private var errorMessage = ""
+    @Environment(\.dismiss) private var dismiss
     
     init(quiz: Quiz, onUpdate: @escaping () -> Void) {
         self.quiz = quiz
@@ -206,66 +275,119 @@ struct QuizDetailView: View {
     }
     
     var body: some View {
-        List {
-            // Quiz Info Section
-            Section("Quiz Information") {
-                LabeledContent("Title", value: currentQuiz.title)
-                LabeledContent("Passing Score", value: currentQuiz.passingScoreDisplay)
-                LabeledContent("Time Limit", value: currentQuiz.timeLimitDisplay)
-                
-                if let description = currentQuiz.quizDescription, !description.isEmpty {
-                    LabeledContent("Description", value: description)
-                }
-            }
+        ZStack {
+            Color.dashboardBg.ignoresSafeArea()
             
-            // Questions Section
-            Section {
-                if isLoading {
-                    ProgressView()
-                } else if questions.isEmpty {
-                    Text("No questions added yet")
-                        .foregroundColor(.secondary)
-                        .italic()
-                } else {
-                    ForEach(Array(questions.enumerated()), id: \.element.id) { index, question in
-                        Button {
-                            questionToEdit = question
-                        } label: {
-                            HStack {
-                                QuestionRowView(question: question, number: index + 1)
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .onDelete(perform: deleteQuestions)
-                }
-            } header: {
+            VStack(spacing: 0) {
+                // Header
                 HStack {
-                    Text("Questions (\(questions.count))")
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.dashboardTextPrimary)
+                            .frame(width: 40, height: 40)
+                            .background(Color.dashboardCard)
+                            .clipShape(Circle())
+                    }
+                    Spacer()
+                    Text("Quiz Details")
+                        .font(.headline)
+                        .foregroundColor(.dashboardTextPrimary)
                     Spacer()
                     Button {
-                        showAddQuestion = true
+                        showEditQuiz = true
                     } label: {
-                        Image(systemName: "plus.circle")
+                        Image(systemName: "square.and.pencil")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.accentBlue)
+                            .frame(width: 40, height: 40)
+                            .background(Color.dashboardCard)
+                            .clipShape(Circle())
                     }
                 }
-            }
-        }
-        .navigationTitle("Quiz Details")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showEditQuiz = true
-                } label: {
-                    Image(systemName: "pencil")
+                .padding()
+                
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Quiz Info Section
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Quiz Information")
+                                .font(.headline)
+                                .foregroundColor(.dashboardTextPrimary)
+                            
+                            VStack(spacing: 0) {
+                                infoRow(label: "Title", value: currentQuiz.title)
+                                Divider().background(Color.white.opacity(0.1))
+                                infoRow(label: "Passing Score", value: currentQuiz.passingScoreDisplay)
+                                Divider().background(Color.white.opacity(0.1))
+                                infoRow(label: "Time Limit", value: currentQuiz.timeLimitDisplay)
+                                
+                                if let description = currentQuiz.quizDescription, !description.isEmpty {
+                                    Divider().background(Color.white.opacity(0.1))
+                                    infoRow(label: "Description", value: description)
+                                }
+                            }
+                            .background(Color.dashboardCard)
+                            .cornerRadius(16)
+                        }
+                        
+                        // Questions Section
+                        VStack(alignment: .leading, spacing: 16) {
+                            HStack {
+                                Text("Questions (\(questions.count))")
+                                    .font(.headline)
+                                    .foregroundColor(.dashboardTextPrimary)
+                                Spacer()
+                                Button {
+                                    showAddQuestion = true
+                                } label: {
+                                    Label("Add", systemImage: "plus")
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.accentBlue)
+                                }
+                            }
+                            
+                            if isLoading {
+                                ProgressView()
+                                    .tint(.white)
+                                    .padding()
+                            } else if questions.isEmpty {
+                                Text("No questions added yet")
+                                    .foregroundColor(.dashboardTextSecondary)
+                                    .italic()
+                                    .padding()
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .background(Color.dashboardCard)
+                                    .cornerRadius(16)
+                            } else {
+                                VStack(spacing: 12) {
+                                    ForEach(Array(questions.enumerated()), id: \.element.id) { index, question in
+                                        Button {
+                                            questionToEdit = question
+                                        } label: {
+                                            HStack {
+                                                QuestionRowView(question: question, number: index + 1)
+                                                Spacer()
+                                                Image(systemName: "chevron.right")
+                                                    .font(.caption)
+                                                    .foregroundColor(.dashboardTextSecondary)
+                                            }
+                                            .padding()
+                                            .background(Color.dashboardCard)
+                                            .cornerRadius(16)
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .padding()
                 }
             }
         }
+        .navigationBarHidden(true)
         .sheet(isPresented: $showEditQuiz) {
             EditQuizView(quiz: currentQuiz) {
                 // Reload the quiz after editing
@@ -301,6 +423,17 @@ struct QuizDetailView: View {
         } message: {
             Text(errorMessage)
         }
+    }
+    
+    private func infoRow(label: String, value: String) -> some View {
+        HStack {
+            Text(label)
+                .foregroundColor(.dashboardTextPrimary)
+            Spacer()
+            Text(value)
+                .foregroundColor(.dashboardTextSecondary)
+        }
+        .padding()
     }
     
     private func loadQuestions() async {
@@ -348,35 +481,35 @@ struct QuestionRowView: View {
                     .fontWeight(.bold)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(Color.ltmsPrimary.opacity(0.2))
-                    .foregroundColor(.ltmsPrimary)
+                    .background(Color.accentBlue.opacity(0.2))
+                    .foregroundColor(.accentBlue)
                     .cornerRadius(6)
                 
                 Text("\(question.points) pt\(question.points > 1 ? "s" : "")")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.dashboardTextSecondary)
             }
             
             Text(question.questionText)
                 .font(.subheadline)
+                .foregroundColor(.dashboardTextPrimary)
             
             if let options = question.options {
                 VStack(alignment: .leading, spacing: 4) {
                     ForEach(options, id: \.self) { option in
                         HStack(spacing: 8) {
                             Image(systemName: option == question.correctAnswer ? "checkmark.circle.fill" : "circle")
-                                .foregroundColor(option == question.correctAnswer ? .green : .secondary)
+                                .foregroundColor(option == question.correctAnswer ? .green : .dashboardTextSecondary)
                                 .font(.caption)
                             Text(option)
                                 .font(.caption)
-                                .foregroundColor(option == question.correctAnswer ? .green : .secondary)
+                                .foregroundColor(option == question.correctAnswer ? .green : .dashboardTextSecondary)
                         }
                     }
                 }
                 .padding(.leading, 8)
             }
         }
-        .padding(.vertical, 4)
     }
 }
 

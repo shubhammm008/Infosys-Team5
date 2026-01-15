@@ -78,71 +78,141 @@ struct EditQuestionView: View {
     
     var body: some View {
         NavigationStack {
-            Form {
-                // Question Text Section
-                Section("Question") {
-                    TextField("Enter your question", text: $questionText, axis: .vertical)
-                        .lineLimit(3...6)
-                }
+            ZStack {
+                Color.dashboardBg.ignoresSafeArea()
                 
-                // Options Section
-                Section {
-                    ForEach(Array(options.indices), id: \.self) { index in
-                        optionRow(at: index)
-                    }
-                } header: {
-                    Text("Answer Options")
-                } footer: {
-                    Text("Select the correct answer by tapping the circle")
-                        .font(.caption)
-                }
-                
-                // Points Section
-                Section("Points") {
-                    Stepper("\(points) point\(points > 1 ? "s" : "")", value: $points, in: 1...10)
-                }
-                
-                // Add More Options
-                Section {
-                    Button {
-                        options.append("")
-                    } label: {
-                        Label("Add Option", systemImage: "plus.circle")
-                    }
-                    .disabled(options.count >= 6)
-                }
-                
-                // Save Button
-                Section {
-                    Button {
-                        Task { await saveQuestion() }
-                    } label: {
-                        HStack {
-                            Spacer()
-                            if isLoading {
-                                ProgressView()
-                                    .tint(.white)
-                            } else {
-                                Text("Save Changes")
-                                    .fontWeight(.semibold)
-                            }
-                            Spacer()
+                VStack(spacing: 0) {
+                    // Custom Header
+                    HStack {
+                        Button("Cancel") {
+                            dismiss()
                         }
+                        .foregroundColor(.dashboardTextSecondary)
+                        
+                        Spacer()
+                        
+                        Text("Edit Question")
+                            .font(.headline)
+                            .foregroundColor(.dashboardTextPrimary)
+                        
+                        Spacer()
+                        
+                        // Invisible spacer for balance
+                        Button("Cancel") { }
+                            .opacity(0)
                     }
-                    .disabled(!isValid || isLoading || !hasChanges)
-                    .listRowBackground((isValid && hasChanges) ? Color.ltmsPrimary : Color.gray)
-                    .foregroundColor(.white)
+                    .padding()
+                    
+                    ScrollView {
+                        VStack(spacing: 24) {
+                            // Question Text Card
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text("Question")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.dashboardTextSecondary)
+                                
+                                customTextField(title: "Enter your question", text: $questionText, isMultiline: true)
+                            }
+                            .padding()
+                            .background(Color.dashboardCard)
+                            .cornerRadius(20)
+                            
+                            // Options Card
+                            VStack(alignment: .leading, spacing: 16) {
+                                HStack {
+                                    Text("Answer Options")
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.dashboardTextSecondary)
+                                    
+                                    Spacer()
+                                    
+                                    Text("Select correct answer")
+                                        .font(.caption)
+                                        .foregroundColor(.dashboardTextSecondary)
+                                }
+                                
+                                VStack(spacing: 12) {
+                                    ForEach(Array(options.indices), id: \.self) { index in
+                                        optionRow(at: index)
+                                    }
+                                }
+                                
+                                // Add Option Button
+                                if options.count < 6 {
+                                    Button {
+                                        options.append("")
+                                    } label: {
+                                        HStack {
+                                            Image(systemName: "plus.circle.fill")
+                                            Text("Add Option")
+                                        }
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.accentBlue)
+                                        .padding(.top, 4)
+                                    }
+                                }
+                            }
+                            .padding()
+                            .background(Color.dashboardCard)
+                            .cornerRadius(20)
+                            
+                            // Points Card
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text("Points")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.dashboardTextSecondary)
+                                
+                                customTextField(
+                                    title: "Points value",
+                                    text: Binding(
+                                        get: { String(points) },
+                                        set: { if let value = Int($0) { points = value } }
+                                    )
+                                )
+                                .keyboardType(.numberPad)
+                            }
+                            .padding()
+                            .background(Color.dashboardCard)
+                            .cornerRadius(20)
+                            
+                            // Save Button
+                            Button {
+                                Task { await saveQuestion() }
+                            } label: {
+                                ZStack {
+                                    if isLoading {
+                                        ProgressView()
+                                            .tint(.white)
+                                    } else {
+                                        Text("Save Changes")
+                                            .fontWeight(.bold)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 56)
+                                .background(
+                                    LinearGradient(
+                                        colors: [Color.accentBlue, Color.accentPurple],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .foregroundColor(.white)
+                                .cornerRadius(16)
+                                .shadow(color: Color.accentBlue.opacity(0.3), radius: 10, x: 0, y: 5)
+                            }
+                            .disabled(!isValid || isLoading || !hasChanges)
+                            .opacity((!isValid || isLoading || !hasChanges) ? 0.6 : 1.0)
+                        }
+                        .padding()
+                    }
                 }
             }
-            .navigationTitle("Edit Question")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-            }
+            .navigationBarHidden(true)
             .alert("Error", isPresented: $showError) {
                 Button("OK") {}
             } message: {
@@ -152,28 +222,62 @@ struct EditQuestionView: View {
     }
     
     @ViewBuilder
+    private func customTextField(title: String, text: Binding<String>, isMultiline: Bool = false) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if !title.isEmpty && title != "Points value" && title != "Enter your question" {
+                 Text(title)
+                    .font(.caption)
+                    .foregroundColor(.dashboardTextSecondary)
+            }
+            
+            if isMultiline {
+                TextEditor(text: text)
+                    .scrollContentBackground(.hidden)
+                    .frame(minHeight: 100)
+                    .padding(12)
+                    .background(Color.white.opacity(0.05))
+                    .cornerRadius(12)
+                    .foregroundColor(.dashboardTextPrimary)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    )
+            } else {
+                TextField(title, text: text)
+                    .padding(12)
+                    .background(Color.white.opacity(0.05))
+                    .cornerRadius(12)
+                    .foregroundColor(.dashboardTextPrimary)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    )
+            }
+        }
+    }
+    
+    @ViewBuilder
     private func optionRow(at index: Int) -> some View {
-        HStack {
+        HStack(spacing: 12) {
             Button {
                 correctAnswerIndex = index
             } label: {
                 Image(systemName: correctAnswerIndex == index ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(correctAnswerIndex == index ? .green : .secondary)
+                    .font(.title3)
+                    .foregroundColor(correctAnswerIndex == index ? .green : .dashboardTextSecondary)
             }
             .buttonStyle(.plain)
             
             TextField("Option \(index + 1)", text: $options[index])
+                .padding(12)
+                .background(Color.white.opacity(0.05))
+                .cornerRadius(12)
+                .foregroundColor(.dashboardTextPrimary)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(correctAnswerIndex == index ? Color.green.opacity(0.3) : Color.white.opacity(0.1), lineWidth: 1)
+                )
             
-            // Allow removing extra options (keep minimum 2)
-            if options.count > 2 && index >= 2 {
-                Button {
-                    removeOption(at: index)
-                } label: {
-                    Image(systemName: "minus.circle.fill")
-                        .foregroundColor(.red)
-                }
-                .buttonStyle(.plain)
-            }
         }
     }
     

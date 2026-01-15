@@ -32,85 +32,199 @@ struct AddQuestionView: View {
     
     var body: some View {
         NavigationStack {
-            Form {
-                // Question Text Section
-                Section("Question") {
-                    TextField("Enter your question", text: $questionText, axis: .vertical)
-                        .lineLimit(3...6)
-                }
+            ZStack {
+                Color.dashboardBg.ignoresSafeArea()
                 
-                // Options Section
-                Section {
-                    ForEach(0..<4, id: \.self) { index in
-                        HStack {
-                            Button {
-                                correctAnswerIndex = index
-                            } label: {
-                                Image(systemName: correctAnswerIndex == index ? "checkmark.circle.fill" : "circle")
-                                    .foregroundColor(correctAnswerIndex == index ? .green : .secondary)
-                            }
-                            .buttonStyle(.plain)
-                            
-                            TextField("Option \(index + 1)", text: $options[index])
+                VStack(spacing: 0) {
+                    // Custom Header
+                    HStack {
+                        Button("Cancel") {
+                            dismiss()
                         }
+                        .foregroundColor(.dashboardTextSecondary)
+                        
+                        Spacer()
+                        
+                        Text("Add Question")
+                            .font(.headline)
+                            .foregroundColor(.dashboardTextPrimary)
+                        
+                        Spacer()
+                        
+                        // Invisible spacer for balance
+                        Button("Cancel") { }
+                            .opacity(0)
                     }
-                } header: {
-                    Text("Answer Options")
-                } footer: {
-                    Text("Select the correct answer by tapping the circle")
-                        .font(.caption)
-                }
-                
-                // Points Section
-                Section("Points") {
-                    Stepper("\(points) point\(points > 1 ? "s" : "")", value: $points, in: 1...10)
-                }
-                
-                // Add More Options
-                Section {
-                    Button {
-                        options.append("")
-                    } label: {
-                        Label("Add Option", systemImage: "plus.circle")
-                    }
-                    .disabled(options.count >= 6)
-                }
-                
-                // Save Button
-                Section {
-                    Button {
-                        Task { await addQuestion() }
-                    } label: {
-                        HStack {
-                            Spacer()
-                            if isLoading {
-                                ProgressView()
-                                    .tint(.white)
-                            } else {
-                                Text("Add Question")
+                    .padding()
+                    
+                    ScrollView {
+                        VStack(spacing: 24) {
+                            // Question Section
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text("Question")
+                                    .font(.subheadline)
                                     .fontWeight(.semibold)
+                                    .foregroundColor(.dashboardTextSecondary)
+                                
+                                customTextField(title: "Enter your question", text: $questionText, isMultiline: true)
                             }
-                            Spacer()
+                            .padding()
+                            .background(Color.dashboardCard)
+                            .cornerRadius(20)
+                            
+                            // Options Section
+                            VStack(alignment: .leading, spacing: 16) {
+                                HStack {
+                                    Text("Answer Options")
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.dashboardTextSecondary)
+                                    
+                                    Spacer()
+                                    
+                                    Text("Select correct answer")
+                                        .font(.caption)
+                                        .foregroundColor(.dashboardTextSecondary)
+                                }
+                                
+                                VStack(spacing: 12) {
+                                    ForEach(0..<options.count, id: \.self) { index in
+                                        HStack(spacing: 12) {
+                                            Button {
+                                                correctAnswerIndex = index
+                                            } label: {
+                                                Image(systemName: correctAnswerIndex == index ? "checkmark.circle.fill" : "circle")
+                                                    .font(.title3)
+                                                    .foregroundColor(correctAnswerIndex == index ? .green : .dashboardTextSecondary)
+                                            }
+                                            .buttonStyle(.plain)
+                                            
+                                            TextField("Option \(index + 1)", text: $options[index])
+                                                .padding(12)
+                                                .background(Color.white.opacity(0.05))
+                                                .cornerRadius(12)
+                                                .foregroundColor(.dashboardTextPrimary)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 12)
+                                                        .stroke(correctAnswerIndex == index ? Color.green.opacity(0.3) : Color.white.opacity(0.1), lineWidth: 1)
+                                                )
+                                        }
+                                    }
+                                }
+                                
+                                // Add Option Button
+                                if options.count < 6 {
+                                    Button {
+                                        options.append("")
+                                    } label: {
+                                        HStack {
+                                            Image(systemName: "plus.circle.fill")
+                                            Text("Add Option")
+                                        }
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.accentBlue)
+                                        .padding(.top, 4)
+                                    }
+                                }
+                            }
+                            .padding()
+                            .background(Color.dashboardCard)
+                            .cornerRadius(20)
+                            
+                            // Points Section
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text("Points")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.dashboardTextSecondary)
+                                
+                                customTextField(
+                                    title: "Points value",
+                                    text: Binding(
+                                        get: { String(points) },
+                                        set: { if let value = Int($0) { points = value } }
+                                    )
+                                )
+                                .keyboardType(.numberPad)
+                            }
+                            .padding()
+                            .background(Color.dashboardCard)
+                            .cornerRadius(20)
+                            
+                            // Action Button
+                            Button {
+                                Task { await addQuestion() }
+                            } label: {
+                                ZStack {
+                                    if isLoading {
+                                        ProgressView()
+                                            .tint(.white)
+                                    } else {
+                                        Text("Add Question")
+                                            .fontWeight(.bold)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 56)
+                                .background(
+                                    LinearGradient(
+                                        colors: [Color.accentBlue, Color.accentPurple],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .foregroundColor(.white)
+                                .cornerRadius(16)
+                                .shadow(color: Color.accentBlue.opacity(0.3), radius: 10, x: 0, y: 5)
+                            }
+                            .disabled(!isValid || isLoading)
+                            .opacity((!isValid || isLoading) ? 0.6 : 1.0)
                         }
-                    }
-                    .disabled(!isValid || isLoading)
-                    .listRowBackground(isValid ? Color.ltmsPrimary : Color.gray)
-                    .foregroundColor(.white)
-                }
-            }
-            .navigationTitle("Add Question")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
+                        .padding()
                     }
                 }
             }
+            .navigationBarHidden(true)
             .alert("Error", isPresented: $showError) {
                 Button("OK") {}
             } message: {
                 Text(errorMessage)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func customTextField(title: String, text: Binding<String>, isMultiline: Bool = false) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if !title.isEmpty {
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(.dashboardTextSecondary)
+            }
+            
+            if isMultiline {
+                TextEditor(text: text)
+                    .scrollContentBackground(.hidden)
+                    .frame(minHeight: 100)
+                    .padding(12)
+                    .background(Color.white.opacity(0.05))
+                    .cornerRadius(12)
+                    .foregroundColor(.dashboardTextPrimary)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    )
+            } else {
+                TextField(title, text: text)
+                    .padding(12)
+                    .background(Color.white.opacity(0.05))
+                    .cornerRadius(12)
+                    .foregroundColor(.dashboardTextPrimary)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    )
             }
         }
     }
@@ -173,58 +287,181 @@ struct AddTrueFalseQuestionView: View {
     
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Statement") {
-                    TextField("Enter the statement", text: $questionText, axis: .vertical)
-                        .lineLimit(3...6)
-                }
+            ZStack {
+                Color.dashboardBg.ignoresSafeArea()
                 
-                Section("Correct Answer") {
-                    Picker("The statement is", selection: $correctAnswer) {
-                        Text("True").tag(true)
-                        Text("False").tag(false)
-                    }
-                    .pickerStyle(.segmented)
-                }
-                
-                Section("Points") {
-                    Stepper("\(points) point\(points > 1 ? "s" : "")", value: $points, in: 1...10)
-                }
-                
-                Section {
-                    Button {
-                        Task { await addQuestion() }
-                    } label: {
-                        HStack {
-                            Spacer()
-                            if isLoading {
-                                ProgressView()
-                                    .tint(.white)
-                            } else {
-                                Text("Add Question")
-                                    .fontWeight(.semibold)
-                            }
-                            Spacer()
+                VStack(spacing: 0) {
+                    // Custom Header
+                    HStack {
+                        Button("Cancel") {
+                            dismiss()
                         }
+                        .foregroundColor(.dashboardTextSecondary)
+                        
+                        Spacer()
+                        
+                        Text("True/False Question")
+                            .font(.headline)
+                            .foregroundColor(.dashboardTextPrimary)
+                        
+                        Spacer()
+                        
+                        Button("Cancel") { }
+                            .opacity(0)
                     }
-                    .disabled(questionText.isEmpty || isLoading)
-                    .listRowBackground(questionText.isEmpty ? Color.gray : Color.ltmsPrimary)
-                    .foregroundColor(.white)
+                    .padding()
+                    
+                    ScrollView {
+                        VStack(spacing: 24) {
+                            // Statement Section
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text("Statement")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.dashboardTextSecondary)
+                                
+                                customTextField(title: "Enter the statement", text: $questionText, isMultiline: true)
+                            }
+                            .padding()
+                            .background(Color.dashboardCard)
+                            .cornerRadius(20)
+                            
+                            // Correct Answer Section
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text("Correct Answer")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.dashboardTextSecondary)
+                                
+                                HStack(spacing: 0) {
+                                    Button {
+                                        correctAnswer = true
+                                    } label: {
+                                        Text("True")
+                                            .fontWeight(.semibold)
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, 12)
+                                            .background(correctAnswer ? Color.accentBlue : Color.white.opacity(0.05))
+                                            .foregroundColor(correctAnswer ? .white : .dashboardTextSecondary)
+                                    }
+                                    
+                                    Divider()
+                                        .background(Color.white.opacity(0.1))
+                                    
+                                    Button {
+                                        correctAnswer = false
+                                    } label: {
+                                        Text("False")
+                                            .fontWeight(.semibold)
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, 12)
+                                            .background(!correctAnswer ? Color.accentBlue : Color.white.opacity(0.05))
+                                            .foregroundColor(!correctAnswer ? .white : .dashboardTextSecondary)
+                                    }
+                                }
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                                )
+                            }
+                            .padding()
+                            .background(Color.dashboardCard)
+                            .cornerRadius(20)
+                            
+                            // Points Section
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text("Points")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.dashboardTextSecondary)
+                                
+                                customTextField(
+                                    title: "Points value",
+                                    text: Binding(
+                                        get: { String(points) },
+                                        set: { if let value = Int($0) { points = value } }
+                                    )
+                                )
+                                .keyboardType(.numberPad)
+                            }
+                            .padding()
+                            .background(Color.dashboardCard)
+                            .cornerRadius(20)
+                            
+                            // Action Button
+                            Button {
+                                Task { await addQuestion() }
+                            } label: {
+                                ZStack {
+                                    if isLoading {
+                                        ProgressView()
+                                            .tint(.white)
+                                    } else {
+                                        Text("Add Question")
+                                            .fontWeight(.bold)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 56)
+                                .background(
+                                    LinearGradient(
+                                        colors: [Color.accentBlue, Color.accentPurple],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .foregroundColor(.white)
+                                .cornerRadius(16)
+                                .shadow(color: Color.accentBlue.opacity(0.3), radius: 10, x: 0, y: 5)
+                            }
+                            .disabled(questionText.isEmpty || isLoading)
+                            .opacity((questionText.isEmpty || isLoading) ? 0.6 : 1.0)
+                        }
+                        .padding()
+                    }
                 }
             }
-            .navigationTitle("True/False Question")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-            }
+            .navigationBarHidden(true)
             .alert("Error", isPresented: $showError) {
                 Button("OK") {}
             } message: {
                 Text(errorMessage)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func customTextField(title: String, text: Binding<String>, isMultiline: Bool = false) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if !title.isEmpty {
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(.dashboardTextSecondary)
+            }
+            
+            if isMultiline {
+                TextEditor(text: text)
+                    .scrollContentBackground(.hidden)
+                    .frame(minHeight: 100)
+                    .padding(12)
+                    .background(Color.white.opacity(0.05))
+                    .cornerRadius(12)
+                    .foregroundColor(.dashboardTextPrimary)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    )
+            } else {
+                TextField(title, text: text)
+                    .padding(12)
+                    .background(Color.white.opacity(0.05))
+                    .cornerRadius(12)
+                    .foregroundColor(.dashboardTextPrimary)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    )
             }
         }
     }
