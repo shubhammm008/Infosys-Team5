@@ -262,6 +262,32 @@ struct CourseCatalogCard: View {
 
 // MARK: - My Courses View
 
+// Course Card Data Model
+struct CourseCardData: Identifiable {
+    let id = UUID()
+    let title: String
+    let subtitle: String
+    let category: String
+    let progress: Double
+    let remainingTime: String
+    let categoryColor: Color
+    let iconName: String
+    let isCompleted: Bool
+    let completionDate: String?
+    
+    init(title: String, subtitle: String, category: String, progress: Double, remainingTime: String, categoryColor: Color, iconName: String, isCompleted: Bool = false, completionDate: String? = nil) {
+        self.title = title
+        self.subtitle = subtitle
+        self.category = category
+        self.progress = progress
+        self.remainingTime = remainingTime
+        self.categoryColor = categoryColor
+        self.iconName = iconName
+        self.isCompleted = isCompleted
+        self.completionDate = completionDate
+    }
+}
+
 @MainActor
 class MyCoursesViewModel: ObservableObject {
     @Published var enrollments: [Enrollment] = []
@@ -276,6 +302,7 @@ class MyCoursesViewModel: ObservableObject {
             enrollments = try await ContentService.shared.fetchEnrollmentsByLearner(learnerId: learnerId)
             
             // Load course details for each enrollment
+            courses = []
             for enrollment in enrollments {
                 if let course = try? await CourseService.shared.fetchCourse(id: enrollment.courseId) {
                     courses.append(course)
@@ -285,6 +312,45 @@ class MyCoursesViewModel: ObservableObject {
             print("Error loading enrollments: \(error)")
         }
     }
+    
+    // Convert Course and Enrollment to CourseCardData
+    func getCourseCardData(course: Course, enrollment: Enrollment) -> CourseCardData {
+        let isCompleted = enrollment.completionPercentage >= 100
+        let category: String
+        let categoryColor: Color
+        let iconName: String
+        
+        // Map course level to category and colors
+        switch course.level {
+        case .beginner:
+            category = "APP DEVELOPMENT"
+            categoryColor = .blue
+            iconName = "swift"
+        case .intermediate:
+            category = "DESIGN"
+            categoryColor = .purple
+            iconName = "paintbrush.fill"
+        case .advanced:
+            category = "BUSINESS"
+            categoryColor = .orange
+            iconName = "chart.bar.fill"
+        }
+        
+        let hoursRemaining = Double(course.durationHours) * (1 - enrollment.completionPercentage / 100)
+        let remainingTime = String(format: "%.0fh left", max(0, hoursRemaining))
+        
+        return CourseCardData(
+            title: course.title,
+            subtitle: course.courseDescription,
+            category: isCompleted ? "COMPLETED" : category,
+            progress: enrollment.completionPercentage / 100,
+            remainingTime: remainingTime,
+            categoryColor: isCompleted ? .green : categoryColor,
+            iconName: iconName,
+            isCompleted: isCompleted,
+            completionDate: isCompleted ? "Oct 24" : nil
+        )
+    }
 }
 
 struct MyCoursesView: View {
@@ -293,7 +359,11 @@ struct MyCoursesView: View {
     
     var body: some View {
         NavigationStack {
-            Group {
+            ZStack {
+                // Background
+                Color(hex: "#F2F2F7")
+                    .ignoresSafeArea()
+                
                 if viewModel.isLoading {
                     ProgressView()
                 } else if viewModel.courses.isEmpty {
@@ -310,20 +380,39 @@ struct MyCoursesView: View {
                     }
                 } else {
                     ScrollView {
-                        LazyVStack(spacing: 16) {
+                        VStack(spacing: 16) {
                             ForEach(Array(zip(viewModel.courses, viewModel.enrollments)), id: \.0.id) { course, enrollment in
+                                let cardData = viewModel.getCourseCardData(course: course, enrollment: enrollment)
+                                
                                 NavigationLink(destination: CourseContentView(course: course)) {
-                                    EnrolledCourseCard(course: course, enrollment: enrollment)
+                                    PremiumCourseCard(courseData: cardData)
                                 }
                                 .buttonStyle(.plain)
                             }
                         }
-                        .padding()
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
                     }
                 }
             }
-            .background(Color.ltmsBackground)
             .navigationTitle("My Courses")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Circle()
+                        .fill(LinearGradient(
+                            colors: [Color.blue.opacity(0.6), Color.purple.opacity(0.6)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ))
+                        .frame(width: 32, height: 32)
+                        .overlay(
+                            Image(systemName: "person.fill")
+                                .foregroundColor(.white)
+                                .font(.system(size: 14))
+                        )
+                }
+            }
             .task {
                 if let userId = authService.currentUser?.id {
                     await viewModel.loadEnrollments(learnerId: userId)
@@ -333,68 +422,171 @@ struct MyCoursesView: View {
     }
 }
 
-struct EnrolledCourseCard: View {
-    let course: Course
-    let enrollment: Enrollment
+// MARK: - Premium Course Card
+
+struct PremiumCourseCard: View {
+    let courseData: CourseCardData
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
+            // Top Row - Category and Icon
             HStack {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(course.title)
-                        .font(.headline)
-                    
-                    Text(course.courseDescription)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .lineLimit(2)
-                }
+                Text(courseData.category)
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundColor(courseData.categoryColor)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(courseData.categoryColor.opacity(0.15))
+                    .cornerRadius(8)
                 
                 Spacer()
+                
+                ZStack {
+                    Circle()
+                        .fill(courseData.categoryColor.opacity(0.15))
+                        .frame(width: 36, height: 36)
+                    
+                    Image(systemName: courseData.iconName)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(courseData.categoryColor)
+                }
             }
             
-            // Progress Bar
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text("Progress")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    Spacer()
-                    Text("\(Int(enrollment.completionPercentage))%")
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.ltmsPrimary)
-                }
-                
-                GeometryReader { geometry in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.gray.opacity(0.2))
-                        
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.ltmsPrimary)
-                            .frame(width: geometry.size.width * (enrollment.completionPercentage / 100))
+            // Middle Section - Title and Subtitle
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .top, spacing: 8) {
+                    Text(courseData.title)
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .foregroundColor(.primary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                    
+                    if courseData.isCompleted {
+                        ZStack {
+                            Circle()
+                                .fill(Color.green)
+                                .frame(width: 20, height: 20)
+                            
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(.white)
+                        }
                     }
                 }
-                .frame(height: 8)
+                
+                if let completionDate = courseData.completionDate {
+                    Text("Completed on \(completionDate)")
+                        .font(.system(size: 14, design: .rounded))
+                        .foregroundColor(.secondary)
+                } else {
+                    Text(courseData.subtitle)
+                        .font(.system(size: 14, design: .rounded))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
             }
             
+            // Progress Section
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Progress")
+                        .font(.system(size: 12, design: .rounded))
+                        .foregroundColor(.secondary)
+                    
+                    Spacer()
+                    
+                    Text("\(Int(courseData.progress * 100))%")
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .foregroundColor(courseData.isCompleted ? .green : courseData.categoryColor)
+                }
+                
+                // Progress Bar
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(Color.gray.opacity(0.15))
+                        .frame(height: 6)
+                    
+                    Capsule()
+                        .fill(courseData.isCompleted ? Color.green : courseData.categoryColor)
+                        .frame(width: CGFloat(courseData.progress) * (UIScreen.main.bounds.width - 64), height: 6)
+                }
+            }
+            
+            // Bottom Row - Time and Action Button
             HStack {
-                Label("\(course.durationHours)h", systemImage: "clock")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                if courseData.isCompleted {
+                    HStack(spacing: 4) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 14))
+                            .foregroundColor(.secondary)
+                        
+                        Text("Certified")
+                            .font(.system(size: 13, design: .rounded))
+                            .foregroundColor(.secondary)
+                    }
+                } else {
+                    HStack(spacing: 4) {
+                        Image(systemName: "clock")
+                            .font(.system(size: 14))
+                            .foregroundColor(.secondary)
+                        
+                        Text(courseData.remainingTime)
+                            .font(.system(size: 13, design: .rounded))
+                            .foregroundColor(.secondary)
+                    }
+                }
                 
                 Spacer()
                 
-                Text("Continue Learning")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.ltmsPrimary)
+                // Action Button
+                if courseData.isCompleted {
+                    HStack(spacing: 6) {
+                        Text("View Certificate")
+                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .foregroundColor(.primary)
+                        
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.primary)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(Color.gray.opacity(0.15))
+                    .cornerRadius(20)
+                } else if courseData.progress > 0 {
+                    HStack(spacing: 6) {
+                        Text("Continue")
+                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .foregroundColor(.white)
+                        
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .background(Color.blue)
+                    .cornerRadius(20)
+                } else {
+                    HStack(spacing: 6) {
+                        Text("Start")
+                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .foregroundColor(.blue)
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 9)
+                    .background(Color.clear)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(Color.blue, lineWidth: 2)
+                    )
+                }
             }
         }
-        .padding()
-        .background(Color.ltmsCardBackground)
-        .cornerRadius(16)
+        .padding(20)
+        .background(Color.white)
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
     }
 }
 
