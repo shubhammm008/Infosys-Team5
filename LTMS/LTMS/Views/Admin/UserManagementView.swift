@@ -203,13 +203,15 @@ struct UserRow: View {
                     .foregroundColor(.secondary)
                 
                 HStack(spacing: 8) {
-                    Text(user.role.displayName)
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(roleColor.opacity(0.2))
-                        .foregroundColor(roleColor)
-                        .cornerRadius(6)
+                    if viewModel.selectedRole == nil {
+                        Text(user.role.displayName)
+                            .font(.caption)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(roleColor.opacity(0.2))
+                            .foregroundColor(roleColor)
+                            .cornerRadius(6)
+                    }
                     
                     if !user.isActive {
                         Text("Inactive")

@@ -64,12 +64,13 @@ struct UnifiedAuthView: View {
                         .padding(.top, 40)
                         
                         // Toggle between Login and Sign Up
-                        Picker("Auth Mode", selection: $showingSignUp) {
-                            Text("Login").tag(false)
-                            Text("Sign Up").tag(true)
-                        }
-                        .pickerStyle(.segmented)
-                        .padding(.horizontal, 30)
+//                        Picker("Auth Mode", selection: $showingSignUp) {
+//                            Text("Login").tag(false)
+//                            Text("Sign Up").tag(true)
+//                        }
+//                        .pickerStyle(.segmented)
+//                        .padding(.horizontal, 30)
+
                         
                         // Form
                         VStack(spacing: 20) {
@@ -82,8 +83,10 @@ struct UnifiedAuthView: View {
                             }
                         }
                         .padding(.horizontal, 30)
-                        
+                        authModeSwitch
                         Spacer()
+                        
+                        
                     }
                 }
             }
@@ -301,6 +304,40 @@ struct UnifiedAuthView: View {
         print("🔵 UnifiedAuthView: Create Account clicked - showing OTP screen")
         showOTPView = true
     }
+    // MARK: - Apple-style Auth Mode Switch
+
+    private var authModeSwitch: some View {
+        HStack(spacing: 6) {
+            if showingSignUp {
+                Text("Already have an account?")
+                    .foregroundColor(.secondary)
+
+                Button {
+                    withAnimation(.easeInOut) {
+                        showingSignUp = false
+                    }
+                } label: {
+                    Text("Sign In")
+                        .fontWeight(.semibold)
+                }
+            } else {
+                Text("Don’t have an account?")
+                    .foregroundColor(.secondary)
+
+                Button {
+                    withAnimation(.easeInOut) {
+                        showingSignUp = true
+                    }
+                } label: {
+                    Text("Sign Up")
+                        .fontWeight(.semibold)
+                }
+            }
+        }
+        .font(.subheadline)
+        .padding(.top, 10)
+    }
+
 }
 
 #Preview {
