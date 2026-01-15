@@ -88,6 +88,9 @@ struct AdminHomeView: View {
     @State private var showUserManagement = false
     @State private var showCourseManagement = false
     @State private var showEnrollmentManagement = false
+    @State private var pendingPublishCount = 2
+    @State private var draftCoursesCount = 1
+
 
 
     
@@ -128,9 +131,45 @@ struct AdminHomeView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     
+                    
+                    // MARK: - Needs Attention
+                    if pendingPublishCount > 0 || draftCoursesCount > 0 {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Needs Attention")
+                                .font(.headline)
+
+                            VStack(spacing: 8) {
+
+                                if pendingPublishCount > 0 {
+                                    AttentionRow(
+                                        title: "Courses awaiting approval",
+                                        subtitle: "Publish requests from educators",
+                                        count: pendingPublishCount,
+                                        icon: "clock.fill"
+                                    ) {
+                                        showCourseManagement = true
+                                    }
+                                }
+
+                                if draftCoursesCount > 0 {
+                                    AttentionRow(
+                                        title: "Draft courses",
+                                        subtitle: "Created but not published",
+                                        count: draftCoursesCount,
+                                        icon: "doc.text.fill"
+                                    ) {
+                                        showCourseManagement = true
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    
+                    
                     // MARK: - Attention Required
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Overview")
+                        Text("System Overview")
                             .font(.headline)
                         
                         LazyVGrid(
@@ -218,6 +257,53 @@ struct AdminHomeView: View {
 
 // MARK: - Supporting Views
 
+struct AttentionRow: View {
+    let title: String
+    let subtitle: String
+    let count: Int
+    let icon: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .foregroundColor(.orange)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                Text("\(count)")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(Color.orange.opacity(0.2))
+                    .foregroundColor(.orange)
+                    .cornerRadius(10)
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding()
+            .background(Color.white)
+            .cornerRadius(12)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+
 struct AttentionCard: View {
     let title: String
     let value: Int
@@ -232,9 +318,9 @@ struct AttentionCard: View {
                     Image(systemName: icon)
                         .foregroundColor(color)
                     Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+//                    Image(systemName: "chevron.right")
+//                        .font(.caption)
+//                        .foregroundColor(.secondary)
                 }
                 
                 Text("\(value)")
