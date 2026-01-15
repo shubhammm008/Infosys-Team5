@@ -143,6 +143,7 @@ struct UserManagementView: View {
                         }
                     }
                     .listStyle(.plain)
+                    .scrollContentBackground(.hidden) // Fix: Remove default system background
                     .refreshable {
                         await viewModel.loadUsers()
                     }

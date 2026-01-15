@@ -60,11 +60,20 @@ struct AnalyticsDashboardView: View {
 
     
     var body: some View {
-        NavigationView {
-            ScrollView {
+        NavigationStack {
+            ZStack {
+                Color.dashboardBg.ignoresSafeArea()
+                
                 if viewModel.isLoading {
-                    ProgressView()
-                        .padding()
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                            .tint(.accentPrimary)
+                        Text("Loading Analytics...")
+                            .foregroundColor(.dashboardTextSecondary)
+                            .font(.subheadline)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if let error = viewModel.errorMessage {
                     VStack(spacing: 16) {
                         Image(systemName: "exclamationmark.triangle")
@@ -78,43 +87,33 @@ struct AnalyticsDashboardView: View {
                             }
                         }
                         .buttonStyle(.borderedProminent)
+                        .tint(.accentPrimary)
                     }
                     .padding()
                 } else {
-                    VStack(spacing: 24) {
-                        // Platform Overview
-                        // Platform Usage (TOP PRIORITY)
-                        platformUsageChart
-                        if !viewModel.enrollmentTrends.isEmpty {
+                    ScrollView {
+                        VStack(spacing: 24) {
+                            // Platform Overview
+                            // Platform Usage (TOP PRIORITY)
                             platformUsageChart
+                            if !viewModel.enrollmentTrends.isEmpty {
+                                platformUsageChart
+                            }
+                            
+                            // Popular Courses
+                            if !viewModel.popularCourses.isEmpty {
+                                popularCoursesSection
+                            }
+                            
+                            // Course Completion Stats
+                            if !viewModel.courseCompletionStats.isEmpty {
+                                courseCompletionSection
+                            }
                         }
-
-
-//                        if let metrics = viewModel.platformMetrics {
-//                            platformOverviewSection(metrics: metrics)
-//                        }
-                        
-                        // Enrollment Trends
-//                        if !viewModel.enrollmentTrends.isEmpty {
-//                            enrollmentTrendsSection
-//                        }
-                        
-                        // Popular Courses
-                        if !viewModel.popularCourses.isEmpty {
-                            popularCoursesSection
-                        }
-                        
-                        // Course Completion Stats
-                        if !viewModel.courseCompletionStats.isEmpty {
-                            courseCompletionSection
-                        }
-                        
-
+                        .padding()
                     }
-                    .padding()
                 }
             }
-            .background(Color.dashboardBg)
             .navigationTitle("Analytics")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -132,6 +131,7 @@ struct AnalyticsDashboardView: View {
                 print("Enrollment trends:", viewModel.enrollmentTrends.count)
             }
         }
+        .preferredColorScheme(.dark)
     }
     
     private func loadData() async {

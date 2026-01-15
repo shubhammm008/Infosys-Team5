@@ -17,7 +17,7 @@ struct LoginView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.ltmsBackground
+                Color.dashboardBg
                     .ignoresSafeArea()
                 
                 VStack(spacing: 30) {
@@ -25,63 +25,37 @@ struct LoginView: View {
                     VStack(spacing: 12) {
                         Image(systemName: "graduationcap.circle.fill")
                             .font(.system(size: 80))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [.ltmsPrimary, .ltmsSecondary],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
+                            .foregroundStyle(Color.accentPrimary)
                         
                         Text("LTMS")
                             .font(.system(size: 40, weight: .bold, design: .rounded))
-                            .foregroundColor(.primary)
+                            .foregroundColor(.dashboardTextPrimary)
                         
                         Text("Learning & Training Management System")
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.dashboardTextSecondary)
                     }
                     .padding(.top, 40)
                     
                     // Login Form
                     VStack(spacing: 20) {
                         // Email Field
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Email")
-                                .font(.subheadline)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.secondary)
-                            
-                            HStack {
-                                Image(systemName: "envelope.fill")
-                                    .foregroundColor(.secondary)
-                                TextField("Enter your email", text: $email)
-                                    .textContentType(.emailAddress)
-                                    .autocapitalization(.none)
-                                    .keyboardType(.emailAddress)
-                            }
-                            .padding()
-                            .background(Color.ltmsCardBackground)
-                            .cornerRadius(12)
-                        }
+                        LTMSInputField(
+                            title: "Email",
+                            icon: "envelope.fill",
+                            placeholder: "Enter your email",
+                            text: $email,
+                            keyboardType: .emailAddress
+                        )
                         
                         // Password Field
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Password")
-                                .font(.subheadline)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.secondary)
-                            
-                            HStack {
-                                Image(systemName: "lock.fill")
-                                    .foregroundColor(.secondary)
-                                SecureField("Enter your password", text: $password)
-                                    .textContentType(.password)
-                            }
-                            .padding()
-                            .background(Color.ltmsCardBackground)
-                            .cornerRadius(12)
-                        }
+                        LTMSInputField(
+                            title: "Password",
+                            icon: "lock.fill",
+                            placeholder: "Enter your password",
+                            text: $password,
+                            isSecure: true
+                        )
                         
                         // Login Button
                         Button(action: handleLogin) {
@@ -96,13 +70,7 @@ struct LoginView: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(
-                                LinearGradient(
-                                    colors: [.ltmsPrimary, .ltmsSecondary],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
+                            .background(Color.accentPrimary)
                             .foregroundColor(.white)
                             .cornerRadius(12)
                         }
@@ -115,7 +83,7 @@ struct LoginView: View {
                         } label: {
                             Text("Don't have an account? **Sign Up**")
                                 .font(.subheadline)
-                                .foregroundColor(.ltmsPrimary)
+                                .foregroundColor(.accentPrimary)
                         }
                     }
                     .padding(.horizontal, 30)
@@ -123,6 +91,7 @@ struct LoginView: View {
                     Spacer()
                 }
             }
+            .preferredColorScheme(.dark)
             .alert("Error", isPresented: $showError) {
                 Button("OK", role: .cancel) {}
             } message: {

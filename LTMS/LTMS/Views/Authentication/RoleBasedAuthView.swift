@@ -21,7 +21,7 @@ struct RoleBasedAuthView: View {
                 }
                 .pickerStyle(.segmented)
                 .padding()
-                .background(Color.ltmsBackground)
+                .background(Color.dashboardBg)
             }
             
             // Content
@@ -31,6 +31,7 @@ struct RoleBasedAuthView: View {
                 RoleBasedLoginView(role: role)
             }
         }
+        .preferredColorScheme(.dark)
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -48,11 +49,11 @@ struct RoleBasedLoginView: View {
     var roleColor: [Color] {
         switch role {
         case .educator:
-            return [.ltmsPrimary, .ltmsSecondary]
+            return [Color.accentPrimary, Color.accentPrimary.opacity(0.8)]
         case .learner:
-            return [.green, .teal]
+            return [Color.accentSuccess, Color.accentSuccess.opacity(0.8)]
         case .admin:
-            return [.purple, .purple.opacity(0.7)]
+            return [Color.accentSecondary, Color.accentSecondary.opacity(0.8)]
         }
     }
     
@@ -69,7 +70,7 @@ struct RoleBasedLoginView: View {
     
     var body: some View {
         ZStack {
-            Color.ltmsBackground
+            Color.dashboardBg
                 .ignoresSafeArea()
             
             ScrollView {
@@ -88,53 +89,31 @@ struct RoleBasedLoginView: View {
                         
                         Text("\(role.displayName) Login")
                             .font(.system(size: 36, weight: .bold, design: .rounded))
-                            .foregroundColor(.primary)
+                            .foregroundColor(.dashboardTextPrimary)
                         
                         Text("Welcome back!")
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.dashboardTextSecondary)
                     }
                     .padding(.top, 40)
                     
                     // Login Form
                     VStack(spacing: 20) {
-                        // Email Field
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Email")
-                                .font(.subheadline)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.secondary)
-                            
-                            HStack {
-                                Image(systemName: "envelope.fill")
-                                    .foregroundColor(.secondary)
-                                TextField("Enter your email", text: $email)
-                                    .textContentType(.emailAddress)
-                                    .autocapitalization(.none)
-                                    .keyboardType(.emailAddress)
-                            }
-                            .padding()
-                            .background(Color.ltmsCardBackground)
-                            .cornerRadius(12)
-                        }
+                        LTMSInputField(
+                            title: "Email",
+                            icon: "envelope.fill",
+                            placeholder: "Enter your email",
+                            text: $email,
+                            keyboardType: .emailAddress
+                        )
                         
-                        // Password Field
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Password")
-                                .font(.subheadline)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.secondary)
-                            
-                            HStack {
-                                Image(systemName: "lock.fill")
-                                    .foregroundColor(.secondary)
-                                SecureField("Enter your password", text: $password)
-                                    .textContentType(.password)
-                            }
-                            .padding()
-                            .background(Color.ltmsCardBackground)
-                            .cornerRadius(12)
-                        }
+                        LTMSInputField(
+                            title: "Password",
+                            icon: "lock.fill",
+                            placeholder: "Enter your password",
+                            text: $password,
+                            isSecure: true
+                        )
                         
                         // Login Button
                         Button(action: handleLogin) {
@@ -166,20 +145,20 @@ struct RoleBasedLoginView: View {
                         if role == .educator {
                             HStack(spacing: 8) {
                                 Image(systemName: "info.circle.fill")
-                                    .foregroundColor(.orange)
+                                    .foregroundColor(.accentWarning)
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Educator Access")
                                         .font(.caption)
                                         .fontWeight(.semibold)
-                                        .foregroundColor(.primary)
+                                        .foregroundColor(.dashboardTextPrimary)
                                     Text("Educator accounts are created by administrators only")
                                         .font(.caption2)
-                                        .foregroundColor(.secondary)
+                                        .foregroundColor(.dashboardTextSecondary)
                                 }
                                 Spacer()
                             }
                             .padding()
-                            .background(Color.orange.opacity(0.1))
+                            .background(Color.accentWarning.opacity(0.1))
                             .cornerRadius(10)
                         }
                     }
@@ -271,7 +250,7 @@ struct RoleBasedSignUpView: View {
             }
         } else {
             ZStack {
-                Color.ltmsBackground
+                Color.dashboardBg
                     .ignoresSafeArea()
                 
                 ScrollView {
@@ -290,10 +269,11 @@ struct RoleBasedSignUpView: View {
                         
                         Text("Create \(role.displayName) Account")
                             .font(.system(size: 28, weight: .bold, design: .rounded))
+                            .foregroundColor(.dashboardTextPrimary)
                         
                         Text("Join LTMS as a \(role.displayName)")
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.dashboardTextSecondary)
                     }
                     .padding(.top, 20)
                     
@@ -301,14 +281,14 @@ struct RoleBasedSignUpView: View {
                     VStack(spacing: 18) {
                         // Name Fields
                         HStack(spacing: 12) {
-                            FormField(
+                            LTMSInputField(
                                 title: "First Name",
                                 icon: "person.fill",
                                 placeholder: "John",
                                 text: $firstName
                             )
                             
-                            FormField(
+                            LTMSInputField(
                                 title: "Last Name",
                                 icon: "person.fill",
                                 placeholder: "Doe",
@@ -317,7 +297,7 @@ struct RoleBasedSignUpView: View {
                         }
                         
                         // Email
-                        FormField(
+                        LTMSInputField(
                             title: "Email",
                             icon: "envelope.fill",
                             placeholder: "john.doe@example.com",
@@ -326,38 +306,40 @@ struct RoleBasedSignUpView: View {
                         )
                         
                         // Password
-                        SecureFormField(
+                        LTMSInputField(
                             title: "Password",
                             icon: "lock.fill",
                             placeholder: "At least 6 characters",
-                            text: $password
+                            text: $password,
+                            isSecure: true
                         )
                         
                         // Confirm Password
-                        SecureFormField(
+                        LTMSInputField(
                             title: "Confirm Password",
                             icon: "lock.fill",
                             placeholder: "Re-enter password",
-                            text: $confirmPassword
+                            text: $confirmPassword,
+                            isSecure: true
                         )
                         
                         // Testing Info Banner
                         HStack(spacing: 8) {
                             Image(systemName: "info.circle.fill")
-                                .foregroundColor(.blue)
+                                .foregroundColor(.accentPrimary)
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Testing Mode")
                                     .font(.caption)
                                     .fontWeight(.semibold)
-                                    .foregroundColor(.primary)
+                                    .foregroundColor(.dashboardTextPrimary)
                                 Text("Use an email ending with @test.com for testing")
                                     .font(.caption2)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(.dashboardTextSecondary)
                             }
                             Spacer()
                         }
                         .padding()
-                        .background(Color.blue.opacity(0.1))
+                        .background(Color.accentPrimary.opacity(0.1))
                         .cornerRadius(10)
                         
                         // Sign Up Button

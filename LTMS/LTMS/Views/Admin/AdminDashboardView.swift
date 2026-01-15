@@ -42,6 +42,7 @@ struct AdminDashboardView: View {
                 .tag(2)
         }
         .tint(.accentPrimary)   // ✅ education green
+        .preferredColorScheme(.dark)
     }
 }
 
@@ -303,6 +304,12 @@ struct StatCard: View {
                 )
             )
             .cornerRadius(18)
+            .overlay(
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.textOnAccent.opacity(0.5))
+                    .padding()
+                , alignment: .topTrailing
+            )
         }
         .buttonStyle(.plain)
     }
@@ -335,6 +342,7 @@ struct PrimaryActionButton: View {
 struct AdminProfileView: View {
     @StateObject private var authService = SupabaseAuthService.shared
     @State private var showLogoutAlert = false
+    @Environment(\.dismiss) var dismiss
 
     
     var body: some View {
@@ -411,9 +419,8 @@ struct AdminProfileView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") {
-                        // Needs a binding to dismiss, or use Environment dismiss
+                        dismiss()
                     }
-                    .disabled(true) // Just a placeholder, actually we can use @Environment(\.dismiss)
                 }
             }
         }

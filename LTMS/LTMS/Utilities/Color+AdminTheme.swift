@@ -9,36 +9,32 @@ import SwiftUI
 
 extension Color {
 
-    // MARK: - Backgrounds
-    // Soft academic paper tone
+    // MARK: - Dark Theme
     static let dashboardBg = LinearGradient(
         colors: [
-            Color(hex: "#FBF6F3"), // warm off-white
-            Color(hex: "#F2E9E6")  // subtle cream
+            Color(red: 12/255, green: 14/255, blue: 28/255),
+            Color(red: 18/255, green: 20/255, blue: 40/255)
         ],
         startPoint: .top,
         endPoint: .bottom
     )
 
-    // MARK: - Card Surfaces
-    static let dashboardCard = Color(hex: "#ffffff")      // reading surface (warm off-white)
-    static let dashboardCardAlt = Color(hex: "#F7EFEA")   // grouped sections
+    static let dashboardCard = Color(red: 24/255, green: 27/255, blue: 54/255)
+    static let dashboardCardAlt = Color(red: 32/255, green: 36/255, blue: 78/255)
 
-    // MARK: - Text
-    static let dashboardTextPrimary = Color(hex: "#2B1E1E")   // deep wine-black
-    static let dashboardTextSecondary = Color(hex: "#6B4A4A") // muted maroon
+    static let dashboardTextPrimary = Color.white
+    static let dashboardTextSecondary = Color.white.opacity(0.65)
 
-    // MARK: - Brand Accents (from design you shared)
-    static let accentPrimary = Color(hex: "#7A2E3A")   // main maroon
-    static let accentSecondary = Color(hex: "#9C4A55") // lighter wine
-
-    // MARK: - Status
-    static let accentSuccess = Color(hex: "#4F8A6F")   // calm green
-    static let accentWarning = Color(hex: "#C08A5A")   // warm alert
-    static let accentHighlight = Color(hex: "#F2E0D8") // subtle emphasis
-
-    // MARK: - Text Utils
-    static let textOnAccent = Color(hex: "#FEF8F4") // warm white for dark backgrounds
+    static let accentBlue = Color(red: 88/255, green: 108/255, blue: 255/255)
+    static let accentPurple = Color(red: 132/255, green: 100/255, blue: 255/255)
+    
+    // MARK: - Legacy Compatibility Aliases (Mapped to new theme)
+    static let accentPrimary = accentBlue
+    static let accentSecondary = accentPurple
+    static let accentSuccess = accentBlue // Mapped to Blue for consistency in limited palette
+    static let accentWarning = accentPurple // Mapped to Purple for consistency
+    static let accentHighlight = accentPurple.opacity(0.3)
+    static let textOnAccent = dashboardTextPrimary
 }
 
 // MARK: - Hex Support
