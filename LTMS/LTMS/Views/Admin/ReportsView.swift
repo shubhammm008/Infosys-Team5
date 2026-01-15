@@ -141,7 +141,7 @@ struct ReportsView: View {
 
             }
 
-            .background(Color(.systemGroupedBackground))
+            .background(Color.dashboardBg)
 
             .navigationTitle("Generate Reports")
 
@@ -219,14 +219,14 @@ struct ReportsView: View {
 
                         Image(systemName: viewModel.selectedReportType.icon)
 
-                            .foregroundColor(.blue)
+                            .foregroundColor(.accentPrimary)
 
 
 
 
                         Text(viewModel.selectedReportType.rawValue)
 
-                            .foregroundColor(.primary)
+                            .foregroundColor(.dashboardTextPrimary)
 
 
 
@@ -238,7 +238,7 @@ struct ReportsView: View {
 
                         Image(systemName: "chevron.down")
 
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.dashboardTextSecondary)
 
                             .font(.caption)
 
@@ -248,7 +248,7 @@ struct ReportsView: View {
 
                     .frame(maxWidth: .infinity)   // ✅ NOW ACTUALLY FULL WIDTH
 
-                    .background(Color(.secondarySystemBackground))
+                    .background(Color.dashboardCardAlt)
 
                     .cornerRadius(12)
 
@@ -267,7 +267,7 @@ struct ReportsView: View {
 
             .padding()
 
-            .background(Color(.systemBackground))
+            .background(Color.dashboardCard)
 
             .cornerRadius(16)
 
@@ -320,17 +320,17 @@ struct ReportsView: View {
 
                             Text("Start Date")
 
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.dashboardTextSecondary)
 
                             Spacer()
 
                             Text(formatDate(viewModel.startDate))
 
-                                .foregroundColor(.primary)
+                                .foregroundColor(.dashboardTextPrimary)
 
                             Image(systemName: showStartDatePicker ? "chevron.up" : "chevron.down")
 
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.dashboardTextSecondary)
 
                                 .font(.caption)
 
@@ -338,7 +338,7 @@ struct ReportsView: View {
 
                         .padding()
 
-                        .background(Color(.secondarySystemBackground))
+                        .background(Color.dashboardCardAlt)
 
                         .cornerRadius(8)
 
@@ -408,17 +408,17 @@ struct ReportsView: View {
 
                             Text("End Date")
 
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.dashboardTextSecondary)
 
                             Spacer()
 
                             Text(formatDate(viewModel.endDate))
 
-                                .foregroundColor(.primary)
+                                .foregroundColor(.dashboardTextPrimary)
 
                             Image(systemName: showEndDatePicker ? "chevron.up" : "chevron.down")
 
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.dashboardTextSecondary)
 
                                 .font(.caption)
 
@@ -426,7 +426,7 @@ struct ReportsView: View {
 
                         .padding()
 
-                        .background(Color(.secondarySystemBackground))
+                        .background(Color.dashboardCardAlt)
 
                         .cornerRadius(8)
 
@@ -468,7 +468,7 @@ struct ReportsView: View {
 
         .padding()
 
-        .background(Color(.systemBackground))
+        .background(Color.dashboardBg)
 
         .cornerRadius(16)
 
@@ -500,7 +500,7 @@ struct ReportsView: View {
 
                             Image(systemName: "calendar")
 
-                                .foregroundColor(.purple)
+                                .foregroundColor(.accentSecondary)
 
                             Text("Period: \(formatDate(viewModel.startDate)) - \(formatDate(viewModel.endDate))")
 
@@ -512,7 +512,7 @@ struct ReportsView: View {
 
                         .frame(maxWidth: .infinity, alignment: .leading)
 
-                        .background(Color(.secondarySystemBackground))
+                        .background(Color.dashboardCardAlt)
 
                         .cornerRadius(12)
 
@@ -526,7 +526,7 @@ struct ReportsView: View {
 
                         Image(systemName: "doc.text")
 
-                            .foregroundColor(.green)
+                            .foregroundColor(.accentSuccess)
 
                         Text("Format: CSV (Excel compatible)")
 
@@ -538,7 +538,7 @@ struct ReportsView: View {
 
                     .frame(maxWidth: .infinity, alignment: .leading)
 
-                    .background(Color(.secondarySystemBackground))
+                    .background(Color.dashboardCardAlt)
 
                     .cornerRadius(12)
 
@@ -550,13 +550,13 @@ struct ReportsView: View {
 
                         Image(systemName: "info.circle")
 
-                            .foregroundColor(.orange)
+                            .foregroundColor(.accentWarning)
 
                         Text("The generated report will be saved to your device and can be shared via the system share sheet.")
 
                             .font(.caption)
 
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.dashboardTextSecondary)
 
                     }
 
@@ -570,7 +570,7 @@ struct ReportsView: View {
 
             .padding()
 
-            .background(Color(.systemBackground))
+            .background(Color.dashboardCard)
 
             .cornerRadius(16)
 
@@ -602,7 +602,7 @@ struct ReportsView: View {
 
                     ProgressView()
 
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .progressViewStyle(CircularProgressViewStyle(tint: .textOnAccent))
 
                     Text("Generating...")
 
@@ -620,9 +620,9 @@ struct ReportsView: View {
 
             .padding()
 
-            .background(Color.blue)
+            .background(Color.accentPrimary)
 
-            .foregroundColor(.white)
+            .foregroundColor(.textOnAccent)
 
             .cornerRadius(12)
 
@@ -669,7 +669,7 @@ struct ReportTypeCard: View {
 
                 .font(.title2)
 
-                .foregroundColor(isSelected ? .blue : .gray)
+                .foregroundColor(isSelected ? .accentPrimary : .dashboardTextSecondary)
 
                 .frame(width: 40)
 
@@ -689,7 +689,7 @@ struct ReportTypeCard: View {
 
                     .font(.caption)
 
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.dashboardTextSecondary)
 
                     .lineLimit(2)
 
@@ -705,7 +705,7 @@ struct ReportTypeCard: View {
 
                 Image(systemName: "checkmark.circle.fill")
 
-                    .foregroundColor(.blue)
+                    .foregroundColor(.accentPrimary)
 
                     .font(.title3)
 
@@ -715,13 +715,13 @@ struct ReportTypeCard: View {
 
         .padding()
 
-        .background(isSelected ? Color.blue.opacity(0.1) : Color(.secondarySystemBackground))
+        .background(isSelected ? Color.accentPrimary.opacity(0.1) : Color.dashboardCardAlt)
 
         .overlay(
 
             RoundedRectangle(cornerRadius: 12)
 
-                .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                .stroke(isSelected ? Color.accentPrimary : Color.clear, lineWidth: 2)
 
         )
 

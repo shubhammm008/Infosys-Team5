@@ -216,19 +216,19 @@ struct EnrollmentManagementView: View {
             // Search bar
             HStack {
                 Image(systemName: "magnifyingglass")
-                    .foregroundColor(.gray)
+                    .foregroundColor(.dashboardTextSecondary)
                 TextField("Search learners...", text: $viewModel.searchText)
                     .textFieldStyle(.plain)
                 
                 if !viewModel.searchText.isEmpty {
                     Button(action: { viewModel.searchText = "" }) {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.gray)
+                            .foregroundColor(.dashboardTextSecondary)
                     }
                 }
             }
             .padding()
-            .background(Color(.systemGray6))
+            .background(Color.dashboardCardAlt)
             
             // Stats header
             if let course = viewModel.selectedCourse {
@@ -236,27 +236,27 @@ struct EnrollmentManagementView: View {
                     StatBox(
                         title: "Total Enrolled",
                         value: "\(viewModel.enrollmentDetails.count)",
-                        color: .blue
+                        color: .accentPrimary
                     )
                     
                     if let maxEnrollments = course.maxEnrollments {
                         StatBox(
                             title: "Capacity",
                             value: "\(viewModel.enrollmentDetails.count)/\(maxEnrollments)",
-                            color: .orange
+                            color: .accentWarning
                         )
                     }
                     
                     StatBox(
                         title: "Completed",
                         value: "\(viewModel.enrollmentDetails.filter { $0.enrollment.status == .completed }.count)",
-                        color: .green
+                        color: .accentSuccess
                     )
                     
                     StatBox(
                         title: "Active",
                         value: "\(viewModel.enrollmentDetails.filter { $0.enrollment.status == .active }.count)",
-                        color: .purple
+                        color: .accentSecondary
                     )
                 }
                 .padding()
@@ -272,10 +272,10 @@ struct EnrollmentManagementView: View {
                 VStack(spacing: 16) {
                     Image(systemName: "person.3.slash")
                         .font(.system(size: 60))
-                        .foregroundColor(.gray)
+                        .foregroundColor(.dashboardTextSecondary)
                     Text(viewModel.searchText.isEmpty ? "No enrollments yet" : "No matching learners found")
                         .font(.headline)
-                        .foregroundColor(.gray)
+                        .foregroundColor(.dashboardTextSecondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -317,7 +317,7 @@ struct EnrollmentManagementView: View {
             List {
                 if viewModel.availableUsers.isEmpty {
                     Text("All learners are already enrolled in this course")
-                        .foregroundColor(.gray)
+                        .foregroundColor(.dashboardTextSecondary)
                         .italic()
                 } else {
                     ForEach(viewModel.availableUsers) { user in
@@ -340,11 +340,11 @@ struct EnrollmentManagementView: View {
                                         .font(.headline)
                                     Text(user.email)
                                         .font(.caption)
-                                        .foregroundColor(.gray)
+                                        .foregroundColor(.dashboardTextSecondary)
                                 }
                                 Spacer()
                                 Image(systemName: "plus.circle.fill")
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(.accentPrimary)
                             }
                         }
                     }
@@ -376,15 +376,15 @@ struct CourseSelectionCard: View {
             HStack {
                 Label(course.level.displayName, systemImage: "chart.bar")
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(.dashboardTextSecondary)
             }
         }
         .frame(width: 200, height: 80)
         .padding()
-        .background(isSelected ? Color.blue.opacity(0.1) : Color(.systemGray6))
+        .background(isSelected ? Color.accentPrimary.opacity(0.1) : Color.dashboardCard)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                .stroke(isSelected ? Color.accentPrimary : Color.clear, lineWidth: 2)
         )
         .cornerRadius(12)
     }
@@ -403,11 +403,11 @@ struct StatBox: View {
                 .foregroundColor(color)
             Text(title)
                 .font(.caption)
-                .foregroundColor(.gray)
+                .foregroundColor(.dashboardTextSecondary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
-        .background(Color(.systemGray6))
+        .background(Color.dashboardCardAlt)
         .cornerRadius(8)
     }
 }
@@ -428,7 +428,7 @@ struct EnrollmentRow: View {
                         .font(.headline)
                     Text(user.email)
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(.dashboardTextSecondary)
                 }
                 
                 Spacer()
@@ -438,25 +438,25 @@ struct EnrollmentRow: View {
                     
                     Text("\(Int(enrollment.completionPercentage))% Complete")
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(.dashboardTextSecondary)
                 }
             }
             
             HStack(spacing: 16) {
                 Label(formatDate(enrollment.enrollmentDate), systemImage: "calendar")
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(.dashboardTextSecondary)
                 
                 if let lastAccessed = enrollment.lastAccessed {
                     Label("Last: \(formatDate(lastAccessed))", systemImage: "clock")
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(.dashboardTextSecondary)
                 }
                 
                 if let enrolledBy = enrollment.enrolledBy, enrolledBy != "self" {
                     Label("Admin enrolled", systemImage: "person.badge.key")
                         .font(.caption)
-                        .foregroundColor(.orange)
+                        .foregroundColor(.accentWarning)
                 }
                 
                 Spacer()
@@ -473,7 +473,7 @@ struct EnrollmentRow: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
-                        .foregroundColor(.blue)
+                        .foregroundColor(.accentPrimary)
                 }
             }
         }
@@ -505,18 +505,18 @@ struct StatusBadge: View {
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background(backgroundColor)
-            .foregroundColor(.white)
+            .foregroundColor(.textOnAccent)
             .cornerRadius(4)
     }
     
     private var backgroundColor: Color {
         switch status {
         case .active:
-            return .blue
+            return .accentPrimary
         case .completed:
-            return .green
+            return .accentSuccess
         case .dropped:
-            return .gray
+            return .dashboardTextSecondary
         }
     }
 }

@@ -79,7 +79,7 @@ struct CreateUserView: View {
 
                         Text("Educator")
 
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.dashboardTextSecondary)
 
                     }
 
@@ -93,7 +93,7 @@ struct CreateUserView: View {
 
                         Text("Auto-generated")
 
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.dashboardTextSecondary)
 
                     }
 
@@ -103,7 +103,7 @@ struct CreateUserView: View {
 
                         .font(.caption)
 
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.dashboardTextSecondary)
 
                 }
 
@@ -150,6 +150,8 @@ struct CreateUserView: View {
             .navigationTitle("Create Educator")
 
             .navigationBarTitleDisplayMode(.inline)
+            .scrollContentBackground(.hidden)
+            .background(Color.dashboardBg)
 
             .toolbar {
 

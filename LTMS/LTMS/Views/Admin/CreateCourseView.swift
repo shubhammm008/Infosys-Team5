@@ -81,7 +81,7 @@ struct CreateCourseView: View {
                                 Text("Start Date")
                                 Spacer()
                                 Text(dateTimeFormatter.string(from: scheduledStartDate))
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(.dashboardTextSecondary)
                             }
                         }
                         .sheet(isPresented: $showStartDatePicker) {
@@ -116,7 +116,7 @@ struct CreateCourseView: View {
                                 Text("End Date")
                                 Spacer()
                                 Text(dateTimeFormatter.string(from: scheduledEndDate))
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(.dashboardTextSecondary)
                             }
                         }
                         .sheet(isPresented: $showEndDatePicker) {
@@ -160,7 +160,7 @@ struct CreateCourseView: View {
                                 Text("Deadline")
                                 Spacer()
                                 Text(dateTimeFormatter.string(from: enrollmentDeadline))
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(.dashboardTextSecondary)
                             }
                         }
                         .sheet(isPresented: $showDeadlinePicker) {
@@ -225,6 +225,8 @@ struct CreateCourseView: View {
             }
             .navigationTitle("Create New Course")
             .navigationBarTitleDisplayMode(.inline)
+            .scrollContentBackground(.hidden)
+            .background(Color.dashboardBg)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {

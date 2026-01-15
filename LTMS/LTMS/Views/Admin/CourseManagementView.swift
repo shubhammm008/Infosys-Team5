@@ -54,11 +54,11 @@ struct CourseManagementView: View {
                 // Search Bar
                 HStack {
                     Image(systemName: "magnifyingglass")
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.dashboardTextSecondary)
                     TextField("Search courses...", text: $viewModel.searchText)
                 }
                 .padding()
-                .background(Color.ltmsCardBackground)
+                .background(Color.dashboardCard)
                 .cornerRadius(12)
                 .padding()
                 
@@ -72,10 +72,10 @@ struct CourseManagementView: View {
                     VStack(spacing: 12) {
                         Image(systemName: "book.slash")
                             .font(.system(size: 60))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.dashboardTextSecondary)
                         Text("No courses found")
                             .font(.headline)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.dashboardTextSecondary)
                         Button("Create Course") {
                             showCreateCourse = true
                         }
@@ -93,7 +93,7 @@ struct CourseManagementView: View {
                     }
                 }
             }
-            .background(Color.ltmsBackground)
+            .background(Color.dashboardBg)
             .navigationTitle("Course Management")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -131,7 +131,7 @@ struct CourseCard: View {
                     
                     Text(course.courseDescription)
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.dashboardTextSecondary)
                         .lineLimit(2)
                 }
                 
@@ -152,7 +152,7 @@ struct CourseCard: View {
                 } label: {
                     Image(systemName: "ellipsis.circle")
                         .font(.title3)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.dashboardTextSecondary)
                 }
             }
             
@@ -161,11 +161,11 @@ struct CourseCard: View {
                let educator = MockDataService.shared.getUserByEmail(educatorId) ?? MockDataService.shared.getUsers().first(where: { $0.id == educatorId }) {
                 HStack(spacing: 8) {
                     Image(systemName: "person.circle.fill")
-                        .foregroundColor(.purple)
+                        .foregroundColor(.accentSecondary)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Assigned to:")
                             .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.dashboardTextSecondary)
                         Text(educator.fullName)
                             .font(.caption)
                             .fontWeight(.medium)
@@ -173,7 +173,7 @@ struct CourseCard: View {
                 }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 6)
-                .background(Color.purple.opacity(0.1))
+                .background(Color.accentSecondary.opacity(0.1))
                 .cornerRadius(8)
             }
             
@@ -181,7 +181,7 @@ struct CourseCard: View {
             HStack(spacing: 16) {
                 Label("\(course.durationHours)h", systemImage: "clock")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.dashboardTextSecondary)
                 
                 Text(course.level.displayName)
                     .font(.caption)
@@ -196,16 +196,16 @@ struct CourseCard: View {
                         .font(.caption)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Color.green.opacity(0.2))
-                        .foregroundColor(.green)
+                        .background(Color.accentSuccess.opacity(0.2))
+                        .foregroundColor(.accentSuccess)
                         .cornerRadius(6)
                 } else {
                     Text("Draft")
                         .font(.caption)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Color.orange.opacity(0.2))
-                        .foregroundColor(.orange)
+                        .background(Color.accentWarning.opacity(0.1))
+                        .foregroundColor(.accentWarning)
                         .cornerRadius(6)
                 }
                 
@@ -227,10 +227,10 @@ struct CourseCard: View {
                         HStack(spacing: 8) {
                             Image(systemName: "calendar")
                                 .font(.caption)
-                                .foregroundColor(.blue)
+                                .foregroundColor(.accentPrimary)
                             Text("Scheduled: \(formatDate(startDate)) - \(formatDate(endDate))")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.dashboardTextSecondary)
                         }
                         
                         if !course.isCurrentlyAvailable && course.isPublished {
@@ -240,7 +240,7 @@ struct CourseCard: View {
                                 Text(availabilityStatus)
                                     .font(.caption2)
                             }
-                            .foregroundColor(.orange)
+                            .foregroundColor(.accentWarning)
                         }
                     }
                     
@@ -248,10 +248,10 @@ struct CourseCard: View {
                         HStack(spacing: 8) {
                             Image(systemName: "person.2.fill")
                                 .font(.caption)
-                                .foregroundColor(.purple)
+                                .foregroundColor(.accentSecondary)
                             Text("Max Enrollments: \(maxEnrollments)")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.dashboardTextSecondary)
                         }
                     }
                     
@@ -259,10 +259,10 @@ struct CourseCard: View {
                         HStack(spacing: 8) {
                             Image(systemName: "hourglass")
                                 .font(.caption)
-                                .foregroundColor(deadline > Date() ? .green : .red)
+                                .foregroundColor(deadline > Date() ? .accentSuccess : .accentSecondary)
                             Text("Enrollment \(course.enrollmentStatus): \(formatDate(deadline))")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.dashboardTextSecondary)
                         }
                     }
                 }
@@ -293,9 +293,9 @@ struct CourseCard: View {
     
     private var levelColor: Color {
         switch course.level {
-        case .beginner: return .green
-        case .intermediate: return .orange
-        case .advanced: return .red
+        case .beginner: return .accentSuccess
+        case .intermediate: return .accentWarning
+        case .advanced: return .accentSecondary
         }
     }
     

@@ -6,51 +6,7 @@
 import SwiftUI
 import Combine
 
-extension Color {
 
-    // MARK: - Backgrounds
-    // Soft academic paper tone
-    static let dashboardBg = LinearGradient(
-        colors: [
-            Color(hex: "#FBF6F3"), // warm off-white
-            Color(hex: "#F2E9E6")  // subtle cream
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
-    // MARK: - Card Surfaces
-    static let dashboardCard = Color(hex: "#FFFFFF")      // reading surface
-    static let dashboardCardAlt = Color(hex: "#F7EFEA")   // grouped sections
-
-    // MARK: - Text
-    static let dashboardTextPrimary = Color(hex: "#2B1E1E")   // deep wine-black
-    static let dashboardTextSecondary = Color(hex: "#6B4A4A") // muted maroon
-
-    // MARK: - Brand Accents (from design you shared)
-    static let accentPrimary = Color(hex: "#7A2E3A")   // main maroon
-    static let accentSecondary = Color(hex: "#9C4A55") // lighter wine
-
-    // MARK: - Status
-    static let accentSuccess = Color(hex: "#4F8A6F")   // calm green
-    static let accentWarning = Color(hex: "#C08A5A")   // warm alert
-    static let accentHighlight = Color(hex: "#F2E0D8") // subtle emphasis
-}
-
-// MARK: - Hex Support
-extension Color {
-    init(hex: String) {
-        let hex = hex.replacingOccurrences(of: "#", with: "")
-        var rgb: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&rgb)
-
-        self.init(
-            red: Double((rgb >> 16) & 0xFF) / 255,
-            green: Double((rgb >> 8) & 0xFF) / 255,
-            blue: Double(rgb & 0xFF) / 255
-        )
-    }
-}
 
 
 
@@ -181,7 +137,7 @@ struct AdminHomeView: View {
                                         subtitle: "Publish requests from educators",
                                         count: pendingPublishCount,
                                         icon: "clock.fill",
-                                        tint: .orange
+                                        tint: .accentWarning
                                     ) {
                                         showCourseManagement = true
                                     }
@@ -327,15 +283,15 @@ struct StatCard: View {
 
                 Image(systemName: icon)
                     .font(.title3)
-                    .foregroundColor(.white.opacity(0.9))
+                    .foregroundColor(.textOnAccent.opacity(0.9))
 
                 Text(value)
                     .font(.system(size: 30, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(.textOnAccent)
 
                 Text(title)
                     .font(.caption)
-                    .foregroundColor(.white.opacity(0.75))
+                    .foregroundColor(.textOnAccent.opacity(0.75))
             }
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -382,77 +338,85 @@ struct AdminProfileView: View {
 
     
     var body: some View {
-        List {
-            // Profile Header
-            Section {
-                HStack(spacing: 16) {
-                    Image(systemName: "person.crop.circle.fill")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 60, height: 60)
-                        .foregroundColor(.gray)
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(authService.currentUser?.fullName ?? "Admin User")
-                            .font(.headline)
-                        Text(authService.currentUser?.email ?? "admin@example.com")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+        NavigationStack {
+            List {
+                // Profile Header
+                Section {
+                    HStack(spacing: 16) {
+                        Image(systemName: "person.crop.circle.fill")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 60, height: 60)
+                            .foregroundColor(.gray)
                         
-                        Text(authService.currentUser?.role.displayName ?? "Administrator")
-                            .font(.caption2)
-                            .fontWeight(.semibold)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 2)
-                            .background(Color.blue.opacity(0.1))
-                            .foregroundColor(.blue)
-                            .clipShape(Capsule())
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(authService.currentUser?.fullName ?? "Admin User")
+                                .font(.headline)
+                            Text(authService.currentUser?.email ?? "admin@example.com")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            
+                            Text(authService.currentUser?.role.displayName ?? "Administrator")
+                                .font(.caption2)
+                                .fontWeight(.semibold)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 2)
+                                .background(Color.accentPrimary.opacity(0.1))
+                                .foregroundColor(.accentPrimary)
+                                .clipShape(Capsule())
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+                
+                // Support & About
+                Section("Support") {
+                    NavigationLink {
+                        HelpCenterView()
+                    } label: {
+                        Label("Help & Support", systemImage: "questionmark.circle")
+                    }
+                    
+                    NavigationLink {
+                        PrivacyPolicyView()
+                    } label: {
+                        Label("Privacy Policy", systemImage: "hand.raised")
+                    }
+                    
+                    NavigationLink {
+                        TermsOfServiceView()
+                    } label: {
+                        Label("Terms of Service", systemImage: "doc.text")
                     }
                 }
-                .padding(.vertical, 4)
-            }
-            
-
-            
-            // Support & About
-            Section("Support") {
-                NavigationLink {
-                    HelpCenterView()
-                } label: {
-                    Label("Help & Support", systemImage: "questionmark.circle")
-                }
                 
-                NavigationLink {
-                    PrivacyPolicyView()
-                } label: {
-                    Label("Privacy Policy", systemImage: "hand.raised")
-                }
-                
-                NavigationLink {
-                    TermsOfServiceView()
-                } label: {
-                    Label("Terms of Service", systemImage: "doc.text")
+                // Account Actions
+                Section {
+                    Button(role: .destructive) {
+                        showLogoutAlert = true
+                    } label: {
+                        Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
+                    }
+                } footer: {
+                    HStack {
+                        Spacer()
+                        Text("Version 1.0.0")
+                        Spacer()
+                    }
+                    .padding(.top)
                 }
             }
-            
-            // Account Actions
-            Section {
-                Button(role: .destructive) {
-                    showLogoutAlert = true
-                } label: {
-                    Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
+            .navigationTitle("Profile")
+            .listStyle(.insetGrouped)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") {
+                        // Needs a binding to dismiss, or use Environment dismiss
+                    }
+                    .disabled(true) // Just a placeholder, actually we can use @Environment(\.dismiss)
                 }
-            } footer: {
-                HStack {
-                    Spacer()
-                    Text("Version 1.0.0")
-                    Spacer()
-                }
-                .padding(.top)
             }
         }
-        .navigationTitle("Profile")
-        .listStyle(.insetGrouped)
         .alert("Sign Out", isPresented: $showLogoutAlert) {
             Button("Cancel", role: .cancel) {}
             Button("Sign Out", role: .destructive) {
@@ -462,10 +426,6 @@ struct AdminProfileView: View {
             Text("Are you sure you want to sign out?")
         }
     }
-}
-
-#Preview {
-    AdminDashboardView()
 }
 
 struct HelpCenterView: View {
@@ -610,3 +570,9 @@ struct TermsOfServiceView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 }
+
+
+#Preview {
+    AdminDashboardView()
+}
+

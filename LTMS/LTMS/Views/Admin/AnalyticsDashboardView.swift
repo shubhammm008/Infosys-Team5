@@ -15,7 +15,7 @@ class AnalyticsDashboardViewModel: ObservableObject {
     @Published var courseCompletionStats: [CourseCompletionStats] = []
     @Published var popularCourses: [PopularCourse] = []
     @Published var enrollmentTrends: [EnrollmentTrend] = []
-    @Published var userActivityMetrics: [UserActivityMetrics] = []
+
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var selectedDays = 30
@@ -33,13 +33,13 @@ class AnalyticsDashboardViewModel: ObservableObject {
             async let completion = analyticsService.fetchAllCourseCompletionStats(organizationId: organizationId)
             async let popular = analyticsService.fetchPopularCourses(organizationId: organizationId)
             async let trends = analyticsService.fetchEnrollmentTrends(organizationId: organizationId, days: selectedDays)
-            async let activity = analyticsService.fetchUserActivityMetrics(organizationId: organizationId, role: .learner)
+
             
             platformMetrics = try await metrics
             courseCompletionStats = try await completion
             popularCourses = try await popular
             enrollmentTrends = try await trends
-            userActivityMetrics = try await activity
+
             
         } catch {
             errorMessage = "Failed to load analytics: \(error.localizedDescription)"
@@ -69,9 +69,9 @@ struct AnalyticsDashboardView: View {
                     VStack(spacing: 16) {
                         Image(systemName: "exclamationmark.triangle")
                             .font(.system(size: 50))
-                            .foregroundColor(.orange)
+                            .foregroundColor(.accentWarning)
                         Text(error)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.dashboardTextSecondary)
                         Button("Retry") {
                             Task {
                                 await loadData()
@@ -109,15 +109,12 @@ struct AnalyticsDashboardView: View {
                             courseCompletionSection
                         }
                         
-                        // Top Active Users
-                        if !viewModel.userActivityMetrics.isEmpty {
-                            topUsersSection
-                        }
+
                     }
                     .padding()
                 }
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Color.dashboardBg)
             .navigationTitle("Analytics")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -168,24 +165,24 @@ struct AnalyticsDashboardView: View {
                     x: .value("Date", $0.date),
                     y: .value("Enrollments", $0.enrollmentCount)
                 )
-                .foregroundStyle(.blue)
+                .foregroundStyle(Color.accentPrimary)
 
                 LineMark(
                     x: .value("Date", $0.date),
                     y: .value("Completions", $0.completionCount)
                 )
-                .foregroundStyle(.green)
+                .foregroundStyle(Color.accentSuccess)
             }
             .frame(height: 220)
 
             if trends.isEmpty {
                 Text("No enrollments yet. This chart will update automatically.")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.dashboardTextSecondary)
             }
         }
         .padding()
-        .background(Color(.systemBackground))
+        .background(Color.dashboardCard)
         .cornerRadius(16)
     }
 
@@ -231,7 +228,7 @@ struct AnalyticsDashboardView: View {
 //            }
 //        }
 //        .padding()
-//        .background(Color(.systemBackground))
+//        .background(Color.dashboardCard)
 //        .cornerRadius(16)
 //    }
     
@@ -263,7 +260,7 @@ struct AnalyticsDashboardView: View {
 //            
 //            if viewModel.enrollmentTrends.isEmpty {
 //                Text("No enrollment data available")
-//                    .foregroundColor(.secondary)
+//                    .foregroundColor(.dashboardTextSecondary)
 //                    .padding()
 //            } else {
 //                // Simple trend visualization
@@ -272,24 +269,24 @@ struct AnalyticsDashboardView: View {
 //                        HStack {
 //                            Text(formatDate(trend.date))
 //                                .font(.caption)
-//                                .foregroundColor(.secondary)
+//                                .foregroundColor(.dashboardTextSecondary)
 //                                .frame(width: 80, alignment: .leading)
 //                            
 //                            HStack(spacing: 8) {
 //                                Label("\(trend.enrollmentCount)", systemImage: "arrow.up.circle.fill")
 //                                    .font(.caption)
-//                                    .foregroundColor(.blue)
+//                                    .foregroundColor(.accentPrimary)
 //                                
 //                                Label("\(trend.completionCount)", systemImage: "checkmark.circle.fill")
 //                                    .font(.caption)
-//                                    .foregroundColor(.green)
+//                                    .foregroundColor(.accentSuccess)
 //                            }
 //                            
 //                            Spacer()
 //                            
 //                            // Simple bar visualization
 //                            Rectangle()
-//                                .fill(Color.blue.opacity(0.3))
+//                                .fill(Color.accentPrimary.opacity(0.3))
 //                                .frame(width: CGFloat(trend.enrollmentCount * 5), height: 20)
 //                                .cornerRadius(4)
 //                        }
@@ -298,7 +295,7 @@ struct AnalyticsDashboardView: View {
 //            }
 //        }
 //        .padding()
-//        .background(Color(.systemBackground))
+//        .background(Color.dashboardCard)
 //        .cornerRadius(16)
 //    }
     
@@ -326,21 +323,21 @@ struct AnalyticsDashboardView: View {
                             .font(.headline)
                         Text("\(course.enrollmentCount) enrollments")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.dashboardTextSecondary)
                     }
                     
                     Spacer()
                     
                     Image(systemName: "person.3.fill")
-                        .foregroundColor(.blue)
+                        .foregroundColor(.accentPrimary)
                 }
                 .padding()
-                .background(Color(.secondarySystemBackground))
+                .background(Color.dashboardCardAlt)
                 .cornerRadius(12)
             }
         }
         .padding()
-        .background(Color(.systemBackground))
+        .background(Color.dashboardCard)
         .cornerRadius(16)
         .sheet(isPresented: $showCourseManagement) {
             CourseManagementView()
@@ -356,12 +353,6 @@ struct AnalyticsDashboardView: View {
                     .font(.title2)
                     .fontWeight(.bold)
 
-                Spacer()
-
-                Button("View All") {
-                    
-                }
-                .font(.caption)
             }
             
             ForEach(viewModel.courseCompletionStats.sorted { $0.completionRate > $1.completionRate }.prefix(3), id: \.courseId) { stat in
@@ -395,11 +386,11 @@ struct AnalyticsDashboardView: View {
                     HStack(spacing: 16) {
                         Label("\(stat.completedEnrollments) completed", systemImage: "checkmark.circle.fill")
                             .font(.caption)
-                            .foregroundColor(.green)
+                            .foregroundColor(.accentSuccess)
                         
                         Label("\(stat.activeEnrollments) active", systemImage: "circle.fill")
                             .font(.caption)
-                            .foregroundColor(.blue)
+                            .foregroundColor(.accentPrimary)
                         
                         if stat.droppedEnrollments > 0 {
                             Label("\(stat.droppedEnrollments) dropped", systemImage: "xmark.circle.fill")
@@ -410,87 +401,29 @@ struct AnalyticsDashboardView: View {
                         if let avgTime = stat.averageTimeToComplete {
                             Label(String(format: "%.1f days avg", avgTime), systemImage: "clock.fill")
                                 .font(.caption)
-                                .foregroundColor(.orange)
+                                .foregroundColor(.accentWarning)
                         }
                     }
                 }
                 .padding()
-                .background(Color(.secondarySystemBackground))
+                .background(Color.dashboardCardAlt)
                 .cornerRadius(12)
             }
         }
         .padding()
-        .background(Color(.systemBackground))
+        .background(Color.dashboardCard)
         .cornerRadius(16)
     }
     
-    @ViewBuilder
-    private var topUsersSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Text("Most Active Learners")
-                    .font(.title2)
-                    .fontWeight(.bold)
 
-                Spacer()
-
-                Button("View All") {
-                    selectedUserRole = .learner
-                    showUserManagement = true
-                }
-
-            }
-
-            
-            ForEach(viewModel.userActivityMetrics.prefix(3), id: \.userId) { metric in
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(metric.userName)
-                            .font(.headline)
-                        HStack(spacing: 12) {
-                            Label("\(metric.loginCount) logins", systemImage: "rectangle.portrait.and.arrow.right")
-                                .font(.caption)
-                            Label("\(metric.totalEnrollments) courses", systemImage: "book.fill")
-                                .font(.caption)
-                            Label(String(format: "%.1fh", metric.totalLearningTimeHours), systemImage: "clock.fill")
-                                .font(.caption)
-                        }
-                        .foregroundColor(.secondary)
-                    }
-                    
-                    Spacer()
-                    
-                    VStack(alignment: .trailing, spacing: 4) {
-                        Text("\(metric.completedCourses)")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.green)
-                        Text("completed")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                .padding()
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(12)
-            }
-        }
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(16)
-        .sheet(isPresented: $showUserManagement) {
-            UserManagementView(preselectedRole: $selectedUserRole)
-        }
-
-    }
     
     private func completionColor(_ rate: Double) -> Color {
         if rate >= 70 {
-            return .green
+            return .accentSuccess
         } else if rate >= 40 {
-            return .orange
+            return .accentWarning
         } else {
-            return .red
+            return .accentSecondary
         }
     }
     
@@ -522,7 +455,7 @@ struct MetricCard: View {
             
             Text(title)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(.dashboardTextSecondary)
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
