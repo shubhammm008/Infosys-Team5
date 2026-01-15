@@ -100,7 +100,7 @@ struct CourseManagementView: View {
                     Button {
                         showCreateCourse = true
                     } label: {
-                        Image(systemName: "plus.circle.fill")
+                        Image(systemName: "plus")
                             .font(.title3)
                     }
                 }

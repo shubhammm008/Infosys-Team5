@@ -18,9 +18,10 @@ struct AdminDashboardView: View {
         TabView(selection: $selectedTab) {
             AdminHomeView(selectedTab: $selectedTab, selectedUserRole: $selectedUserRole)
                 .tabItem {
-                    Label("Home", systemImage: "house.fill")
+                    Label("Dashboard", systemImage: "rectangle.grid.2x2.fill")
                 }
                 .tag(0)
+
             
             AnalyticsDashboardView()
                 .tabItem {
@@ -28,35 +29,13 @@ struct AdminDashboardView: View {
                 }
                 .tag(1)
             
-            UserManagementView(preselectedRole: $selectedUserRole)
-                .tabItem {
-                    Label("Users", systemImage: "person.3.fill")
-                }
-                .tag(2)
-            
-            CourseManagementView()
-                .tabItem {
-                    Label("Courses", systemImage: "book.fill")
-                }
-                .tag(3)
-            
-            EnrollmentManagementView()
-                .tabItem {
-                    Label("Enrollments", systemImage: "person.badge.plus")
-                }
-                .tag(4)
             
             ReportsView()
                 .tabItem {
                     Label("Reports", systemImage: "doc.text.fill")
                 }
-                .tag(5)
-            
-            AdminProfileView()
-                .tabItem {
-                    Label("Profile", systemImage: "person.circle.fill")
-                }
-                .tag(6)
+                .tag(2)
+
         }
         .tint(.ltmsPrimary)
     }
@@ -102,138 +81,132 @@ class AdminHomeViewModel: ObservableObject {
 struct AdminHomeView: View {
     @StateObject private var authService = SupabaseAuthService.shared
     @StateObject private var viewModel = AdminHomeViewModel()
+    
     @State private var showCreateUser = false
     @State private var showCreateCourse = false
+    @State private var showAdminProfile = false
+    @State private var showUserManagement = false
+    @State private var showCourseManagement = false
+    @State private var showEnrollmentManagement = false
+
+
+    
     @Binding var selectedTab: Int
     @Binding var selectedUserRole: UserRole?
     
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
-                    // Welcome Header
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Welcome back,")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                            Text(authService.currentUser?.firstName ?? "Admin")
-                                .font(.title)
-                                .fontWeight(.bold)
-                        }
-                        Spacer()
-                        
-                        Image(systemName: "person.circle.fill")
-                            .font(.system(size: 50))
-                            .foregroundColor(.ltmsPrimary)
-                    }
-                    .padding()
-                    .background(Color.ltmsCardBackground)
-                    .cornerRadius(16)
+                VStack(spacing: 28) {
                     
-                    // Quick Stats
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                        StatCard(
-                            title: "Total Users",
-                            value: "\(viewModel.totalUsers)",
-                            icon: "person.3.fill",
-                            color: .blue
-                        ) {
-                            selectedUserRole = nil
-                            selectedTab = 2
+                    // MARK: - Admin Context Header
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Welcome Back")
+                            .font(.default)
+                            .foregroundColor(.secondary)
+
+                        HStack {
+                            Text("Admin")
+                                .font(.title.bold())
+
+
+                            Spacer()
+
+                            Button {
+                                showAdminProfile = true
+                            } label: {
+                                Image(systemName: "person.circle.fill")
+                                    .font(.system(size: 42))
+                                    .foregroundColor(.ltmsPrimary)
+                            }
+
                         }
+
+                    }
+                    .sheet(isPresented: $showAdminProfile) {
+                        AdminProfileView()
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    // MARK: - Attention Required
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Overview")
+                            .font(.headline)
                         
-                        StatCard(
-                            title: "Total Courses",
-                            value: "\(viewModel.totalCourses)",
-                            icon: "book.fill",
-                            color: .purple
+                        LazyVGrid(
+                            columns: [GridItem(.flexible()), GridItem(.flexible())],
+                            spacing: 16
                         ) {
-                            selectedTab = 3
-                        }
-                        
-                        StatCard(
-                            title: "Educators",
-                            value: "\(viewModel.totalEducators)",
-                            icon: "person.badge.key.fill",
-                            color: .orange
-                        ) {
-                            selectedUserRole = .educator
-                            selectedTab = 2
-                        }
-                        
-                        StatCard(
-                            title: "Learners",
-                            value: "\(viewModel.totalLearners)",
-                            icon: "graduationcap.fill",
-                            color: .green
-                        ) {
-                            selectedUserRole = .learner
-                            selectedTab = 2
+                            AttentionCard(
+                                title: "Users",
+                                value: viewModel.totalUsers,
+                                icon: "person.3.fill",
+                                color: .blue
+                            ) {
+                                selectedUserRole = nil
+                                showUserManagement = true
+                            }
+                            
+                            AttentionCard(
+                                title: "Courses",
+                                value: viewModel.totalCourses,
+                                icon: "book.fill",
+                                color: .purple
+                            ) {
+                                showCourseManagement = true
+                            }
                         }
                     }
+                    .sheet(isPresented: $showCourseManagement) {
+                        CourseManagementView()
+                    }
+                    .sheet(isPresented: $showUserManagement) {
+                        UserManagementView()
+                    }
                     
-                    // Quick Actions
+                    // MARK: - Quick Actions
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Quick Actions")
                             .font(.headline)
-                            .padding(.horizontal)
                         
                         VStack(spacing: 12) {
-                            QuickActionButton(
-                                title: "Create Educator Account",
-                                icon: "person.badge.plus",
-                                color: .blue
-                            ) {
-                                showCreateUser = true
-                            }
-                            
-                            QuickActionButton(
-                                title: "Create New Course",
-                                icon: "plus.circle.fill",
-                                color: .purple
+                            PrimaryActionButton(
+                                title: "Create Course",
+                                icon: "plus.circle.fill"
                             ) {
                                 showCreateCourse = true
                             }
                             
-                            QuickActionButton(
-                                title: "View Analytics Dashboard",
-                                icon: "chart.bar.fill",
-                                color: .green
+                            PrimaryActionButton(
+                                title: "Add Educator",
+                                icon: "person.badge.plus"
                             ) {
-                                selectedTab = 1
+                                showCreateUser = true
                             }
                             
-                            QuickActionButton(
-                                title: "Manage Enrollments",
-                                icon: "person.badge.plus",
-                                color: .orange
-                            ) {
-                                selectedTab = 4
-                            }
-                            
-                            QuickActionButton(
-                                title: "Generate Reports",
-                                icon: "doc.text.fill",
-                                color: .red
-                            ) {
-                                selectedTab = 5
+                            PrimaryActionButton(title: "Manage Enrollments", icon: "person.badge.plus")
+                            {
+                                showEnrollmentManagement = true
                             }
                         }
                     }
                 }
                 .padding()
             }
+            .background(Color.ltmsBackground)
+            .navigationTitle("Dashboard")
+            .navigationBarTitleDisplayMode(.inline)
             .refreshable {
                 await viewModel.loadStats()
             }
-            .background(Color.ltmsBackground)
-            .navigationTitle("Dashboard")
             .sheet(isPresented: $showCreateUser) {
                 CreateUserView()
             }
             .sheet(isPresented: $showCreateCourse) {
                 CreateCourseView()
+            }
+            .sheet(isPresented: $showEnrollmentManagement) {
+                EnrollmentManagementView()
             }
             .task {
                 await viewModel.loadStats()
@@ -242,7 +215,73 @@ struct AdminHomeView: View {
     }
 }
 
+
 // MARK: - Supporting Views
+
+struct AttentionCard: View {
+    let title: String
+    let value: Int
+    let icon: String
+    let color: Color
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Image(systemName: icon)
+                        .foregroundColor(color)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Text("\(value)")
+                    .font(.system(size: 26, weight: .bold))
+                
+                Text(title)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.ltmsCardBackground)
+            .cornerRadius(14)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct PrimaryActionButton: View {
+    let title: String
+    let icon: String
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Image(systemName: icon)
+                    .font(.title3)
+                
+                Text(title)
+                    .fontWeight(.semibold)
+                
+                Spacer()
+                
+                Image(systemName: "arrow.right")
+                    .font(.caption)
+            }
+            .padding()
+            .background(Color.white)
+            .foregroundColor(.ltmsPrimary)
+            .cornerRadius(14)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+
 
 struct StatCard: View {
     let title: String

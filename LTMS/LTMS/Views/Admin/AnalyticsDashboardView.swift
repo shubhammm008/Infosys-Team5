@@ -2,8 +2,6 @@
 //  AnalyticsDashboardView.swift
 //  LTMS
 //
-//  Created by AI Assistant on 13/01/26.
-//
 
 import SwiftUI
 import Combine
@@ -141,12 +139,12 @@ struct AnalyticsDashboardView: View {
                     color: .blue
                 )
                 
-                MetricCard(
-                    title: "Active (7 days)",
-                    value: "\(metrics.activeUsersLast7Days)",
-                    icon: "person.wave.2.fill",
-                    color: .green
-                )
+//                MetricCard(
+//                    title: "Active (7 days)",
+//                    value: "\(metrics.activeUsersLast7Days)",
+//                    icon: "person.wave.2.fill",
+//                    color: .green
+//                )
                 
                 MetricCard(
                     title: "Total Courses",
@@ -162,12 +160,12 @@ struct AnalyticsDashboardView: View {
                     color: .orange
                 )
                 
-                MetricCard(
-                    title: "Learning Hours",
-                    value: String(format: "%.1f", metrics.totalLearningTimeHours),
-                    icon: "clock.fill",
-                    color: .red
-                )
+//                MetricCard(
+//                    title: "Learning Hours",
+//                    value: String(format: "%.1f", metrics.totalLearningTimeHours),
+//                    icon: "clock.fill",
+//                    color: .red
+//                )
                 
                 MetricCard(
                     title: "Avg Completion",
