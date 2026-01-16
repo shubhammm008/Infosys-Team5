@@ -113,109 +113,216 @@ struct AddContentView: View {
     
     var body: some View {
         NavigationStack {
-            Form {
-                // Content Type Selection
-                Section("Content Type") {
-                    Picker("Type", selection: $viewModel.selectedType) {
-                        ForEach(ContentType.allCases, id: \.self) { type in
-                            Label(type.displayName, systemImage: type.icon)
-                                .tag(type)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .onChange(of: viewModel.selectedType) { _, _ in
-                        viewModel.selectedFileData = nil
-                        viewModel.selectedFileName = nil
-                    }
-                }
+            ZStack {
+                Color.dashboardBg.ignoresSafeArea()
                 
-                // Basic Info
-                Section("Details") {
-                    TextField("Content Title", text: $viewModel.title)
-                        .autocorrectionDisabled()
-                }
-                
-                // Content Input Based on Type
-                if viewModel.selectedType == .text {
-                    Section("Text Content") {
-                        TextEditor(text: $viewModel.textContent)
-                            .frame(minHeight: 200)
+                VStack(spacing: 0) {
+                    // Header
+                    HStack {
+                        Button("Cancel") { dismiss() }
+                            .foregroundColor(.dashboardTextSecondary)
+                        Spacer()
+                        Text("Add Content")
+                            .font(.headline)
+                            .foregroundColor(.dashboardTextPrimary)
+                        Spacer()
+                        Button("Cancel") { }
+                            .opacity(0)
                     }
-                } else {
-                    Section("File") {
-                        if let fileName = viewModel.selectedFileName {
-                            HStack {
-                                Image(systemName: viewModel.selectedType.icon)
-                                    .foregroundColor(viewModel.selectedType.color)
-                                Text(fileName)
+                    .padding()
+                    
+                    ScrollView {
+                        VStack(spacing: 24) {
+                            
+                            // Content Type Selection
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text("Content Type")
                                     .font(.subheadline)
-                                Spacer()
-                                Button("Change") {
-                                    if viewModel.selectedType == .video {
-                                        showVideoPicker = true
-                                    } else {
-                                        showDocumentPicker = true
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.dashboardTextSecondary)
+                                
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 12) {
+                                        ForEach(ContentType.allCases, id: \.self) { type in
+                                            Button(action: {
+                                                withAnimation {
+                                                    viewModel.selectedType = type
+                                                }
+                                            }) {
+                                                VStack(spacing: 8) {
+                                                    ZStack {
+                                                        Circle()
+                                                            .fill(viewModel.selectedType == type ? type.color.opacity(0.2) : Color.white.opacity(0.05))
+                                                            .frame(width: 50, height: 50)
+                                                        
+                                                        Image(systemName: type.icon)
+                                                            .font(.title2)
+                                                            .foregroundColor(viewModel.selectedType == type ? type.color : .dashboardTextSecondary)
+                                                    }
+                                                    
+                                                    Text(type.displayName)
+                                                        .font(.caption)
+                                                        .fontWeight(viewModel.selectedType == type ? .bold : .regular)
+                                                        .foregroundColor(viewModel.selectedType == type ? .dashboardTextPrimary : .dashboardTextSecondary)
+                                                }
+                                                .padding(.vertical, 8)
+                                                .padding(.horizontal, 12)
+                                                .background(viewModel.selectedType == type ? Color.dashboardCard : Color.clear)
+                                                .cornerRadius(16)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 16)
+                                                        .stroke(viewModel.selectedType == type ? type.color.opacity(0.5) : Color.white.opacity(0.1), lineWidth: 1)
+                                                )
+                                            }
+                                        }
                                     }
                                 }
-                                .font(.caption)
                             }
-                        } else {
-                            Button {
-                                if viewModel.selectedType == .video {
-                                    showVideoPicker = true
+                            .padding()
+                            .background(Color.dashboardCard)
+                            .cornerRadius(20)
+                            
+                            // Basic Info
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text("Details")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.dashboardTextSecondary)
+                                
+                                customTextField(title: "Content Title", text: $viewModel.title)
+                            }
+                            .padding()
+                            .background(Color.dashboardCard)
+                            .cornerRadius(20)
+                            
+                            // Content Input
+                            VStack(alignment: .leading, spacing: 16) {
+                                if viewModel.selectedType == .text {
+                                    Text("Text Content")
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.dashboardTextSecondary)
+                                    
+                                    customTextField(title: "Content", text: $viewModel.textContent, isMultiline: true)
                                 } else {
-                                    showDocumentPicker = true
-                                }
-                            } label: {
-                                HStack {
-                                    Image(systemName: "arrow.up.doc")
-                                    Text("Choose \(viewModel.selectedType.displayName) File")
-                                    Spacer()
+                                    Text("File Upload")
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.dashboardTextSecondary)
+                                    
+                                    if let fileName = viewModel.selectedFileName {
+                                        HStack {
+                                            Image(systemName: viewModel.selectedType.icon)
+                                                .foregroundColor(viewModel.selectedType.color)
+                                                .font(.title3)
+                                            Text(fileName)
+                                                .font(.subheadline)
+                                                .foregroundColor(.dashboardTextPrimary)
+                                            Spacer()
+                                            Button("Change") {
+                                                if viewModel.selectedType == .video {
+                                                    showVideoPicker = true
+                                                } else {
+                                                    showDocumentPicker = true
+                                                }
+                                            }
+                                            .font(.caption)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(.accentBlue)
+                                        }
+                                        .padding()
+                                        .background(Color.white.opacity(0.05))
+                                        .cornerRadius(12)
+                                    } else {
+                                        Button {
+                                            if viewModel.selectedType == .video {
+                                                showVideoPicker = true
+                                            } else {
+                                                showDocumentPicker = true
+                                            }
+                                        } label: {
+                                            VStack(spacing: 12) {
+                                                Image(systemName: "arrow.up.doc")
+                                                    .font(.largeTitle)
+                                                    .foregroundColor(.accentBlue)
+                                                Text("Choose \(viewModel.selectedType.displayName) File")
+                                                    .font(.headline)
+                                                    .foregroundColor(.dashboardTextSecondary)
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, 32)
+                                            .background(Color.white.opacity(0.05))
+                                            .cornerRadius(16)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 16)
+                                                    .stroke(style: StrokeStyle(lineWidth: 2, dash: [5]))
+                                                    .foregroundColor(.accentBlue.opacity(0.5))
+                                            )
+                                        }
+                                    }
                                 }
                             }
-                        }
-                    }
-                }
-                
-                // Upload Progress
-                if viewModel.isUploading {
-                    Section {
-                        VStack(spacing: 8) {
-                            ProgressView(value: viewModel.uploadProgress)
-                            Text("Uploading... \(Int(viewModel.uploadProgress * 100))%")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                }
-                
-                // Save Button
-                Section {
-                    Button(viewModel.isUploading ? "Uploading..." : "Add Content") {
-                        Task {
-                            do {
-                                if try await viewModel.saveContent() {
-                                    onContentAdded()
-                                    dismiss()
+                            .padding()
+                            .background(Color.dashboardCard)
+                            .cornerRadius(20)
+                            
+                            // Upload Progress
+                            if viewModel.isUploading {
+                                VStack(spacing: 8) {
+                                    ProgressView(value: viewModel.uploadProgress)
+                                        .tint(.accentBlue)
+                                    Text("Uploading... \(Int(viewModel.uploadProgress * 100))%")
+                                        .font(.caption)
+                                        .foregroundColor(.dashboardTextSecondary)
                                 }
-                            } catch {
-                                print("Error saving content: \(error)")
+                                .padding()
+                                .background(Color.dashboardCard)
+                                .cornerRadius(16)
                             }
+                            
+                            // Save Button
+                            Button(action: {
+                                Task {
+                                    do {
+                                        if try await viewModel.saveContent() {
+                                            onContentAdded()
+                                            dismiss()
+                                        }
+                                    } catch {
+                                        print("Error saving content: \(error)")
+                                    }
+                                }
+                            }) {
+                                ZStack {
+                                    if viewModel.isUploading {
+                                        ProgressView()
+                                            .tint(.white)
+                                    } else {
+                                        Text("Add Content")
+                                            .fontWeight(.bold)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 56)
+                                .background(
+                                    LinearGradient(
+                                        colors: [Color.accentBlue, Color.accentPurple],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .foregroundColor(.white)
+                                .cornerRadius(16)
+                                .shadow(color: Color.accentBlue.opacity(0.3), radius: 10, x: 0, y: 5)
+                            }
+                            .disabled(!viewModel.canSave || viewModel.isUploading)
+                            .opacity(!viewModel.canSave || viewModel.isUploading ? 0.6 : 1.0)
                         }
+                        .padding()
                     }
-                    .disabled(!viewModel.canSave || viewModel.isUploading)
                 }
             }
-            .navigationTitle("Add Content")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                    .disabled(viewModel.isUploading)
-                }
-            }
+            .navigationBarHidden(true)
             .fileImporter(
                 isPresented: $showDocumentPicker,
                 allowedContentTypes: allowedFileTypes,
@@ -237,6 +344,39 @@ struct AddContentView: View {
                 Button("OK") { }
             } message: {
                 Text(viewModel.errorMessage ?? "An error occurred")
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func customTextField(title: String, text: Binding<String>, isMultiline: Bool = false) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.dashboardTextSecondary)
+            
+            if isMultiline {
+                TextEditor(text: text)
+                    .scrollContentBackground(.hidden)
+                    .frame(minHeight: 150)
+                    .padding(12)
+                    .background(Color.white.opacity(0.05))
+                    .cornerRadius(12)
+                    .foregroundColor(.dashboardTextPrimary)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    )
+            } else {
+                TextField(title, text: text)
+                    .padding(12)
+                    .background(Color.white.opacity(0.05))
+                    .cornerRadius(12)
+                    .foregroundColor(.dashboardTextPrimary)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    )
             }
         }
     }
@@ -321,3 +461,4 @@ extension ContentType {
         }
     }
 }
+
