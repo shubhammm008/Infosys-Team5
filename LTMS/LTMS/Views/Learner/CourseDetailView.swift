@@ -27,7 +27,7 @@ struct CourseDetailView: View {
                     RoundedRectangle(cornerRadius: 16)
                         .fill(
                             LinearGradient(
-                                colors: [.ltmsPrimary, .ltmsSecondary],
+                                colors: [.accentPrimary, .accentSecondary],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
@@ -36,7 +36,7 @@ struct CourseDetailView: View {
                         .overlay(
                             Image(systemName: "book.fill")
                                 .font(.system(size: 60))
-                                .foregroundColor(.white.opacity(0.8))
+                                .foregroundColor(.white.opacity(0.7))
                         )
                     
                     // Title and Description
@@ -44,10 +44,11 @@ struct CourseDetailView: View {
                         Text(course.title)
                             .font(.title)
                             .fontWeight(.bold)
+                            .foregroundColor(.dashboardTextPrimary)
                         
                         Text(course.courseDescription)
                             .font(.body)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.dashboardTextSecondary)
                     }
                 }
                 
@@ -55,6 +56,7 @@ struct CourseDetailView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Course Details")
                         .font(.headline)
+                        .foregroundColor(.dashboardTextPrimary)
                     
                     HStack(spacing: 20) {
                         DetailItem(icon: "clock.fill", title: "Duration", value: "\(course.durationHours) hours")
@@ -62,8 +64,9 @@ struct CourseDetailView: View {
                     }
                 }
                 .padding()
-                .background(Color.ltmsCardBackground)
+                .background(Color.dashboardCard)
                 .cornerRadius(16)
+                .shadow(color: Color.black.opacity(0.2), radius: 6, x: 0, y: 3)
                 
                 // Enrollment Button
                 if !isEnrolled {
@@ -81,13 +84,13 @@ struct CourseDetailView: View {
                         .padding()
                         .background(
                             LinearGradient(
-                                colors: [.ltmsPrimary, .ltmsSecondary],
+                                colors: [.accentPrimary, .accentSecondary],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
                         )
                         .foregroundColor(.white)
-                        .cornerRadius(12)
+                        .cornerRadius(14)
                     }
                     .disabled(isEnrolling)
                 } else {
@@ -96,17 +99,19 @@ struct CourseDetailView: View {
                             .foregroundColor(.green)
                         Text("You're enrolled in this course")
                             .fontWeight(.semibold)
+                            .foregroundColor(.dashboardTextPrimary)
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.green.opacity(0.1))
-                    .cornerRadius(12)
+                    .background(Color.green.opacity(0.15))
+                    .cornerRadius(14)
                 }
             }
             .padding()
         }
-        .background(Color.ltmsBackground)
+        .background(Color.dashboardBg)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .task {
             await checkEnrollmentStatus()
         }
@@ -171,16 +176,17 @@ struct DetailItem: View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundColor(.ltmsPrimary)
+                .foregroundColor(.accentPrimary)
                 .frame(width: 40)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.dashboardTextSecondary)
                 Text(value)
                     .font(.subheadline)
                     .fontWeight(.semibold)
+                    .foregroundColor(.dashboardTextPrimary)
             }
         }
     }

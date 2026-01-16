@@ -342,6 +342,8 @@ struct MyCoursesView: View {
             }
             .background(Color.dashboardBg)
             .navigationTitle("My Courses")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .task {
                 if let userId = authService.currentUser?.id {
                     await viewModel.loadEnrollments(learnerId: userId)

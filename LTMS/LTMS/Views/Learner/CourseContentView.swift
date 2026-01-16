@@ -131,9 +131,10 @@ struct CourseContentView: View {
             }
             .padding()
         }
-        .background(Color.ltmsBackground)
+        .background(Color.dashboardBg)
         .navigationTitle(viewModel.course.title)
         .navigationBarTitleDisplayMode(.large)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .task {
             await viewModel.loadCourseContent()
         }
@@ -147,7 +148,7 @@ struct CourseContentView: View {
             RoundedRectangle(cornerRadius: 16)
                 .fill(
                     LinearGradient(
-                        colors: [.ltmsPrimary, .ltmsSecondary],
+                        colors: [.accentPrimary, .accentSecondary],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -167,13 +168,13 @@ struct CourseContentView: View {
                     Label(viewModel.course.level.displayName, systemImage: "chart.bar")
                 }
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(.dashboardTextSecondary)
                 
                 if let enrollment = viewModel.enrollment {
                     ProgressBar(value: enrollment.completionPercentage / 100.0)
                     Text("\(Int(enrollment.completionPercentage))% Complete")
                         .font(.caption)
-                        .foregroundColor(.ltmsPrimary)
+                        .foregroundColor(.accentPrimary)
                         .fontWeight(.semibold)
                 }
             }
@@ -187,10 +188,11 @@ struct CourseContentView: View {
             Text("About this course")
                 .font(.title3)
                 .fontWeight(.bold)
+                .foregroundColor(.dashboardTextPrimary)
             
             Text(viewModel.course.courseDescription)
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(.dashboardTextSecondary)
             
             // Stats
             HStack(spacing: 20) {
@@ -208,8 +210,9 @@ struct CourseContentView: View {
             }
         }
         .padding()
-        .background(Color.ltmsCardBackground)
+        .background(Color.dashboardCard)
         .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.2), radius: 6, x: 0, y: 3)
     }
     
     private var totalLessons: Int {
@@ -240,21 +243,22 @@ struct CourseContentView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Course Quizzes")
                         .font(.headline)
-                        .foregroundColor(.primary)
+                        .foregroundColor(.dashboardTextPrimary)
                     
                     Text("Test your knowledge")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.dashboardTextSecondary)
                 }
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.dashboardTextSecondary)
             }
             .padding()
-            .background(Color.ltmsCardBackground)
+            .background(Color.dashboardCard)
             .cornerRadius(16)
+            .shadow(color: Color.black.opacity(0.2), radius: 6, x: 0, y: 3)
         }
         .buttonStyle(.plain)
     }
@@ -266,6 +270,7 @@ struct CourseContentView: View {
             Text("Course Syllabus")
                 .font(.title3)
                 .fontWeight(.bold)
+                .foregroundColor(.dashboardTextPrimary)
             
             VStack(spacing: 12) {
                 ForEach(Array(viewModel.modules.enumerated()), id: \.element.id) { index, module in
@@ -289,13 +294,13 @@ struct CourseContentView: View {
         VStack(spacing: 16) {
             Image(systemName: "book.closed")
                 .font(.system(size: 60))
-                .foregroundColor(.secondary)
+                .foregroundColor(.dashboardTextSecondary)
             Text("Course content coming soon")
                 .font(.headline)
-                .foregroundColor(.secondary)
+                .foregroundColor(.dashboardTextPrimary)
             Text("The instructor is preparing the materials")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(.dashboardTextSecondary)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -322,24 +327,24 @@ struct ModuleAccordion: View {
                     // Module number badge
                     ZStack {
                         Circle()
-                            .fill(Color.ltmsPrimary.opacity(0.2))
+                            .fill(Color.accentPrimary.opacity(0.2))
                             .frame(width: 40, height: 40)
                         Text("\(moduleNumber)")
                             .font(.headline)
-                            .foregroundColor(.ltmsPrimary)
+                            .foregroundColor(.accentPrimary)
                     }
                     
                     // Module info
                     VStack(alignment: .leading, spacing: 4) {
                         Text(module.title)
                             .font(.headline)
-                            .foregroundColor(.primary)
+                            .foregroundColor(.dashboardTextPrimary)
                             .multilineTextAlignment(.leading)
                         
                         HStack(spacing: 8) {
                             Text("\(lessons.count) lessons")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.dashboardTextSecondary)
                             
                             if completionPercentage > 0 {
                                 Text("• \(Int(completionPercentage * 100))% complete")
@@ -352,11 +357,12 @@ struct ModuleAccordion: View {
                     Spacer()
                     
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.dashboardTextSecondary)
                 }
                 .padding()
-                .background(Color.ltmsCardBackground)
+                .background(Color.dashboardCard)
                 .cornerRadius(12)
+                .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
             }
             .buttonStyle(.plain)
             
@@ -386,7 +392,7 @@ struct ModuleAccordion: View {
                 .padding(.top, 8)
                 .padding(.horizontal)
                 .padding(.bottom)
-                .background(Color.ltmsCardBackground.opacity(0.5))
+                .background(Color.dashboardCard.opacity(0.5))
                 .cornerRadius(12)
                 .padding(.top, 4)
             }
@@ -420,12 +426,12 @@ struct LessonRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Lesson \(lessonNumber): \(lesson.title)")
                     .font(.subheadline)
-                    .foregroundColor(.primary)
+                    .foregroundColor(.dashboardTextPrimary)
                 
                 if let objectives = lesson.learningObjectives, !objectives.isEmpty {
                     Text(objectives)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.dashboardTextSecondary)
                         .lineLimit(1)
                 }
             }
@@ -434,7 +440,7 @@ struct LessonRow: View {
             
             Image(systemName: "chevron.right")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(.dashboardTextSecondary)
         }
         .padding(.vertical, 8)
     }
@@ -454,7 +460,7 @@ struct ProgressBar: View {
                 RoundedRectangle(cornerRadius: 4)
                     .fill(
                         LinearGradient(
-                            colors: [.ltmsPrimary, .ltmsSecondary],
+                            colors: [.accentPrimary, .accentSecondary],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -477,7 +483,7 @@ struct StatBadge: View {
                 .foregroundColor(color)
             Text(title)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(.dashboardTextSecondary)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
