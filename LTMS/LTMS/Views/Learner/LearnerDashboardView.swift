@@ -82,56 +82,103 @@ class CourseCatalogViewModel: ObservableObject {
 
 struct CourseCatalogView: View {
     @StateObject private var viewModel = CourseCatalogViewModel()
+    @StateObject private var authService = SupabaseAuthService.shared
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Search Bar
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.secondary)
-                    TextField("Search courses...", text: $viewModel.searchText)
-                }
-                .padding()
-                .background(Color.ltmsCardBackground)
-                .cornerRadius(12)
-                .padding()
-                
-                // Level Filter
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        FilterChip(title: "All", isSelected: viewModel.selectedLevel == nil) {
-                            viewModel.selectedLevel = nil
+            ScrollView {
+                VStack(spacing: 24) {
+                    // MARK: - Greeting Header (matching Admin/Educator)
+                    HStack(alignment: .center, spacing: 16) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(greetingMessage)
+                                .font(.subheadline)
+                                .foregroundColor(.dashboardTextSecondary)
+                            
+                            Text(authService.currentUser?.firstName ?? "Learner")
+                                .font(.system(size: 28, weight: .bold))
+                                .foregroundColor(.dashboardTextPrimary)
                         }
                         
-                        ForEach(CourseLevel.allCases, id: \.self) { level in
-                            FilterChip(title: level.displayName, isSelected: viewModel.selectedLevel == level) {
-                                viewModel.selectedLevel = level
+                        Spacer()
+                        
+                        // Profile Avatar - centered vertically
+                        if let profilePictureURL = authService.currentUser?.profilePictureURL,
+                           let url = URL(string: profilePictureURL) {
+                            AsyncImage(url: url) { phase in
+                                switch phase {
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 50, height: 50)
+                                        .clipShape(Circle())
+                                default:
+                                    Image(systemName: "person.circle.fill")
+                                        .font(.system(size: 50))
+                                        .foregroundColor(.dashboardTextPrimary)
+                                }
+                            }
+                            .id(profilePictureURL)
+                        } else {
+                            Image(systemName: "person.circle.fill")
+                                .font(.system(size: 50))
+                                .foregroundColor(.dashboardTextPrimary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    // MARK: - Search Bar
+                    HStack(spacing: 12) {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(.dashboardTextSecondary)
+                        TextField("", text: $viewModel.searchText, prompt: Text("Search courses...").foregroundColor(.dashboardTextSecondary))
+                            .foregroundColor(.dashboardTextPrimary)
+                            .tint(.accentPrimary)
+                    }
+                    .padding(16)
+                    .background(Color.dashboardCard)
+                    .cornerRadius(14)
+                    
+                    // MARK: - Level Filter
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            FilterChip(title: "All", isSelected: viewModel.selectedLevel == nil) {
+                                viewModel.selectedLevel = nil
+                            }
+                            
+                            ForEach(CourseLevel.allCases, id: \.self) { level in
+                                FilterChip(title: level.displayName, isSelected: viewModel.selectedLevel == level) {
+                                    viewModel.selectedLevel = level
+                                }
                             }
                         }
                     }
-                    .padding(.horizontal)
-                }
-                .padding(.bottom)
-                
-                // Course Grid
-                if viewModel.isLoading {
-                    Spacer()
-                    ProgressView()
-                    Spacer()
-                } else if viewModel.filteredCourses.isEmpty {
-                    Spacer()
-                    VStack(spacing: 12) {
-                        Image(systemName: "book.closed")
-                            .font(.system(size: 60))
-                            .foregroundColor(.secondary)
-                        Text("No courses available")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
-                    }
-                    Spacer()
-                } else {
-                    ScrollView {
+                    
+                   // MARK: - Course Grid
+                    if viewModel.isLoading {
+                        VStack {
+                            Spacer()
+                            ProgressView()
+                                .tint(.accentPrimary)
+                            Spacer()
+                        }
+                        .frame(height: 300)
+                    } else if viewModel.filteredCourses.isEmpty {
+                        VStack(spacing: 12) {
+                            Image(systemName: "book.closed")
+                                .font(.system(size: 60))
+                                .foregroundColor(.dashboardTextSecondary)
+                            Text("No courses available")
+                                .font(.headline)
+                                .foregroundColor(.dashboardTextPrimary)
+                            Text("Check back later for new content")
+                                .font(.caption)
+                                .foregroundColor(.dashboardTextSecondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 60)
+                    } else {
                         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
                             ForEach(viewModel.filteredCourses) { course in
                                 NavigationLink(destination: CourseDetailView(course: course)) {
@@ -140,15 +187,29 @@ struct CourseCatalogView: View {
                                 .buttonStyle(.plain)
                             }
                         }
-                        .padding()
                     }
                 }
+                .padding()
             }
-            .background(Color.ltmsBackground)
-            .navigationTitle("Discover Courses")
+            .background(Color.dashboardBg)
+            .navigationBarHidden(true)
             .task {
                 await viewModel.loadCourses()
             }
+        }
+    }
+    
+    private var greetingMessage: String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        switch hour {
+        case 0..<12:
+            return "Good Morning"
+        case 12..<17:
+            return "Good Afternoon"
+        case 17..<24:
+            return "Good Evening"
+        default:
+            return "Welcome Back"
         }
     }
 }
@@ -162,7 +223,7 @@ struct CourseCatalogCard: View {
             RoundedRectangle(cornerRadius: 12)
                 .fill(
                     LinearGradient(
-                        colors: [.ltmsPrimary.opacity(0.6), .ltmsSecondary.opacity(0.6)],
+                        colors: [.accentPrimary, .accentSecondary],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -171,38 +232,42 @@ struct CourseCatalogCard: View {
                 .overlay(
                     Image(systemName: "book.fill")
                         .font(.system(size: 40))
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(.white.opacity(0.7))
                 )
             
             VStack(alignment: .leading, spacing: 6) {
                 Text(course.title)
                     .font(.headline)
-                    .foregroundColor(.primary)
+                    .foregroundColor(.dashboardTextPrimary)
                     .lineLimit(2)
                 
                 Text(course.courseDescription)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.dashboardTextSecondary)
                     .lineLimit(2)
                 
                 HStack(spacing: 8) {
                     Label("\(course.durationHours)h", systemImage: "clock")
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.dashboardTextSecondary)
+                    
+                    Spacer()
                     
                     Text(course.level.displayName)
                         .font(.caption2)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
+                        .fontWeight(.medium)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
                         .background(levelColor.opacity(0.2))
                         .foregroundColor(levelColor)
-                        .cornerRadius(4)
+                        .cornerRadius(6)
                 }
             }
         }
-        .padding()
-        .background(Color.ltmsCardBackground)
+        .padding(12)
+        .background(Color.dashboardCard)
         .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.2), radius: 6, x: 0, y: 3)
     }
     
     private var levelColor: Color {
@@ -382,6 +447,7 @@ struct LearnerProgressView: View {
 struct LearnerProfileView: View {
     @StateObject private var authService = SupabaseAuthService.shared
     @State private var showLogoutAlert = false
+    @State private var showEditProfile = false
     
     var body: some View {
         NavigationStack {

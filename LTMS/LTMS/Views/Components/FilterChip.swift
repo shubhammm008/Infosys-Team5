@@ -16,19 +16,19 @@ struct FilterChip: View {
         Button(action: action) {
             Text(title)
                 .font(.subheadline)
-                .fontWeight(isSelected ? .semibold : .regular)
-                .foregroundColor(isSelected ? .white : .primary)
+                .fontWeight(isSelected ? .semibold : .medium)
+                .foregroundColor(isSelected ? .white : .dashboardTextSecondary)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
                 .background(
                     isSelected
                     ? LinearGradient(
-                        colors: [.ltmsPrimary, .ltmsSecondary],
+                        colors: [.accentPrimary, .accentSecondary],
                         startPoint: .leading,
                         endPoint: .trailing
                     )
                     : LinearGradient(
-                        colors: [Color.ltmsCardBackground, Color.ltmsCardBackground],
+                        colors: [Color.dashboardCard, Color.dashboardCard],
                         startPoint: .leading,
                         endPoint: .trailing
                     )
