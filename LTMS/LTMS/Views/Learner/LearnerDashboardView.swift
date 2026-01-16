@@ -32,7 +32,8 @@ struct LearnerDashboardView: View {
                 }
                 .tag(2)
             
-            LearnerProfileView()
+            
+            LearnerProfileViewNew()
                 .tabItem {
                     Label("Profile", systemImage: "person.circle.fill")
                 }
@@ -315,17 +316,18 @@ struct MyCoursesView: View {
             Group {
                 if viewModel.isLoading {
                     ProgressView()
+                        .tint(.accentPrimary)
                 } else if viewModel.courses.isEmpty {
                     VStack(spacing: 16) {
                         Image(systemName: "book.closed")
                             .font(.system(size: 60))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.dashboardTextSecondary)
                         Text("No Enrolled Courses")
                             .font(.headline)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.dashboardTextPrimary)
                         Text("Explore the catalog to find courses")
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.dashboardTextSecondary)
                     }
                 } else {
                     ScrollView {
@@ -338,7 +340,7 @@ struct MyCoursesView: View {
                     }
                 }
             }
-            .background(Color.ltmsBackground)
+            .background(Color.dashboardBg)
             .navigationTitle("My Courses")
             .task {
                 if let userId = authService.currentUser?.id {
@@ -368,10 +370,11 @@ struct EnrolledCourseCard: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(course.title)
                         .font(.headline)
+                        .foregroundColor(.dashboardTextPrimary)
                     
                     Text(course.courseDescription)
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.dashboardTextSecondary)
                         .lineLimit(2)
                 }
                 
@@ -383,21 +386,27 @@ struct EnrolledCourseCard: View {
                 HStack {
                     Text("Progress")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.dashboardTextSecondary)
                     Spacer()
                     Text("\(Int(enrollment.completionPercentage))%")
                         .font(.caption)
                         .fontWeight(.semibold)
-                        .foregroundColor(.ltmsPrimary)
+                        .foregroundColor(.accentPrimary)
                 }
                 
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.gray.opacity(0.2))
+                            .fill(Color.gray.opacity(0.3))
                         
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.ltmsPrimary)
+                            .fill(
+                                LinearGradient(
+                                    colors: [.accentPrimary, .accentSecondary],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
                             .frame(width: geometry.size.width * (enrollment.completionPercentage / 100))
                     }
                 }
@@ -407,19 +416,20 @@ struct EnrolledCourseCard: View {
             HStack {
                 Label("\(course.durationHours)h", systemImage: "clock")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.dashboardTextSecondary)
                 
                 Spacer()
                 
                 Text("Continue Learning")
                     .font(.caption)
                     .fontWeight(.semibold)
-                    .foregroundColor(.ltmsPrimary)
+                    .foregroundColor(.accentPrimary)
             }
         }
-        .padding()
-        .background(Color.ltmsCardBackground)
+        .padding(16)
+        .background(Color.dashboardCard)
         .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.2), radius: 6, x: 0, y: 3)
     }
 }
 

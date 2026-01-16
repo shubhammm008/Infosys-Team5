@@ -104,7 +104,7 @@ struct LearnerProfileViewNew: View {
                             }
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
+                            .padding(.vertical, 14)
                             .background(
                                 LinearGradient(
                                     colors: [.accentPrimary, .accentSecondary],
@@ -112,38 +112,76 @@ struct LearnerProfileViewNew: View {
                                     endPoint: .trailing
                                 )
                             )
-                            .cornerRadius(12)
+                            .cornerRadius(14)
                         }
                     }
-                    .padding(24)
+                    .padding(28)
                     .background(Color.dashboardCard)
                     .cornerRadius(20)
                     .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 4)
                     .padding(.horizontal, 16)
                     .padding(.top, 16)
                     
-                    // MARK: - Sign Out Section
-                    VStack(spacing: 0) {
-                        Button(action: {
-                            showLogoutAlert = true
-                        }) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "rectangle.portrait.and.arrow.right")
-                                    .font(.body)
-                                Text("Sign Out")
+                    // MARK: - Terms & Privacy Section
+                    NavigationLink(destination: TermsPrivacyView()) {
+                        HStack(spacing: 16) {
+                            // Icon with background
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.accentPrimary.opacity(0.2))
+                                    .frame(width: 48, height: 48)
+                                
+                                Image(systemName: "info.circle.fill")
+                                    .font(.system(size: 22))
+                                    .foregroundColor(.accentPrimary)
+                            }
+                            
+                            // Title & Subtitle
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Terms & Privacy Policy")
                                     .font(.body)
                                     .fontWeight(.medium)
+                                    .foregroundColor(.dashboardTextPrimary)
+                                
+                                Text("Review our policies")
+                                    .font(.caption)
+                                    .foregroundColor(.dashboardTextSecondary)
                             }
-                            .foregroundColor(.red)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(Color.dashboardCard)
-                            .cornerRadius(16)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(Color.red.opacity(0.3), lineWidth: 1)
-                            )
+                            
+                            Spacer()
+                            
+                            // Chevron
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.dashboardTextSecondary)
                         }
+                        .padding(16)
+                        .background(Color.dashboardCard)
+                        .cornerRadius(16)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 16)
+                    
+                    // MARK: - Sign Out Button
+                    Button(action: {
+                        showLogoutAlert = true
+                    }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                                .font(.body)
+                            Text("Sign Out")
+                                .font(.body)
+                                .fontWeight(.semibold)
+                        }
+                        .foregroundColor(.red)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color.dashboardCard)
+                        .cornerRadius(16)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(Color.red.opacity(0.3), lineWidth: 1.5)
+                        )
                     }
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
