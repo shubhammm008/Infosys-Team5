@@ -17,7 +17,7 @@ struct AdminLoginView: View {
     
     var body: some View {
         ZStack {
-            Color.ltmsBackground
+            Color.dashboardBg
                 .ignoresSafeArea()
             
             VStack(spacing: 30) {
@@ -25,63 +25,35 @@ struct AdminLoginView: View {
                 VStack(spacing: 12) {
                     Image(systemName: "person.badge.key.fill")
                         .font(.system(size: 80))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [.purple, .purple.opacity(0.7)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .foregroundStyle(Color.accentPrimary)
                     
                     Text("Admin Login")
                         .font(.system(size: 36, weight: .bold, design: .rounded))
-                        .foregroundColor(.primary)
+                        .foregroundColor(.dashboardTextPrimary)
                     
                     Text("Access administrative controls")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.dashboardTextSecondary)
                 }
                 .padding(.top, 40)
                 
                 // Login Form
                 VStack(spacing: 20) {
-                    // Email Field
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Admin Email")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.secondary)
-                        
-                        HStack {
-                            Image(systemName: "envelope.fill")
-                                .foregroundColor(.secondary)
-                            TextField("Enter admin email", text: $email)
-                                .textContentType(.emailAddress)
-                                .autocapitalization(.none)
-                                .keyboardType(.emailAddress)
-                        }
-                        .padding()
-                        .background(Color.ltmsCardBackground)
-                        .cornerRadius(12)
-                    }
+                    LTMSInputField(
+                        title: "Admin Email",
+                        icon: "envelope.fill",
+                        placeholder: "Enter admin email",
+                        text: $email,
+                        keyboardType: .emailAddress
+                    )
                     
-                    // Password Field
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Password")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.secondary)
-                        
-                        HStack {
-                            Image(systemName: "lock.fill")
-                                .foregroundColor(.secondary)
-                            SecureField("Enter password", text: $password)
-                                .textContentType(.password)
-                        }
-                        .padding()
-                        .background(Color.ltmsCardBackground)
-                        .cornerRadius(12)
-                    }
+                    LTMSInputField(
+                        title: "Password",
+                        icon: "lock.fill",
+                        placeholder: "Enter password",
+                        text: $password,
+                        isSecure: true
+                    )
                     
                     // Login Button
                     Button(action: handleLogin) {
@@ -97,13 +69,7 @@ struct AdminLoginView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(
-                            LinearGradient(
-                                colors: [.purple, .purple.opacity(0.7)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                        .background(Color.accentPrimary)
                         .foregroundColor(.white)
                         .cornerRadius(12)
                     }
@@ -113,13 +79,13 @@ struct AdminLoginView: View {
                     // Note about admin access
                     HStack(spacing: 8) {
                         Image(systemName: "info.circle.fill")
-                            .foregroundColor(.orange)
+                            .foregroundColor(.accentWarning)
                         Text("Admin accounts are created by system administrators only")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.dashboardTextSecondary)
                     }
                     .padding()
-                    .background(Color.orange.opacity(0.1))
+                    .background(Color.accentWarning.opacity(0.1))
                     .cornerRadius(10)
                 }
                 .padding(.horizontal, 30)

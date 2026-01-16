@@ -9,7 +9,7 @@ import SwiftUI
 import Combine
 
 struct LearnerDashboardView: View {
-    @StateObject private var authService = SupabaseAuthService.shared
+    @EnvironmentObject var authService: SupabaseAuthService
     @State private var selectedTab = 0
     
     var body: some View {
@@ -49,55 +49,10 @@ class CourseCatalogViewModel: ObservableObject {
     @Published var courses: [Course] = []
     @Published var isLoading = false
     @Published var searchText = ""
-    @Published var selectedLevel: CourseLevel? = nil
-    @Published var enrolledCourseIds: Set<String> = []
-    
-    init() {
-        // Fetch courses on initialization
-        Task {
-            await fetchEnrolledCourses()
-            await fetchPublishedCourses()
-        }
-    }
-    
-    func fetchEnrolledCourses() async {
-        guard let userId = SupabaseAuthService.shared.currentUser?.id else { return }
-        
-        do {
-            let enrollments = try await ContentService.shared.fetchEnrollmentsByLearner(learnerId: userId)
-            enrolledCourseIds = Set(enrollments.map { $0.courseId })
-            print("✅ User enrolled in \(enrolledCourseIds.count) courses")
-        } catch {
-            print("❌ Error loading enrollments: \(error)")
-        }
-    }
-    
-    func fetchPublishedCourses() async {
-        isLoading = true
-        defer { isLoading = false }
-        
-        do {
-            // Fetch all courses from Supabase
-            let allCourses: [Course] = try await SupabaseService.shared.fetchAll(from: SupabaseConstants.courses)
-            
-            // Filter for published courses only
-            courses = allCourses.filter { $0.isPublished }
-            
-            print("📚 Loaded \(courses.count) published courses from Supabase for learners")
-        } catch {
-            print("❌ Error loading published courses: \(error)")
-            courses = []
-        }
-    }
+    @Published var selectedLevel: CourseLevel?
     
     var filteredCourses: [Course] {
         var filtered = courses.filter { $0.isPublished }
-        
-        // Exclude enrolled courses
-        filtered = filtered.filter { course in
-            guard let courseId = course.id else { return true }
-            return !enrolledCourseIds.contains(courseId)
-        }
         
         if let level = selectedLevel {
             filtered = filtered.filter { $0.level == level }
@@ -191,10 +146,9 @@ struct CourseCatalogView: View {
             }
             .background(Color.ltmsBackground)
             .navigationTitle("Discover Courses")
-            // DISABLED - Causes FirebaseService crash
-            // .task {
-            //     await viewModel.loadCourses()
-            // }
+            .task {
+                await viewModel.loadCourses()
+            }
         }
     }
 }
@@ -312,10 +266,7 @@ struct MyCoursesView: View {
                     ScrollView {
                         LazyVStack(spacing: 16) {
                             ForEach(Array(zip(viewModel.courses, viewModel.enrollments)), id: \.0.id) { course, enrollment in
-                                NavigationLink(destination: CourseContentView(course: course)) {
-                                    EnrolledCourseCard(course: course, enrollment: enrollment)
-                                }
-                                .buttonStyle(.plain)
+                                EnrolledCourseCard(course: course, enrollment: enrollment)
                             }
                         }
                         .padding()
@@ -338,6 +289,15 @@ struct EnrolledCourseCard: View {
     let enrollment: Enrollment
     
     var body: some View {
+        NavigationLink {
+            CourseContentView(course: course)
+        } label: {
+            cardContent
+        }
+        .buttonStyle(.plain)
+    }
+    
+    private var cardContent: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 VStack(alignment: .leading, spacing: 6) {
@@ -463,7 +423,9 @@ struct LearnerProfileView: View {
             .alert("Sign Out", isPresented: $showLogoutAlert) {
                 Button("Cancel", role: .cancel) {}
                 Button("Sign Out", role: .destructive) {
-                    Task { try? await authService.signOut() }
+                    Task {
+                        try? await authService.signOut()
+                    }
                 }
             } message: {
                 Text("Are you sure you want to sign out?")
@@ -472,6 +434,8 @@ struct LearnerProfileView: View {
     }
 }
 
+
 #Preview {
     LearnerDashboardView()
 }
+

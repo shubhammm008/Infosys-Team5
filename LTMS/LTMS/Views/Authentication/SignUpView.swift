@@ -39,7 +39,7 @@ struct SignUpView: View {
             }
         } else {
             ZStack {
-                Color.ltmsBackground
+                Color.dashboardBg
                     .ignoresSafeArea()
                 
                 ScrollView {
@@ -48,20 +48,15 @@ struct SignUpView: View {
                     VStack(spacing: 8) {
                         Image(systemName: "person.badge.plus.fill")
                             .font(.system(size: 60))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [.ltmsPrimary, .ltmsSecondary],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
+                            .foregroundStyle(Color.accentPrimary)
                         
                         Text("Create Account")
                             .font(.system(size: 32, weight: .bold, design: .rounded))
+                            .foregroundColor(.dashboardTextPrimary)
                         
                         Text("Join LTMS today")
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.dashboardTextSecondary)
                     }
                     .padding(.top, 20)
                     
@@ -69,14 +64,14 @@ struct SignUpView: View {
                     VStack(spacing: 18) {
                         // Name Fields
                         HStack(spacing: 12) {
-                            FormField(
+                            LTMSInputField(
                                 title: "First Name",
                                 icon: "person.fill",
                                 placeholder: "John",
                                 text: $firstName
                             )
                             
-                            FormField(
+                            LTMSInputField(
                                 title: "Last Name",
                                 icon: "person.fill",
                                 placeholder: "Doe",
@@ -85,7 +80,7 @@ struct SignUpView: View {
                         }
                         
                         // Email
-                        FormField(
+                        LTMSInputField(
                             title: "Email",
                             icon: "envelope.fill",
                             placeholder: "john.doe@example.com",
@@ -98,7 +93,7 @@ struct SignUpView: View {
                             Text("Role")
                                 .font(.subheadline)
                                 .fontWeight(.semibold)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.dashboardTextSecondary)
                             
                             Picker("Role", selection: $selectedRole) {
                                 ForEach(UserRole.allCases, id: \.self) { role in
@@ -109,19 +104,21 @@ struct SignUpView: View {
                         }
                         
                         // Password
-                        SecureFormField(
+                        LTMSInputField(
                             title: "Password",
                             icon: "lock.fill",
                             placeholder: "At least 6 characters",
-                            text: $password
+                            text: $password,
+                            isSecure: true
                         )
                         
                         // Confirm Password
-                        SecureFormField(
+                        LTMSInputField(
                             title: "Confirm Password",
                             icon: "lock.fill",
                             placeholder: "Re-enter password",
-                            text: $confirmPassword
+                            text: $confirmPassword,
+                            isSecure: true
                         )
                         
                         // Sign Up Button
@@ -140,13 +137,7 @@ struct SignUpView: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(
-                                LinearGradient(
-                                    colors: [.ltmsPrimary, .ltmsSecondary],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
+                            .background(Color.accentPrimary)
                             .foregroundColor(.white)
                             .cornerRadius(12)
                         }
@@ -158,6 +149,7 @@ struct SignUpView: View {
                 .padding(.bottom, 30)
             }
             }
+            .preferredColorScheme(.dark)
             .navigationBarTitleDisplayMode(.inline)
             .alert("Error", isPresented: $showError) {
                 Button("OK", role: .cancel) {}
@@ -186,58 +178,7 @@ struct SignUpView: View {
 
 // MARK: - Form Field Components
 
-struct FormField: View {
-    let title: String
-    let icon: String
-    let placeholder: String
-    @Binding var text: String
-    var keyboardType: UIKeyboardType = .default
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .foregroundColor(.secondary)
-            
-            HStack {
-                Image(systemName: icon)
-                    .foregroundColor(.secondary)
-                TextField(placeholder, text: $text)
-                    .keyboardType(keyboardType)
-                    .autocapitalization(keyboardType == .emailAddress ? .none : .words)
-            }
-            .padding()
-            .background(Color.ltmsCardBackground)
-            .cornerRadius(12)
-        }
-    }
-}
 
-struct SecureFormField: View {
-    let title: String
-    let icon: String
-    let placeholder: String
-    @Binding var text: String
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .foregroundColor(.secondary)
-            
-            HStack {
-                Image(systemName: icon)
-                    .foregroundColor(.secondary)
-                SecureField(placeholder, text: $text)
-            }
-            .padding()
-            .background(Color.ltmsCardBackground)
-            .cornerRadius(12)
-        }
-    }
-}
 
 #Preview {
     NavigationStack {

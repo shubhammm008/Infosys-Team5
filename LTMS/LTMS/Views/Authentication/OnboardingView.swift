@@ -20,38 +20,24 @@ struct OnboardingView: View {
         NavigationStack {
             ZStack {
                 // Background
-                LinearGradient(
-                    colors: [
-                        Color.ltmsPrimary.opacity(0.1),
-                        Color.ltmsSecondary.opacity(0.05),
-                        Color.ltmsBackground
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                Color.dashboardBg
+                    .ignoresSafeArea()
                 
                 VStack(spacing: 40) {
                     // Header Section
                     VStack(spacing: 16) {
                         Image(systemName: "graduationcap.circle.fill")
                             .font(.system(size: 100))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [.ltmsPrimary, .ltmsSecondary],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .shadow(color: .ltmsPrimary.opacity(0.3), radius: 20, x: 0, y: 10)
+                            .foregroundStyle(Color.accentPrimary)
+                            .shadow(color: .accentPrimary.opacity(0.3), radius: 20, x: 0, y: 10)
                         
                         Text("Welcome to LTMS")
                             .font(.system(size: 42, weight: .bold, design: .rounded))
-                            .foregroundColor(.primary)
+                            .foregroundColor(.dashboardTextPrimary)
                         
                         Text("Learning & Training Management System")
                             .font(.title3)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.dashboardTextSecondary)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
                     }
@@ -62,14 +48,14 @@ struct OnboardingView: View {
                         Text("Choose Your Role")
                             .font(.title2)
                             .fontWeight(.semibold)
-                            .foregroundColor(.primary)
+                            .foregroundColor(.dashboardTextPrimary)
                         
                         // Admin Card
                         UserTypeCard(
                             icon: "person.badge.key.fill",
                             title: "Admin",
                             description: "Manage the entire system",
-                            gradient: [Color.purple, Color.purple.opacity(0.7)],
+                            gradient: [Color.accentSecondary, Color.accentSecondary.opacity(0.7)],
                             action: {
                                 selectedUserType = .admin
                             }
@@ -80,7 +66,7 @@ struct OnboardingView: View {
                             icon: "person.fill.checkmark",
                             title: "Educator",
                             description: "Create and manage courses",
-                            gradient: [Color.ltmsPrimary, Color.ltmsSecondary],
+                            gradient: [Color.accentPrimary, Color.accentPrimary.opacity(0.8)],
                             action: {
                                 selectedUserType = .educator
                             }
@@ -91,7 +77,7 @@ struct OnboardingView: View {
                             icon: "person.fill.viewfinder",
                             title: "Learner",
                             description: "Access courses and learn",
-                            gradient: [Color.green, Color.teal],
+                            gradient: [Color.accentSuccess, Color.accentSuccess.opacity(0.8)],
                             action: {
                                 selectedUserType = .learner
                             }
@@ -120,9 +106,11 @@ struct OnboardingView: View {
             )) {
                 RoleBasedAuthView(role: .learner)
             }
+            }
+            .preferredColorScheme(.dark)
         }
     }
-}
+
 
 // MARK: - User Type Card Component
 struct UserTypeCard: View {
@@ -160,11 +148,11 @@ struct UserTypeCard: View {
                     Text(title)
                         .font(.title2)
                         .fontWeight(.bold)
-                        .foregroundColor(.primary)
+                        .foregroundColor(.dashboardTextPrimary)
                     
                     Text(description)
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.dashboardTextSecondary)
                 }
                 
                 Spacer()
@@ -177,7 +165,7 @@ struct UserTypeCard: View {
             .padding(24)
             .background(
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(Color.ltmsCardBackground)
+                    .fill(Color.dashboardCard)
                     .shadow(color: Color.black.opacity(0.1), radius: isPressed ? 5 : 15, x: 0, y: isPressed ? 2 : 8)
             )
             .scaleEffect(isPressed ? 0.97 : 1.0)

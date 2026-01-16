@@ -94,11 +94,11 @@ struct UserManagementView: View {
                 VStack(spacing: 12) {
                     HStack {
                         Image(systemName: "magnifyingglass")
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.dashboardTextSecondary)
                         TextField("Search users...", text: $viewModel.searchText)
                     }
                     .padding()
-                    .background(Color.ltmsCardBackground)
+                    .background(Color.dashboardCard)
                     .cornerRadius(12)
                     
                     // Role Filter
@@ -118,7 +118,7 @@ struct UserManagementView: View {
                     }
                 }
                 .padding()
-                .background(Color.ltmsBackground)
+                .background(Color.dashboardBg)
                 
                 // User List
                 if viewModel.isLoading {
@@ -130,10 +130,10 @@ struct UserManagementView: View {
                     VStack(spacing: 12) {
                         Image(systemName: "person.2.slash")
                             .font(.system(size: 60))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.dashboardTextSecondary)
                         Text("No users found")
                             .font(.headline)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.dashboardTextSecondary)
                     }
                     Spacer()
                 } else {
@@ -143,12 +143,13 @@ struct UserManagementView: View {
                         }
                     }
                     .listStyle(.plain)
+                    .scrollContentBackground(.hidden) // Fix: Remove default system background
                     .refreshable {
                         await viewModel.loadUsers()
                     }
                 }
             }
-            .background(Color.ltmsBackground)
+            .background(Color.dashboardBg)
             .navigationTitle("User Management")
             .onChange(of: preselectedRole) { _, newRole in
                 if let role = newRole {
@@ -200,24 +201,26 @@ struct UserRow: View {
                 
                 Text(user.email)
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.dashboardTextSecondary)
                 
                 HStack(spacing: 8) {
-                    Text(user.role.displayName)
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(roleColor.opacity(0.2))
-                        .foregroundColor(roleColor)
-                        .cornerRadius(6)
+                    if viewModel.selectedRole == nil {
+                        Text(user.role.displayName)
+                            .font(.caption)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(roleColor.opacity(0.2))
+                            .foregroundColor(roleColor)
+                            .cornerRadius(6)
+                    }
                     
                     if !user.isActive {
                         Text("Inactive")
                             .font(.caption)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(Color.red.opacity(0.2))
-                            .foregroundColor(.red)
+                            .background(Color.accentSecondary.opacity(0.1))
+                            .foregroundColor(.accentSecondary)
                             .cornerRadius(6)
                     }
                 }
@@ -269,7 +272,7 @@ struct UserRow: View {
             } label: {
                 Image(systemName: "ellipsis.circle")
                     .font(.title3)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.dashboardTextSecondary)
             }
         }
         .padding(.vertical, 8)
@@ -287,28 +290,9 @@ struct UserRow: View {
     
     private var roleColor: Color {
         switch user.role {
-        case .admin: return .blue
-        case .educator: return .purple
-        case .learner: return .green
-        }
-    }
-}
-
-struct FilterChip: View {
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(isSelected ? .semibold : .regular)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(isSelected ? Color.ltmsPrimary : Color.ltmsCardBackground)
-                .foregroundColor(isSelected ? .white : .primary)
-                .cornerRadius(20)
+        case .admin: return .accentPrimary
+        case .educator: return .accentSecondary
+        case .learner: return .accentSuccess
         }
     }
 }

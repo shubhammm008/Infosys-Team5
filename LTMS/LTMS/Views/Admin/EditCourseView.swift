@@ -93,14 +93,14 @@ struct EditCourseView: View {
                        let educator = educators.first(where: { $0.id == educatorId }) {
                         HStack {
                             Image(systemName: "person.circle.fill")
-                                .foregroundColor(.purple)
+                                .foregroundColor(.accentSecondary)
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(educator.fullName)
                                     .font(.subheadline)
                                     .fontWeight(.medium)
                                 Text(educator.email)
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(.dashboardTextSecondary)
                             }
                         }
                         .padding(.vertical, 4)
@@ -166,6 +166,8 @@ struct EditCourseView: View {
             }
             .navigationTitle("Edit Course")
             .navigationBarTitleDisplayMode(.inline)
+            .scrollContentBackground(.hidden)
+            .background(Color.dashboardBg)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {

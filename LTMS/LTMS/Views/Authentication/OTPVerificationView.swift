@@ -30,13 +30,7 @@ struct OTPVerificationView: View {
             VStack(spacing: 12) {
                 Image(systemName: "envelope.badge.shield.half.filled")
                     .font(.system(size: 60))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.ltmsPrimary, .ltmsSecondary],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .foregroundStyle(Color.accentPrimary)
                 
                 Text("Verify Your Email")
                     .font(.title)
@@ -44,12 +38,12 @@ struct OTPVerificationView: View {
                 
                 Text("We've sent a 6-digit code to")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.dashboardTextSecondary)
                 
                 Text(email)
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.ltmsPrimary)
+                    .foregroundColor(.accentPrimary)
             }
             
             // OTP Input
@@ -61,11 +55,11 @@ struct OTPVerificationView: View {
                     .font(.title2)
                     .fontWeight(.semibold)
                     .padding()
-                    .background(Color.ltmsCardBackground)
+                    .background(Color.dashboardCard)
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(otpCode.count == 6 ? Color.ltmsPrimary : Color.gray.opacity(0.3), lineWidth: 2)
+                            .stroke(otpCode.count == 6 ? Color.accentPrimary : Color.gray.opacity(0.3), lineWidth: 2)
                     )
                     .onChange(of: otpCode) { oldValue, newValue in
                         // Keep only digits and limit to 6
@@ -94,13 +88,7 @@ struct OTPVerificationView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(
-                    LinearGradient(
-                        colors: [.ltmsPrimary, .ltmsSecondary],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
+                .background(Color.accentPrimary)
                 .foregroundColor(.white)
                 .cornerRadius(12)
             }
@@ -123,7 +111,8 @@ struct OTPVerificationView: View {
             Spacer()
         }
         .padding()
-        .background(Color.ltmsBackground)
+        .background(Color.dashboardBg)
+        .preferredColorScheme(.dark)
         .alert("Error", isPresented: $showError) {
             Button("OK", role: .cancel) {}
         } message: {

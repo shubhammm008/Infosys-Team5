@@ -36,7 +36,7 @@ struct UnifiedAuthView: View {
         } else {
         NavigationStack {
             ZStack {
-                Color.ltmsBackground
+                Color.dashboardBg
                     .ignoresSafeArea()
                 
                 ScrollView {
@@ -45,31 +45,26 @@ struct UnifiedAuthView: View {
                         VStack(spacing: 12) {
                             Image(systemName: "graduationcap.circle.fill")
                                 .font(.system(size: 80))
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [.ltmsPrimary, .ltmsSecondary],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
+                                .foregroundStyle(Color.accentPrimary)
                             
                             Text("LTMS")
                                 .font(.system(size: 36, weight: .bold, design: .rounded))
-                                .foregroundColor(.primary)
+                                .foregroundColor(.dashboardTextPrimary)
                             
                             Text("Learning & Training Management")
                                 .font(.subheadline)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.dashboardTextSecondary)
                         }
                         .padding(.top, 40)
                         
                         // Toggle between Login and Sign Up
-                        Picker("Auth Mode", selection: $showingSignUp) {
-                            Text("Login").tag(false)
-                            Text("Sign Up").tag(true)
-                        }
-                        .pickerStyle(.segmented)
-                        .padding(.horizontal, 30)
+//                        Picker("Auth Mode", selection: $showingSignUp) {
+//                            Text("Login").tag(false)
+//                            Text("Sign Up").tag(true)
+//                        }
+//                        .pickerStyle(.segmented)
+//                        .padding(.horizontal, 30)
+
                         
                         // Form
                         VStack(spacing: 20) {
@@ -82,8 +77,10 @@ struct UnifiedAuthView: View {
                             }
                         }
                         .padding(.horizontal, 30)
-                        
+                        authModeSwitch
                         Spacer()
+                        
+                        
                     }
                 }
             }
@@ -101,7 +98,7 @@ struct UnifiedAuthView: View {
     private var loginForm: some View {
         VStack(spacing: 20) {
             // Email
-            FormField(
+            LTMSInputField(
                 title: "Email",
                 icon: "envelope.fill",
                 placeholder: "Enter your email",
@@ -109,11 +106,12 @@ struct UnifiedAuthView: View {
             )
             
             // Password
-            SecureFormField(
+            LTMSInputField(
                 title: "Password",
                 icon: "lock.fill",
                 placeholder: "Enter your password",
-                text: $password
+                text: $password,
+                isSecure: true
             )
             
             // Login Button
@@ -129,13 +127,7 @@ struct UnifiedAuthView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(
-                    LinearGradient(
-                        colors: [.ltmsPrimary, .ltmsSecondary],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
+                .background(Color.accentPrimary)
                 .foregroundColor(.white)
                 .cornerRadius(12)
             }
@@ -149,7 +141,7 @@ struct UnifiedAuthView: View {
     private var signUpForm: some View {
         VStack(spacing: 20) {
             // First Name
-            FormField(
+            LTMSInputField(
                 title: "First Name",
                 icon: "person.fill",
                 placeholder: "Enter your first name",
@@ -157,7 +149,7 @@ struct UnifiedAuthView: View {
             )
             
             // Last Name
-            FormField(
+            LTMSInputField(
                 title: "Last Name",
                 icon: "person.fill",
                 placeholder: "Enter your last name",
@@ -165,7 +157,7 @@ struct UnifiedAuthView: View {
             )
             
             // Email
-            FormField(
+            LTMSInputField(
                 title: "Email",
                 icon: "envelope.fill",
                 placeholder: "Enter your email",
@@ -186,21 +178,23 @@ struct UnifiedAuthView: View {
             }
             
             // Password
-            SecureFormField(
+            LTMSInputField(
                 title: "Password",
                 icon: "lock.fill",
                 placeholder: "Minimum \(AppConstants.minimumPasswordLength) characters",
-                text: $password
+                text: $password,
+                isSecure: true
             )
             
 
             
             // Confirm Password
-            SecureFormField(
+            LTMSInputField(
                 title: "Confirm Password",
                 icon: "lock.fill",
                 placeholder: "Re-enter password",
-                text: $confirmPassword
+                text: $confirmPassword,
+                isSecure: true
             )
             
             // Password match feedback
@@ -219,20 +213,20 @@ struct UnifiedAuthView: View {
             // Info Banner
             HStack(spacing: 8) {
                 Image(systemName: "info.circle.fill")
-                    .foregroundColor(.blue)
+                    .foregroundColor(.accentPrimary)
                 VStack(alignment: .leading, spacing: 4) {
                     Text("New User Registration")
                         .font(.caption)
                         .fontWeight(.semibold)
-                        .foregroundColor(.primary)
+                        .foregroundColor(.dashboardTextPrimary)
                     Text("All new accounts start as Learners. Contact admin for role changes.")
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.dashboardTextSecondary)
                 }
                 Spacer()
             }
             .padding()
-            .background(Color.blue.opacity(0.1))
+            .background(Color.accentPrimary.opacity(0.1))
             .cornerRadius(10)
             
             // Sign Up Button - Green when valid
@@ -253,16 +247,8 @@ struct UnifiedAuthView: View {
                 .padding()
                 .background(
                     isFormValid ?
-                    LinearGradient(
-                        colors: [.green, .teal],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    ) :
-                    LinearGradient(
-                        colors: [.gray, .gray.opacity(0.8)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
+                    Color.accentPrimary :
+                    Color.gray.opacity(0.3)
                 )
                 .foregroundColor(.white)
                 .cornerRadius(12)
@@ -301,6 +287,42 @@ struct UnifiedAuthView: View {
         print("🔵 UnifiedAuthView: Create Account clicked - showing OTP screen")
         showOTPView = true
     }
+    // MARK: - Apple-style Auth Mode Switch
+
+    private var authModeSwitch: some View {
+        HStack(spacing: 6) {
+            if showingSignUp {
+                Text("Already have an account?")
+                    .foregroundColor(.dashboardTextSecondary)
+
+                Button {
+                    withAnimation(.easeInOut) {
+                        showingSignUp = false
+                    }
+                } label: {
+                    Text("Sign In")
+                        .fontWeight(.semibold)
+                        .foregroundColor(.accentPrimary)
+                }
+            } else {
+                Text("Don’t have an account?")
+                    .foregroundColor(.dashboardTextSecondary)
+
+                Button {
+                    withAnimation(.easeInOut) {
+                        showingSignUp = true
+                    }
+                } label: {
+                    Text("Sign Up")
+                        .fontWeight(.semibold)
+                        .foregroundColor(.accentPrimary)
+                }
+            }
+        }
+        .font(.subheadline)
+        .padding(.top, 10)
+    }
+
 }
 
 #Preview {
