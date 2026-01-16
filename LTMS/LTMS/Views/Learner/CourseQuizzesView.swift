@@ -25,6 +25,8 @@ struct CourseQuizzesView: View {
         }
         .navigationTitle("Quizzes")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .background(Color.dashboardBg)
         .task {
             await loadQuizzes()
         }
@@ -41,15 +43,16 @@ struct CourseQuizzesView: View {
         VStack(spacing: 20) {
             Image(systemName: "doc.questionmark")
                 .font(.system(size: 60))
-                .foregroundColor(.secondary)
+                .foregroundColor(.dashboardTextSecondary)
             
             Text("No Quizzes Available")
                 .font(.title2)
                 .fontWeight(.semibold)
+                .foregroundColor(.dashboardTextPrimary)
             
             Text("The instructor hasn't added any quizzes to this course yet")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(.dashboardTextSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
         }
@@ -73,7 +76,7 @@ struct CourseQuizzesView: View {
             }
             .padding()
         }
-        .background(Color.ltmsBackground)
+        .background(Color.dashboardBg)
         .refreshable {
             await loadQuizzes()
         }
@@ -129,11 +132,12 @@ struct LearnerQuizCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(quiz.title)
                         .font(.headline)
+                        .foregroundColor(.dashboardTextPrimary)
                     
                     if let description = quiz.quizDescription, !description.isEmpty {
                         Text(description)
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.dashboardTextSecondary)
                             .lineLimit(2)
                     }
                 }
@@ -150,14 +154,14 @@ struct LearnerQuizCard: View {
                 Label(quiz.timeLimitDisplay, systemImage: "clock")
             }
             .font(.caption)
-            .foregroundColor(.secondary)
+            .foregroundColor(.dashboardTextSecondary)
             
             // Previous Score (if attempted)
             if let submission = submission {
                 HStack {
                     Text("Your Score:")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.dashboardTextSecondary)
                     
                     Text(submission.scoreDisplay)
                         .font(.subheadline)
@@ -170,7 +174,7 @@ struct LearnerQuizCard: View {
                         showQuizResult = true
                     }
                     .font(.caption)
-                    .foregroundColor(.ltmsPrimary)
+                    .foregroundColor(.accentPrimary)
                 }
                 .padding(.top, 4)
             }
@@ -208,19 +212,20 @@ struct LearnerQuizCard: View {
                         .padding(.vertical, 12)
                         .background(
                             LinearGradient(
-                                colors: [.ltmsPrimary, .ltmsSecondary],
+                                colors: [.accentPrimary, .accentSecondary],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
                         )
                         .foregroundColor(.white)
-                        .cornerRadius(10)
+                        .cornerRadius(14)
                 }
             }
         }
         .padding()
-        .background(Color.ltmsCardBackground)
+        .background(Color.dashboardCard)
         .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.2), radius: 6, x: 0, y: 3)
         .fullScreenCover(isPresented: $showQuizAttempt) {
             QuizAttemptView(quiz: quiz) { _ in
                 onRefresh()

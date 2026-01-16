@@ -104,7 +104,7 @@ struct CourseContentView: View {
     
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 24) {
                 // Course Header
                 courseHeader
                 
@@ -113,14 +113,10 @@ struct CourseContentView: View {
                     courseOverview
                 }
                 
-                // Quizzes Section
-                if !viewModel.isLoading {
-                    quizzesSection
-                }
-                
                 // Course Content (Modules & Lessons)
                 if viewModel.isLoading {
                     ProgressView()
+                        .tint(.accentPrimary)
                         .frame(maxWidth: .infinity)
                         .padding()
                 } else if viewModel.modules.isEmpty {
@@ -184,95 +180,87 @@ struct CourseContentView: View {
     // MARK: - Course Overview
     
     private var courseOverview: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 20) {
             Text("About this course")
-                .font(.title3)
+                .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(.dashboardTextPrimary)
             
             Text(viewModel.course.courseDescription)
-                .font(.subheadline)
+                .font(.body)
                 .foregroundColor(.dashboardTextSecondary)
+                .lineSpacing(4)
             
-            // Stats
-            HStack(spacing: 20) {
-                StatBadge(
-                    icon: "square.stack.3d.up",
-                    title: "\(viewModel.modules.count) Modules",
-                    color: .purple
-                )
+            // Stats Row
+            HStack(spacing: 16) {
+                // Modules Stat
+                HStack(spacing: 8) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.accentPrimary.opacity(0.2))
+                            .frame(width: 40, height: 40)
+                        Image(systemName: "square.stack.3d.up")
+                            .foregroundColor(.accentPrimary)
+                            .font(.system(size: 18))
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("\(viewModel.modules.count)")
+                            .font(.headline)
+                            .foregroundColor(.dashboardTextPrimary)
+                        Text("Modules")
+                            .font(.caption)
+                            .foregroundColor(.dashboardTextSecondary)
+                    }
+                }
                 
-                StatBadge(
-                    icon: "play.circle",
-                    title: "\(totalLessons) Lessons",
-                    color: .blue
-                )
+                Spacer()
+                
+                // Lessons Stat
+                HStack(spacing: 8) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.blue.opacity(0.2))
+                            .frame(width: 40, height: 40)
+                        Image(systemName: "play.circle")
+                            .foregroundColor(.blue)
+                            .font(.system(size: 18))
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("\(totalLessons)")
+                            .font(.headline)
+                            .foregroundColor(.dashboardTextPrimary)
+                        Text("Lessons")
+                            .font(.caption)
+                            .foregroundColor(.dashboardTextSecondary)
+                    }
+                }
+                
+                Spacer()
             }
         }
-        .padding()
+        .padding(20)
         .background(Color.dashboardCard)
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.2), radius: 6, x: 0, y: 3)
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
     }
     
     private var totalLessons: Int {
         viewModel.lessonsByModule.values.reduce(0) { $0 + $1.count }
     }
     
-    // MARK: - Quizzes Section
-    
-    private var quizzesSection: some View {
-        NavigationLink(destination: CourseQuizzesView(course: viewModel.course)) {
-            HStack(spacing: 16) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(
-                            LinearGradient(
-                                colors: [.orange, .red],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 50, height: 50)
-                    
-                    Image(systemName: "questionmark.circle.fill")
-                        .font(.title2)
-                        .foregroundColor(.white)
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Course Quizzes")
-                        .font(.headline)
-                        .foregroundColor(.dashboardTextPrimary)
-                    
-                    Text("Test your knowledge")
-                        .font(.caption)
-                        .foregroundColor(.dashboardTextSecondary)
-                }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .foregroundColor(.dashboardTextSecondary)
-            }
-            .padding()
-            .background(Color.dashboardCard)
-            .cornerRadius(16)
-            .shadow(color: Color.black.opacity(0.2), radius: 6, x: 0, y: 3)
-        }
-        .buttonStyle(.plain)
-    }
+
     
     // MARK: - Course Syllabus
     
     private var courseSyllabus: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Course Syllabus")
-                .font(.title3)
+                .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(.dashboardTextPrimary)
+                .padding(.bottom, 4)
             
-            VStack(spacing: 12) {
+            VStack(spacing: 16) {
                 ForEach(Array(viewModel.modules.enumerated()), id: \.element.id) { index, module in
                     ModuleAccordion(
                         module: module,
@@ -323,21 +311,29 @@ struct ModuleAccordion: View {
         VStack(spacing: 0) {
             // Module Header
             Button(action: onToggle) {
-                HStack(spacing: 12) {
+                HStack(spacing: 16) {
                     // Module number badge
                     ZStack {
-                        Circle()
-                            .fill(Color.accentPrimary.opacity(0.2))
-                            .frame(width: 40, height: 40)
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(
+                                LinearGradient(
+                                    colors: [.accentPrimary, .accentSecondary],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 50, height: 50)
                         Text("\(moduleNumber)")
-                            .font(.headline)
-                            .foregroundColor(.accentPrimary)
+                            .font(.title3)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
                     }
                     
                     // Module info
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 6) {
                         Text(module.title)
-                            .font(.headline)
+                            .font(.body)
+                            .fontWeight(.semibold)
                             .foregroundColor(.dashboardTextPrimary)
                             .multilineTextAlignment(.leading)
                         
@@ -356,19 +352,40 @@ struct ModuleAccordion: View {
                     
                     Spacer()
                     
-                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .foregroundColor(.dashboardTextSecondary)
+                    // Progress circle or chevron
+                    ZStack {
+                        Circle()
+                            .stroke(Color.dashboardTextSecondary.opacity(0.3), lineWidth: 2)
+                            .frame(width: 32, height: 32)
+                        
+                        Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.dashboardTextPrimary)
+                    }
                 }
-                .padding()
-                .background(Color.dashboardCard)
-                .cornerRadius(12)
-                .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
+                .padding(16)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color.dashboardCard)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(
+                            LinearGradient(
+                                colors: isExpanded ? [.accentPrimary.opacity(0.5), .accentSecondary.opacity(0.5)] : [Color.clear],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            ),
+                            lineWidth: isExpanded ? 2 : 0
+                        )
+                )
+                .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
             }
             .buttonStyle(.plain)
             
             // Lessons List (Expanded)
             if isExpanded {
-                VStack(spacing: 0) {
+                VStack(spacing: 8) {
                     ForEach(Array(lessons.enumerated()), id: \.element.id) { index, lesson in
                         NavigationLink(destination: LessonViewerView(
                             lesson: lesson,
@@ -389,9 +406,9 @@ struct ModuleAccordion: View {
                         }
                     }
                 }
-                .padding(.top, 8)
-                .padding(.horizontal)
-                .padding(.bottom)
+                .padding(.top, 12)
+                .padding(.horizontal, 8)
+                .padding(.bottom, 8)
                 .background(Color.dashboardCard.opacity(0.5))
                 .cornerRadius(12)
                 .padding(.top, 4)
@@ -408,41 +425,59 @@ struct LessonRow: View {
     let isCompleted: Bool
     
     var body: some View {
-        HStack(spacing: 12) {
-            // Completion indicator
+        HStack(spacing: 14) {
+            // Play icon
             ZStack {
-                Circle()
-                    .stroke(isCompleted ? Color.green : Color.gray.opacity(0.3), lineWidth: 2)
-                    .frame(width: 24, height: 24)
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(
+                        isCompleted 
+                        ? Color.green.opacity(0.15)
+                        : Color.accentPrimary.opacity(0.15)
+                    )
+                    .frame(width: 44, height: 44)
                 
-                if isCompleted {
-                    Image(systemName: "checkmark")
-                        .font(.caption.bold())
-                        .foregroundColor(.green)
-                }
+                Image(systemName: isCompleted ? "checkmark.circle.fill" : "play.circle.fill")
+                    .font(.system(size: 22))
+                    .foregroundColor(isCompleted ? .green : .accentPrimary)
             }
             
             // Lesson info
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Lesson \(lessonNumber): \(lesson.title)")
+            VStack(alignment: .leading, spacing: 5) {
+                Text(lesson.title)
                     .font(.subheadline)
+                    .fontWeight(.medium)
                     .foregroundColor(.dashboardTextPrimary)
                 
-                if let objectives = lesson.learningObjectives, !objectives.isEmpty {
-                    Text(objectives)
-                        .font(.caption)
+                HStack(spacing: 6) {
+                    Text("Lesson \(lessonNumber)")
+                        .font(.caption2)
                         .foregroundColor(.dashboardTextSecondary)
-                        .lineLimit(1)
+                    
+                    if let objectives = lesson.learningObjectives, !objectives.isEmpty {
+                        Text("•")
+                            .font(.caption2)
+                            .foregroundColor(.dashboardTextSecondary)
+                        Text(objectives)
+                            .font(.caption2)
+                            .foregroundColor(.dashboardTextSecondary)
+                            .lineLimit(1)
+                    }
                 }
             }
             
             Spacer()
             
+            // Arrow indicator
             Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundColor(.dashboardTextSecondary)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.dashboardTextSecondary.opacity(0.6))
         }
-        .padding(.vertical, 8)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.dashboardBg.opacity(0.5))
+        )
     }
 }
 

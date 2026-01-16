@@ -138,9 +138,10 @@ struct LessonViewerView: View {
             }
             .padding()
         }
-        .background(Color.ltmsBackground)
+        .background(Color.dashboardBg)
         .navigationTitle("Lesson")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .alert("Error", isPresented: $viewModel.showError) {
             Button("OK") { }
         } message: {
@@ -174,14 +175,16 @@ struct LessonViewerView: View {
             Text(viewModel.lesson.title)
                 .font(.title2)
                 .fontWeight(.bold)
+                .foregroundColor(.dashboardTextPrimary)
             
             Text(viewModel.lesson.lessonDescription)
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(.dashboardTextSecondary)
         }
         .padding()
-        .background(Color.ltmsCardBackground)
+        .background(Color.dashboardCard)
         .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
     }
     
     // MARK: - Objectives Section
@@ -190,14 +193,14 @@ struct LessonViewerView: View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Learning Objectives", systemImage: "target")
                 .font(.headline)
-                .foregroundColor(.ltmsPrimary)
+                .foregroundColor(.accentPrimary)
             
             Text(objectives)
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(.dashboardTextSecondary)
         }
         .padding()
-        .background(Color.blue.opacity(0.1))
+        .background(Color.accentPrimary.opacity(0.15))
         .cornerRadius(12)
     }
     
@@ -211,7 +214,7 @@ struct LessonViewerView: View {
             
             Text(prerequisites)
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(.dashboardTextSecondary)
         }
         .padding()
         .background(Color.orange.opacity(0.1))
@@ -224,6 +227,7 @@ struct LessonViewerView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Learning Materials")
                 .font(.headline)
+                .foregroundColor(.dashboardTextPrimary)
             
             VStack(spacing: 12) {
                 ForEach(viewModel.contents) { content in
@@ -243,10 +247,10 @@ struct LessonViewerView: View {
         VStack(spacing: 12) {
             Image(systemName: "doc.text")
                 .font(.system(size: 50))
-                .foregroundColor(.secondary)
+                .foregroundColor(.dashboardTextSecondary)
             Text("No materials available yet")
                 .font(.headline)
-                .foregroundColor(.secondary)
+                .foregroundColor(.dashboardTextPrimary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40)
@@ -298,7 +302,7 @@ struct LessonViewerView: View {
                         Color.green.opacity(0.2)
                     } else {
                         LinearGradient(
-                            colors: [.ltmsPrimary, .ltmsSecondary],
+                            colors: [.accentPrimary, .accentSecondary],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -306,7 +310,7 @@ struct LessonViewerView: View {
                 }
             )
             .foregroundColor(viewModel.currentProgress?.isCompleted == true ? .green : .white)
-            .cornerRadius(12)
+            .cornerRadius(14)
         }
         .disabled(viewModel.currentProgress?.isCompleted == true)
     }
@@ -334,22 +338,23 @@ struct ContentCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(content.title)
                     .font(.headline)
-                    .foregroundColor(.primary)
+                    .foregroundColor(.dashboardTextPrimary)
                 
                 Text(content.contentType.displayName)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.dashboardTextSecondary)
             }
             
             Spacer()
             
             Image(systemName: "play.circle.fill")
                 .font(.title2)
-                .foregroundColor(.ltmsPrimary)
+                .foregroundColor(.accentPrimary)
         }
         .padding()
-        .background(Color.ltmsCardBackground)
+        .background(Color.dashboardCard)
         .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
     }
 }
 
@@ -375,19 +380,19 @@ struct QuizCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(quiz.title)
                     .font(.headline)
-                    .foregroundColor(.primary)
+                    .foregroundColor(.dashboardTextPrimary)
                 
                 HStack(spacing: 8) {
                     Text(quiz.passingScoreDisplay)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.dashboardTextSecondary)
                     
                     if quiz.timeLimitMinutes != nil {
                         Text("•")
                             .foregroundColor(.secondary)
                         Text(quiz.timeLimitDisplay)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.dashboardTextSecondary)
                     }
                 }
             }
@@ -396,11 +401,12 @@ struct QuizCard: View {
             
             Image(systemName: "chevron.right")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(.dashboardTextSecondary)
         }
         .padding()
-        .background(Color.ltmsCardBackground)
+        .background(Color.dashboardCard)
         .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
     }
 }
 
