@@ -12,7 +12,13 @@ struct TermsPrivacyView: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
+            ZStack {
+                // Dark gradient background
+                Rectangle()
+                    .fill(Color.dashboardBg)
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 0) {
                 // Custom Segmented Control
                 Picker("", selection: $selectedTab) {
                     Text("Terms of Service").tag(0)
@@ -20,6 +26,17 @@ struct TermsPrivacyView: View {
                 }
                 .pickerStyle(.segmented)
                 .padding()
+                .onAppear {
+                    // Customize segmented control text color for visibility
+                    UISegmentedControl.appearance().setTitleTextAttributes([
+                        .foregroundColor: UIColor.white
+                    ], for: .normal)
+                    UISegmentedControl.appearance().setTitleTextAttributes([
+                        .foregroundColor: UIColor(red: 18/255, green: 20/255, blue: 40/255, alpha: 1.0)
+                    ], for: .selected)
+                    UISegmentedControl.appearance().selectedSegmentTintColor = UIColor.white
+                    UISegmentedControl.appearance().backgroundColor = UIColor(Color.dashboardCard)
+                }
                 
                 // Content
                 TabView(selection: $selectedTab) {
@@ -30,9 +47,13 @@ struct TermsPrivacyView: View {
                         .tag(1)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
+                }
             }
             .navigationTitle("Legal")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarBackground(Color.dashboardCard, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar(.hidden, for: .tabBar)
         }
     }
@@ -49,10 +70,11 @@ struct TermsOfServiceView: View {
                     Text("Terms of Service")
                         .font(.title)
                         .fontWeight(.bold)
+                        .foregroundColor(.dashboardTextPrimary)
                     
                     Text("Last updated: January 15, 2026")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.dashboardTextSecondary)
                 }
                 .padding(.bottom, 8)
                 
@@ -173,7 +195,7 @@ struct TermsOfServiceView: View {
             }
             .padding()
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color.clear)
     }
 }
 
@@ -188,10 +210,11 @@ struct PrivacyPolicyView: View {
                     Text("Privacy Policy")
                         .font(.title)
                         .fontWeight(.bold)
+                        .foregroundColor(.dashboardTextPrimary)
                     
                     Text("Last updated: January 15, 2026")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.dashboardTextSecondary)
                 }
                 .padding(.bottom, 8)
                 
@@ -358,7 +381,7 @@ struct PrivacyPolicyView: View {
             }
             .padding()
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color.clear)
     }
 }
 
@@ -373,10 +396,11 @@ struct SectionView: View {
             Text(title)
                 .font(.headline)
                 .fontWeight(.semibold)
+                .foregroundColor(.accentBlue)
             
             Text(content)
                 .font(.body)
-                .foregroundColor(.primary)
+                .foregroundColor(.dashboardTextPrimary)
                 .lineSpacing(4)
         }
         .padding(.vertical, 8)
