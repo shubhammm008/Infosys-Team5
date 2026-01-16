@@ -2,7 +2,7 @@
 //  EditQuestionView.swift
 //  LTMS
 //
-//  Created for Quiz Feature - Educator View
+//   - Educator View
 //
 
 import SwiftUI

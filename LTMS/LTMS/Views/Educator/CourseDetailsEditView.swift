@@ -1,9 +1,4 @@
-//
-//  CourseDetailsEditView.swift
-//  LTMS
-//
-//  Created for Prerequisites and Learning Objectives feature
-//
+
 
 import SwiftUI
 
