@@ -15,6 +15,8 @@ struct CourseDetailView: View {
     @State private var isEnrolling = false
     @State private var isEnrolled = false
     @State private var showEnrollmentSuccess = false
+    @State private var showEnrollmentError = false
+    @State private var enrollmentErrorMessage = ""
     
     var body: some View {
         ScrollView {
@@ -44,63 +46,9 @@ struct CourseDetailView: View {
                             .fontWeight(.bold)
                         
                         Text(course.courseDescription)
-                            .font(.caption)
+                            .font(.body)
                             .foregroundColor(.secondary)
                     }
-                    .padding(.horizontal) // Added padding to the title/description block
-                }
-                
-                Divider()
-                
-                // Prerequisites Section
-                if let prerequisites = course.prerequisites, !prerequisites.isEmpty {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Label("Prerequisites", systemImage: "checkmark.circle")
-                            .font(.headline)
-                            .foregroundColor(.ltmsPrimary)
-                        
-                        VStack(alignment: .leading, spacing: 8) {
-                            ForEach(prerequisites, id: \.self) { prerequisite in
-                                HStack(alignment: .top, spacing: 8) {
-                                    Image(systemName: "circle.fill")
-                                        .font(.system(size: 6))
-                                        .foregroundColor(.secondary)
-                                        .padding(.top, 6)
-                                    Text(prerequisite)
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                        }
-                    }
-                    .padding(.horizontal)
-                    
-                    Divider()
-                }
-                
-                // Learning Objectives Section
-                if let objectives = course.learningObjectives, !objectives.isEmpty {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Label("What You'll Learn", systemImage: "lightbulb.fill")
-                            .font(.headline)
-                            .foregroundColor(.ltmsPrimary)
-                        
-                        VStack(alignment: .leading, spacing: 8) {
-                            ForEach(objectives, id: \.self) { objective in
-                                HStack(alignment: .top, spacing: 8) {
-                                    Image(systemName: "star.fill")
-                                        .font(.system(size: 10))
-                                        .foregroundColor(.yellow)
-                                        .padding(.top, 4)
-                                    Text(objective)
-                                        .font(.subheadline)
-                                }
-                            }
-                        }
-                    }
-                    .padding(.horizontal)
-                    
-                    Divider()
                 }
                 
                 // Course Details
@@ -169,6 +117,11 @@ struct CourseDetailView: View {
         } message: {
             Text("You have successfully enrolled in \(course.title)")
         }
+        .alert("Enrollment Error", isPresented: $showEnrollmentError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(enrollmentErrorMessage)
+        }
     }
     
     private func checkEnrollmentStatus() async {
@@ -191,17 +144,19 @@ struct CourseDetailView: View {
             defer { isEnrolling = false }
             
             do {
-                // Enroll user and save to database
-                let enrollment = try await ContentService.shared.enrollInCourse(learnerId: userId, courseId: courseId)
-                print("✅ Enrollment saved to database: \(enrollment.id ?? "N/A")")
-                print("   Course: \(course.title)")
-                print("   Learner: \(userId)")
-                print("   Enrollment Date: \(enrollment.enrollmentDate)")
-                
+                _ = try await ContentService.shared.enrollInCourse(learnerId: userId, courseId: courseId)
                 isEnrolled = true
                 showEnrollmentSuccess = true
             } catch {
-                print("❌ Error enrolling: \(error)")
+                let errorMessage = "\(error)"
+                if errorMessage.contains("23505") || errorMessage.contains("duplicate key") {
+                    // User is already enrolled, just update the UI
+                    isEnrolled = true
+                } else {
+                    enrollmentErrorMessage = "Failed to enroll in the course. Please try again."
+                    showEnrollmentError = true
+                }
+                print("Error enrolling: \(error)")
             }
         }
     }

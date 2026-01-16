@@ -20,6 +20,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		05CA506A2F1A0B0200952D6E /* LTMS.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = LTMS.xcodeproj; sourceTree = "<group>"; };
 		F32DDCDB2F19F6CE00C99C2A /* LTMS.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = LTMS.xcodeproj; sourceTree = "<group>"; };
 		F3AA6CB02F0957CB00B04A63 /* LTMS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LTMS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F3AA6CC72F0957CD00B04A63 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
@@ -53,6 +54,11 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		05CA506D2F1A0B0200952D6E /* Products */ = {
+			isa = PBXGroup;
+			name = Products;
+			sourceTree = "<group>";
+		};
 		F32DDCDC2F19F6CE00C99C2A /* Products */ = {
 			isa = PBXGroup;
 			name = Products;
@@ -141,6 +147,10 @@
 			productRefGroup = F3AA6CB12F0957CB00B04A63 /* Products */;
 			projectDirPath = "";
 			projectReferences = (
+				{
+					ProductGroup = 05CA506D2F1A0B0200952D6E /* Products */;
+					ProjectRef = 05CA506A2F1A0B0200952D6E /* LTMS.xcodeproj */;
+				},
 				{
 					ProductGroup = F32DDCDC2F19F6CE00C99C2A /* Products */;
 					ProjectRef = F32DDCDB2F19F6CE00C99C2A /* LTMS.xcodeproj */;

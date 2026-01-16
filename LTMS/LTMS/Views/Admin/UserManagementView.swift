@@ -297,25 +297,6 @@ struct UserRow: View {
     }
 }
 
-struct FilterChip: View {
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(isSelected ? .semibold : .medium)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(isSelected ? Color.accentPrimary : Color.dashboardCard)
-                .foregroundColor(isSelected ? .textOnAccent : .dashboardTextPrimary)
-                .cornerRadius(20)
-        }
-    }
-}
-
 #Preview {
     UserManagementView()
 }

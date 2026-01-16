@@ -476,108 +476,108 @@ struct HelpCenterView: View {
     }
 }
 
-struct PrivacyPolicyView: View {
-    var body: some View {
-        List {
-            Section {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Privacy Policy")
-                        .font(.title)
-                        .fontWeight(.bold)
-                    
-                    Text("Last updated: January 15, 2026")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                .padding(.vertical, 8)
-            }
-            
-            Section("1. Introduction") {
-                Text("Welcome to the Learning & Training Management System (LTMS). We value your privacy and are committed to protecting your personal data.")
-                    .font(.callout)
-                    .foregroundColor(.secondary)
-            }
-            
-            Section("2. Data Collection") {
-                Text("We collect information you provide directly to us, such as when you create an account, enroll in a course, or communicate with our support team.")
-                    .font(.callout)
-                    .foregroundColor(.secondary)
-            }
-            
-            Section("3. Use of Information") {
-                Text("We use the information we collect to provide, maintain, and improve our services, including to process transactions, send you technical notices, and respond to your comments.")
-                    .font(.callout)
-                    .foregroundColor(.secondary)
-            }
-            
-            Section("4. Data Security") {
-                Text("We implement appropriate technical and organizational measures to protect specific data against accidental or unlawful destruction, loss, alteration, or unauthorized disclosure.")
-                    .font(.callout)
-                    .foregroundColor(.secondary)
-            }
-            
-            Section("5. Contact Us") {
-                Text("If you have any questions about this Privacy Policy, please contact us at privacy@ltms.com.")
-                    .font(.callout)
-                    .foregroundColor(.secondary)
-            }
-        }
-        .navigationTitle("Privacy Policy")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-struct TermsOfServiceView: View {
-    var body: some View {
-        List {
-            Section {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Terms of Service")
-                        .font(.title)
-                        .fontWeight(.bold)
-                    
-                    Text("Last updated: January 15, 2026")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                .padding(.vertical, 8)
-            }
-            
-            Section("1. Acceptance of Terms") {
-                Text("By accessing or using our service, you agree to be bound by these Terms of Service and all applicable laws and regulations.")
-                    .font(.callout)
-                    .foregroundColor(.secondary)
-            }
-            
-            Section("2. User Accounts") {
-                Text("You are responsible for safeguarding the password that you use to access the service and for any activities or actions under your password.")
-                    .font(.callout)
-                    .foregroundColor(.secondary)
-            }
-            
-            Section("3. Content Guidelines") {
-                Text("Users may not post content that is illegal, offensive, or infringes on the rights of others. We reserve the right to remove any content that violates these terms.")
-                    .font(.callout)
-                    .foregroundColor(.secondary)
-            }
-            
-            Section("4. Termination") {
-                Text("We may terminate or suspend your account immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach the Terms.")
-                    .font(.callout)
-                    .foregroundColor(.secondary)
-            }
-            
-            Section("5. Disclaimer") {
-                Text("The service is provided on an 'AS IS' and 'AS AVAILABLE' basis. We make no warranties, expressed or implied, regarding the operation of the service.")
-                    .font(.callout)
-                    .foregroundColor(.secondary)
-            }
-        }
-        .navigationTitle("Terms of Service")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
+//struct PrivacyPolicyView: View {
+//    var body: some View {
+//        List {
+//            Section {
+//                VStack(alignment: .leading, spacing: 8) {
+//                    Text("Privacy Policy")
+//                        .font(.title)
+//                        .fontWeight(.bold)
+//                    
+//                    Text("Last updated: January 15, 2026")
+//                        .font(.subheadline)
+//                        .foregroundColor(.secondary)
+//                }
+//                .padding(.vertical, 8)
+//            }
+//            
+//            Section("1. Introduction") {
+//                Text("Welcome to the Learning & Training Management System (LTMS). We value your privacy and are committed to protecting your personal data.")
+//                    .font(.callout)
+//                    .foregroundColor(.secondary)
+//            }
+//            
+//            Section("2. Data Collection") {
+//                Text("We collect information you provide directly to us, such as when you create an account, enroll in a course, or communicate with our support team.")
+//                    .font(.callout)
+//                    .foregroundColor(.secondary)
+//            }
+//            
+//            Section("3. Use of Information") {
+//                Text("We use the information we collect to provide, maintain, and improve our services, including to process transactions, send you technical notices, and respond to your comments.")
+//                    .font(.callout)
+//                    .foregroundColor(.secondary)
+//            }
+//            
+//            Section("4. Data Security") {
+//                Text("We implement appropriate technical and organizational measures to protect specific data against accidental or unlawful destruction, loss, alteration, or unauthorized disclosure.")
+//                    .font(.callout)
+//                    .foregroundColor(.secondary)
+//            }
+//            
+//            Section("5. Contact Us") {
+//                Text("If you have any questions about this Privacy Policy, please contact us at privacy@ltms.com.")
+//                    .font(.callout)
+//                    .foregroundColor(.secondary)
+//            }
+//        }
+//        .navigationTitle("Privacy Policy")
+//        .navigationBarTitleDisplayMode(.inline)
+//    }
+//}
+//
+//struct TermsOfServiceView: View {
+//    var body: some View {
+//        List {
+//            Section {
+//                VStack(alignment: .leading, spacing: 8) {
+//                    Text("Terms of Service")
+//                        .font(.title)
+//                        .fontWeight(.bold)
+//                    
+//                    Text("Last updated: January 15, 2026")
+//                        .font(.subheadline)
+//                        .foregroundColor(.secondary)
+//                }
+//                .padding(.vertical, 8)
+//            }
+//            
+//            Section("1. Acceptance of Terms") {
+//                Text("By accessing or using our service, you agree to be bound by these Terms of Service and all applicable laws and regulations.")
+//                    .font(.callout)
+//                    .foregroundColor(.secondary)
+//            }
+//            
+//            Section("2. User Accounts") {
+//                Text("You are responsible for safeguarding the password that you use to access the service and for any activities or actions under your password.")
+//                    .font(.callout)
+//                    .foregroundColor(.secondary)
+//            }
+//            
+//            Section("3. Content Guidelines") {
+//                Text("Users may not post content that is illegal, offensive, or infringes on the rights of others. We reserve the right to remove any content that violates these terms.")
+//                    .font(.callout)
+//                    .foregroundColor(.secondary)
+//            }
+//            
+//            Section("4. Termination") {
+//                Text("We may terminate or suspend your account immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach the Terms.")
+//                    .font(.callout)
+//                    .foregroundColor(.secondary)
+//            }
+//            
+//            Section("5. Disclaimer") {
+//                Text("The service is provided on an 'AS IS' and 'AS AVAILABLE' basis. We make no warranties, expressed or implied, regarding the operation of the service.")
+//                    .font(.callout)
+//                    .foregroundColor(.secondary)
+//            }
+//        }
+//        .navigationTitle("Terms of Service")
+//        .navigationBarTitleDisplayMode(.inline)
+//    }
+//}
+//
 
 #Preview {
     AdminDashboardView()
