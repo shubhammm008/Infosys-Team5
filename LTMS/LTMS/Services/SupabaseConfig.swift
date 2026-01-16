@@ -2,7 +2,7 @@
 //  SupabaseConfig.swift
 //  LTMS
 //
-//  Created for Supabase Integration
+//  Created by Shubham Singh on 07/01/26.
 //
 
 import Foundation

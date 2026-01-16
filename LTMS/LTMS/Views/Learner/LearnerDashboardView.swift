@@ -616,16 +616,6 @@ struct PremiumCourseCard: View {
 // MARK: - Progress View
 
 struct LearnerProgressView: View {
-    @State private var animateRings = false
-    @State private var animateBars = false
-    
-    // Sample data - replace with real data from your services
-    @State private var coursesCompleted = 4
-    @State private var totalCourses = 5
-    @State private var hoursLearned = 12.0
-    @State private var currentStreak = 7
-    @State private var weeklyHours: [Double] = [2.5, 3.0, 4.5, 2.0, 3.5, 2.5, 0.5]
-    
     var body: some View {
         NavigationStack {
             ZStack {
@@ -677,7 +667,10 @@ struct LearnerProgressView: View {
                 withAnimation(.spring(response: 1.0, dampingFraction: 0.8).delay(0.3)) {
                     animateBars = true
                 }
+                .padding()
             }
+            .background(Color.ltmsBackground)
+            .navigationTitle("My Progress")
         }
     }
 }
