@@ -1,10 +1,3 @@
-//
-//  AddContentView.swift
-//  LTMS
-//
-//  Created for Content Upload
-//
-
 import SwiftUI
 import PhotosUI
 import UniformTypeIdentifiers

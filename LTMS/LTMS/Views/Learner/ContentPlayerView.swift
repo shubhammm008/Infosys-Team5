@@ -1,9 +1,4 @@
-//
-//  ContentPlayerView.swift
-//  LTMS
-//
-//  Created for Content Viewing (PDF, Video, Slides, Text)
-//
+
 
 import SwiftUI
 import PDFKit

@@ -1,9 +1,4 @@
-//
-//  CourseContentView.swift
-//  LTMS
-//
-//  Created for Learner Course Content Navigation
-//
+
 
 import SwiftUI
 import Combine

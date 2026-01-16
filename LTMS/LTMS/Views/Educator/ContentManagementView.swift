@@ -1,9 +1,4 @@
-//
-//  ContentManagementView.swift
-//  LTMS
-//
-//  Created for Content Management
-//
+
 
 import SwiftUI
 import Combine
