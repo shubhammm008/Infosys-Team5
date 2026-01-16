@@ -204,13 +204,13 @@ struct CourseCatalogView: View {
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
         case 0..<12:
-            return "Good Morning"
+            return "Good Morning,"
         case 12..<17:
-            return "Good Afternoon"
+            return "Good Afternoon,"
         case 17..<24:
-            return "Good Evening"
+            return "Good Evening,"
         default:
-            return "Welcome Back"
+            return "Welcome Back,"
         }
     }
 }
@@ -390,10 +390,12 @@ struct EnrolledCourseCard: View {
                         .font(.caption)
                         .foregroundColor(.dashboardTextSecondary)
                     Spacer()
-                    Text("\(Int(enrollment.completionPercentage))%")
+                    // Only show 100% if course status is completed
+                    let displayPercentage = enrollment.status == .completed ? 100 : min(Int(enrollment.completionPercentage), 99)
+                    Text("\(displayPercentage)%")
                         .font(.caption)
                         .fontWeight(.semibold)
-                        .foregroundColor(.accentPrimary)
+                        .foregroundColor(enrollment.status == .completed ? .green : .accentPrimary)
                 }
                 
                 GeometryReader { geometry in

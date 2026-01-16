@@ -160,11 +160,18 @@ struct LessonViewerView: View {
     // MARK: - Lesson Header
     
     private var lessonHeader: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 20) {
+            // Completed Badge
             if let isCompleted = viewModel.currentProgress?.isCompleted, isCompleted {
-                HStack {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
+                HStack(spacing: 10) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.green.opacity(0.2))
+                            .frame(width: 32, height: 32)
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 18))
+                            .foregroundColor(.green)
+                    }
                     Text("Completed")
                         .font(.subheadline)
                         .foregroundColor(.green)
@@ -172,61 +179,131 @@ struct LessonViewerView: View {
                 }
             }
             
+            // Lesson Title
             Text(viewModel.lesson.title)
-                .font(.title2)
+                .font(.largeTitle)
                 .fontWeight(.bold)
                 .foregroundColor(.dashboardTextPrimary)
             
+            // Lesson Description
             Text(viewModel.lesson.lessonDescription)
-                .font(.subheadline)
+                .font(.body)
                 .foregroundColor(.dashboardTextSecondary)
+                .lineSpacing(6)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .padding()
-        .background(Color.dashboardCard)
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(24)
+        .background(
+            RoundedRectangle(cornerRadius: 24)
+                .fill(Color.dashboardCard)
+        )
+        .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
     }
     
     // MARK: - Objectives Section
     
     private func objectivesSection(_ objectives: String) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("Learning Objectives", systemImage: "target")
-                .font(.headline)
-                .foregroundColor(.accentPrimary)
+        HStack(alignment: .top, spacing: 16) {
+            // Icon
+            ZStack {
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.blue.opacity(0.3), Color.blue.opacity(0.15)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 56, height: 56)
+                
+                Image(systemName: "target")
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundColor(.blue)
+            }
             
-            Text(objectives)
-                .font(.subheadline)
-                .foregroundColor(.dashboardTextSecondary)
+            // Content
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Learning Objectives")
+                    .font(.title3)
+                    .fontWeight(.bold)
+                    .foregroundColor(.dashboardTextPrimary)
+                
+                Text(objectives)
+                    .font(.body)
+                    .foregroundColor(.dashboardTextSecondary)
+                    .lineSpacing(6)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
-        .padding()
-        .background(Color.accentPrimary.opacity(0.15))
-        .cornerRadius(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color.dashboardCard)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.blue.opacity(0.2), lineWidth: 1.5)
+        )
+        .shadow(color: Color.blue.opacity(0.1), radius: 8, x: 0, y: 4)
     }
     
     // MARK: - Prerequisites Section
     
     private func prerequisitesSection(_ prerequisites: String) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("Prerequisites", systemImage: "checkmark.circle")
-                .font(.headline)
-                .foregroundColor(.orange)
+        HStack(alignment: .top, spacing: 16) {
+            // Icon
+            ZStack {
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.orange.opacity(0.3), Color.orange.opacity(0.15)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 56, height: 56)
+                
+                Image(systemName: "checkmark.shield")
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundColor(.orange)
+            }
             
-            Text(prerequisites)
-                .font(.subheadline)
-                .foregroundColor(.dashboardTextSecondary)
+            // Content
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Prerequisites")
+                    .font(.title3)
+                    .fontWeight(.bold)
+                    .foregroundColor(.dashboardTextPrimary)
+                
+                Text(prerequisites)
+                    .font(.body)
+                    .foregroundColor(.dashboardTextSecondary)
+                    .lineSpacing(6)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
-        .padding()
-        .background(Color.orange.opacity(0.1))
-        .cornerRadius(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color.dashboardCard)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.orange.opacity(0.2), lineWidth: 1.5)
+        )
+        .shadow(color: Color.orange.opacity(0.1), radius: 8, x: 0, y: 4)
     }
     
     // MARK: - Materials Section
     
     private var materialsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 20) {
             Text("Learning Materials")
-                .font(.headline)
+                .font(.title2)
+                .fontWeight(.bold)
                 .foregroundColor(.dashboardTextPrimary)
             
             VStack(spacing: 12) {

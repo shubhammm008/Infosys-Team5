@@ -23,11 +23,6 @@ struct EditProfileView: View {
     @State private var showErrorAlert = false
     @State private var errorMessage = ""
     
-    // Photo picker states
-    @State private var selectedPhotoItem: PhotosPickerItem?
-    @State private var selectedPhotoData: Data?
-    @State private var profileImage: UIImage?
-    
     var body: some View {
         NavigationStack {
             ZStack {
@@ -37,67 +32,6 @@ struct EditProfileView: View {
                     .ignoresSafeArea()
                 
                 Form {
-                // MARK: - Profile Picture Section
-                Section {
-                    HStack {
-                        Spacer()
-                        VStack(spacing: 12) {
-                            // Display selected image or default avatar
-                            if let profileImage = profileImage {
-                                Image(uiImage: profileImage)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: 100, height: 100)
-                                    .clipShape(Circle())
-                                    .overlay(
-                                        Circle()
-                                            .stroke(
-                                                LinearGradient(
-                                                    colors: [.accentBlue, .accentPurple],
-                                                    startPoint: .topLeading,
-                                                    endPoint: .bottomTrailing
-                                                ),
-                                                lineWidth: 3
-                                            )
-                                    )
-                            } else {
-                                Circle()
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [.accentBlue, .accentPurple],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                    .frame(width: 100, height: 100)
-                                    .overlay(
-                                        Image(systemName: "person.fill")
-                                            .font(.system(size: 44))
-                                            .foregroundColor(.white)
-                                    )
-                            }
-                            
-                            // PhotosPicker button
-                            PhotosPicker(
-                                selection: $selectedPhotoItem,
-                                matching: .images,
-                                photoLibrary: .shared()
-                            ) {
-                                HStack(spacing: 6) {
-                                    Image(systemName: "camera.fill")
-                                        .font(.caption)
-                                    Text("Change Photo")
-                                }
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                                .foregroundColor(.accentBlue)
-                            }
-                        }
-                        Spacer()
-                    }
-                    .listRowBackground(Color.clear)
-                }
-                
                 // MARK: - Personal Information
                 Section {
                     HStack {
@@ -171,35 +105,6 @@ struct EditProfileView: View {
             .onAppear {
                 loadCurrentUserData()
             }
-            .onChange(of: selectedPhotoItem) { oldValue, newValue in
-                print("📸 PhotosPicker selection changed")
-                Task {
-                    if let newValue = newValue {
-                        print("📸 New value exists, attempting to load...")
-                        do {
-                            if let data = try await newValue.loadTransferable(type: Data.self) {
-                                print("📸 Data loaded: \(data.count) bytes")
-                                if let uiImage = UIImage(data: data) {
-                                    print("📸 UIImage created successfully")
-                                    await MainActor.run {
-                                        selectedPhotoData = data
-                                        profileImage = uiImage
-                                        print("✅ Photo updated successfully - profileImage is now set")
-                                    }
-                                } else {
-                                    print("❌ Failed to create UIImage from data")
-                                }
-                            } else {
-                                print("❌ Failed to load transferable data")
-                            }
-                        } catch {
-                            print("❌ Error loading photo: \(error)")
-                        }
-                    } else {
-                        print("📸 New value is nil")
-                    }
-                }
-            }
             .alert("Success", isPresented: $showSuccessAlert) {
                 Button("OK") {
                     dismiss()
@@ -235,25 +140,6 @@ struct EditProfileView: View {
             firstName = user.firstName
             lastName = user.lastName
             email = user.email
-            
-            // Load existing profile picture if available
-            if let profilePictureURL = user.profilePictureURL,
-               let url = URL(string: profilePictureURL) {
-                Task {
-                    do {
-                        let (data, _) = try await URLSession.shared.data(from: url)
-                        if let uiImage = UIImage(data: data) {
-                            await MainActor.run {
-                                profileImage = uiImage
-                                selectedPhotoData = data
-                                print("✅ Loaded existing profile picture")
-                            }
-                        }
-                    } catch {
-                        print("⚠️ Failed to load existing profile picture: \(error)")
-                    }
-                }
-            }
         }
     }
     
@@ -277,37 +163,6 @@ struct EditProfileView: View {
                 var updatedUser = authService.currentUser!
                 updatedUser.firstName = firstName
                 updatedUser.lastName = lastName
-                
-                // Upload photo if one was selected
-                if let photoData = selectedPhotoData {
-                    print("📤 Uploading profile photo...")
-                    
-                    // Create unique filename
-                    let fileName = "\(userId)_\(UUID().uuidString).jpg"
-                    let path = "profile_pictures/\(fileName)"
-                    
-                    // Upload to Supabase storage
-                    do {
-                        try await SupabaseService.shared.client.storage
-                            .from("profile-pictures")
-                            .upload(
-                                path,
-                                data: photoData,
-                                options: FileOptions(contentType: "image/jpeg", upsert: true)
-                            )
-                        
-                        // Get public URL
-                        let publicURL = try SupabaseService.shared.client.storage
-                            .from("profile-pictures")
-                            .getPublicURL(path: path)
-                        
-                        updatedUser.profilePictureURL = publicURL.absoluteString
-                        print("✅ Photo uploaded successfully: \(publicURL.absoluteString)")
-                    } catch {
-                        print("⚠️ Failed to upload photo: \(error.localizedDescription)")
-                        // Continue without photo upload
-                    }
-                }
                 
                 // Update in Supabase using correct parameter order
                 let result: User = try await SupabaseService.shared.update(

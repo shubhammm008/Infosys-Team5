@@ -53,20 +53,24 @@ struct CourseDetailView: View {
                 }
                 
                 // Course Details
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 20) {
                     Text("Course Details")
-                        .font(.headline)
+                        .font(.title2)
+                        .fontWeight(.bold)
                         .foregroundColor(.dashboardTextPrimary)
                     
-                    HStack(spacing: 20) {
-                        DetailItem(icon: "clock.fill", title: "Duration", value: "\(course.durationHours) hours")
-                        DetailItem(icon: "chart.bar.fill", title: "Level", value: course.level.displayName)
+                    HStack(spacing: 24) {
+                        DetailItem(icon: "clock.fill", title: "Duration", value: "\(course.durationHours) hours", color: .blue)
+                        
+                        Spacer()
+                        
+                        DetailItem(icon: "chart.bar.fill", title: "Level", value: course.level.displayName, color: .purple)
                     }
                 }
-                .padding()
+                .padding(24)
                 .background(Color.dashboardCard)
-                .cornerRadius(16)
-                .shadow(color: Color.black.opacity(0.2), radius: 6, x: 0, y: 3)
+                .cornerRadius(20)
+                .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
                 
                 // Enrollment Button
                 if !isEnrolled {
@@ -171,22 +175,37 @@ struct DetailItem: View {
     let icon: String
     let title: String
     let value: String
+    let color: Color
     
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(.accentPrimary)
-                .frame(width: 40)
+            // Icon background (smaller)
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(
+                        LinearGradient(
+                            colors: [color.opacity(0.3), color.opacity(0.15)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 42, height: 42)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(color)
+            }
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundColor(.dashboardTextSecondary)
                 Text(value)
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundColor(.dashboardTextPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
         }
     }
