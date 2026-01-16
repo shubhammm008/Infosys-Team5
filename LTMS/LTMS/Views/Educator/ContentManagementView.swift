@@ -48,7 +48,7 @@ class ContentManagementViewModel: ObservableObject {
     }
     
     func updateLesson(title: String, description: String, objectives: String?, prerequisites: String?) async throws {
-        guard let lessonId = lesson.id else { return }
+        guard lesson.id != nil else { return }
         
         var updatedLesson = lesson
         updatedLesson.title = title
