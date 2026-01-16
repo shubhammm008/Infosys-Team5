@@ -224,20 +224,22 @@ struct CreateCourseView: View {
                     .disabled(isLoading || !isFormValid)
                 }
             }
-        }
-        .navigationTitle("Create New Course")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button(action: { dismiss() }) {
-                    Text("Cancel")
+            .navigationTitle("Create New Course")
+            .navigationBarTitleDisplayMode(.inline)
+            .scrollContentBackground(.hidden)
+            .background(Color.dashboardBg)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
                 }
             }
-        }
-        .alert("Error", isPresented: $showError) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(errorMessage)
+            .alert("Error", isPresented: $showError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(errorMessage)
+            }
         }
     }
     

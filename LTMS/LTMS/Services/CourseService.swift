@@ -64,6 +64,27 @@ class CourseService: ObservableObject {
         return try await SupabaseService.shared.fetchPublishedCourses(in: AppConstants.defaultOrganizationId)
     }
     
+    func fetchPendingCourses(organizationId: String) async throws -> [Course] {
+        let response = try await SupabaseService.shared.client
+            .from(SupabaseConstants.courses)
+            .select()
+            .eq("organization_id", value: organizationId)
+            .eq("is_published", value: false)
+            .execute()
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return try decoder.decode([Course].self, from: response.data)
+    }
+    
+    func publishCourse(courseId: String) async throws {
+        var course = try await fetchCourse(id: courseId)
+        course.isPublished = true
+        course.updatedAt = Date()
+        try await updateCourse(course)
+        print("✅ Course '\(course.title)' has been published")
+    }
+    
     // MARK: - Module Operations (Supabase)
     
     func createModule(_ module: Module) async throws -> Module {

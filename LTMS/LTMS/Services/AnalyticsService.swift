@@ -196,6 +196,8 @@ class AnalyticsService {
         let allEnrollments: [Enrollment] = try await supabaseService.fetchAll(from: SupabaseConstants.enrollments)
         let enrollments = allEnrollments // For now, include all
         
+        print("📊 [Analytics] Fetched \(enrollments.count) total enrollments for trends")
+        
         let calendar = Calendar.current
         let now = Date()
         let startDate = calendar.date(byAdding: .day, value: -days, to: now) ?? now
@@ -227,17 +229,28 @@ class AnalyticsService {
             EnrollmentTrend(date: date, enrollmentCount: counts.enrollments, completionCount: counts.completions)
         }.sorted { $0.date < $1.date }
         
+        print("📊 [Analytics] Generated \(trends.count) trend data points from enrollments")
+        
         return trends
     }
     
     // MARK: - Popular Courses
     
     func fetchPopularCourses(organizationId: String, limit: Int = 10) async throws -> [PopularCourse] {
-        let courses: [Course] = try await supabaseService.query(
+        var courses: [Course] = try await supabaseService.query(
             from: SupabaseConstants.courses,
             where: "organization_id",
             equals: organizationId
         )
+        
+        print("📊 [Analytics] Found \(courses.count) courses for organization: \(organizationId)")
+        
+        // If no courses found for this org, try fetching all courses (for mock auth scenarios)
+        if courses.isEmpty {
+            print("📊 [Analytics] No courses for org, fetching all courses...")
+            courses = try await supabaseService.fetchAll(from: SupabaseConstants.courses)
+            print("📊 [Analytics] Found \(courses.count) total courses in database")
+        }
         
         var popularCourses: [PopularCourse] = []
         
@@ -250,6 +263,8 @@ class AnalyticsService {
                 equals: courseId
             )
             
+            print("📊 [Analytics] Course '\(course.title)' (ID: \(courseId)) has \(enrollments.count) enrollments")
+            
             popularCourses.append(PopularCourse(
                 courseId: courseId,
                 courseTitle: course.title,
@@ -259,7 +274,10 @@ class AnalyticsService {
         }
         
         // Sort by enrollment count and limit
-        return popularCourses.sorted { $0.enrollmentCount > $1.enrollmentCount }.prefix(limit).map { $0 }
+        let sorted = popularCourses.sorted { $0.enrollmentCount > $1.enrollmentCount }.prefix(limit).map { $0 }
+        print("📊 [Analytics] Returning \(sorted.count) popular courses, top course has \(sorted.first?.enrollmentCount ?? 0) enrollments")
+        
+        return sorted
     }
     
     // MARK: - User Activity Metrics

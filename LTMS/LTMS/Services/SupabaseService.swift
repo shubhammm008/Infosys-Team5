@@ -83,12 +83,24 @@ class SupabaseService {
     
     /// Fetch all records from a table
     func fetchAll<T: Codable>(from table: String) async throws -> [T] {
-        let response = try await client
-            .from(table)
-            .select()
-            .execute()
-        
-        return try decoder.decode([T].self, from: response.data)
+        do {
+            let response = try await client
+                .from(table)
+                .select()
+                .execute()
+            
+            print("📥 [Supabase] Fetched from \(table): \(response.data.count) bytes")
+            
+            let decoded = try decoder.decode([T].self, from: response.data)
+            print("✅ [Supabase] Successfully decoded \(decoded.count) records from \(table)")
+            return decoded
+        } catch {
+            print("❌ [Supabase] Error fetching from \(table): \(error)")
+            if let decodingError = error as? DecodingError {
+                print("   Decoding error details: \(decodingError)")
+            }
+            throw error
+        }
     }
     
     /// Query records with a filter

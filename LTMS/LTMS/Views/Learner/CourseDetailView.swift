@@ -27,7 +27,7 @@ struct CourseDetailView: View {
                     RoundedRectangle(cornerRadius: 16)
                         .fill(
                             LinearGradient(
-                                colors: [.accentPrimary, .accentSecondary],
+                                colors: [.ltmsPrimary, .ltmsSecondary],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
@@ -36,7 +36,7 @@ struct CourseDetailView: View {
                         .overlay(
                             Image(systemName: "book.fill")
                                 .font(.system(size: 60))
-                                .foregroundColor(.white.opacity(0.7))
+                                .foregroundColor(.white.opacity(0.8))
                         )
                     
                     // Title and Description
@@ -44,33 +44,26 @@ struct CourseDetailView: View {
                         Text(course.title)
                             .font(.title)
                             .fontWeight(.bold)
-                            .foregroundColor(.dashboardTextPrimary)
                         
                         Text(course.courseDescription)
                             .font(.body)
-                            .foregroundColor(.dashboardTextSecondary)
+                            .foregroundColor(.secondary)
                     }
                 }
                 
                 // Course Details
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 16) {
                     Text("Course Details")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.dashboardTextPrimary)
+                        .font(.headline)
                     
-                    HStack(spacing: 24) {
-                        DetailItem(icon: "clock.fill", title: "Duration", value: "\(course.durationHours) hours", color: .blue)
-                        
-                        Spacer()
-                        
-                        DetailItem(icon: "chart.bar.fill", title: "Level", value: course.level.displayName, color: .purple)
+                    HStack(spacing: 20) {
+                        DetailItem(icon: "clock.fill", title: "Duration", value: "\(course.durationHours) hours")
+                        DetailItem(icon: "chart.bar.fill", title: "Level", value: course.level.displayName)
                     }
                 }
-                .padding(24)
-                .background(Color.dashboardCard)
-                .cornerRadius(20)
-                .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+                .padding()
+                .background(Color.ltmsCardBackground)
+                .cornerRadius(16)
                 
                 // Enrollment Button
                 if !isEnrolled {
@@ -88,13 +81,13 @@ struct CourseDetailView: View {
                         .padding()
                         .background(
                             LinearGradient(
-                                colors: [.accentPrimary, .accentSecondary],
+                                colors: [.ltmsPrimary, .ltmsSecondary],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
                         )
                         .foregroundColor(.white)
-                        .cornerRadius(14)
+                        .cornerRadius(12)
                     }
                     .disabled(isEnrolling)
                 } else {
@@ -103,19 +96,17 @@ struct CourseDetailView: View {
                             .foregroundColor(.green)
                         Text("You're enrolled in this course")
                             .fontWeight(.semibold)
-                            .foregroundColor(.dashboardTextPrimary)
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.green.opacity(0.15))
-                    .cornerRadius(14)
+                    .background(Color.green.opacity(0.1))
+                    .cornerRadius(12)
                 }
             }
             .padding()
         }
-        .background(Color.dashboardBg)
+        .background(Color.ltmsBackground)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarColorScheme(.dark, for: .navigationBar)
         .task {
             await checkEnrollmentStatus()
         }
@@ -175,37 +166,21 @@ struct DetailItem: View {
     let icon: String
     let title: String
     let value: String
-    let color: Color
     
     var body: some View {
         HStack(spacing: 12) {
-            // Icon background (smaller)
-            ZStack {
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(
-                        LinearGradient(
-                            colors: [color.opacity(0.3), color.opacity(0.15)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 42, height: 42)
-                
-                Image(systemName: icon)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(color)
-            }
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundColor(.ltmsPrimary)
+                .frame(width: 40)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.caption2)
-                    .foregroundColor(.dashboardTextSecondary)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
                 Text(value)
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.dashboardTextPrimary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
             }
         }
     }

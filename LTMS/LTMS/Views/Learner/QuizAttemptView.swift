@@ -47,8 +47,6 @@ struct QuizAttemptView: View {
             }
             .navigationTitle(quiz.title)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .background(Color.dashboardBg)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Exit") {
@@ -92,7 +90,7 @@ struct QuizAttemptView: View {
             ProgressView()
                 .scaleEffect(1.5)
             Text("Loading quiz...")
-                .foregroundColor(.dashboardTextSecondary)
+                .foregroundColor(.secondary)
         }
     }
     
@@ -107,10 +105,9 @@ struct QuizAttemptView: View {
             Text("No Questions")
                 .font(.title2)
                 .fontWeight(.semibold)
-                .foregroundColor(.dashboardTextPrimary)
             
             Text("This quiz doesn't have any questions yet")
-                .foregroundColor(.dashboardTextSecondary)
+                .foregroundColor(.secondary)
             
             Button("Go Back") {
                 dismiss()
@@ -128,7 +125,7 @@ struct QuizAttemptView: View {
             Text(formatTime(timeRemaining))
                 .font(.headline)
                 .monospacedDigit()
-                .foregroundColor(timeRemaining < 60 ? .red : .dashboardTextPrimary)
+                .foregroundColor(timeRemaining < 60 ? .red : .primary)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
@@ -145,18 +142,18 @@ struct QuizAttemptView: View {
             // Progress Bar
             VStack(spacing: 8) {
                 ProgressView(value: progress)
-                    .tint(.accentPrimary)
+                    .tint(.ltmsPrimary)
                 
                 HStack {
                     Text("Question \(currentQuestionIndex + 1) of \(questions.count)")
                         .font(.caption)
-                        .foregroundColor(.dashboardTextSecondary)
+                        .foregroundColor(.secondary)
                     
                     Spacer()
                     
                     Text("\(answeredCount) answered")
                         .font(.caption)
-                        .foregroundColor(.accentPrimary)
+                        .foregroundColor(.ltmsPrimary)
                 }
             }
             .padding()
@@ -188,13 +185,13 @@ struct QuizAttemptView: View {
                     .fontWeight(.bold)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
-                    .background(Color.accentPrimary)
+                    .background(Color.ltmsPrimary)
                     .foregroundColor(.white)
                     .cornerRadius(8)
                 
                 Text("\(question.points) pt\(question.points > 1 ? "s" : "")")
                     .font(.caption)
-                    .foregroundColor(.dashboardTextSecondary)
+                    .foregroundColor(.secondary)
                 
                 Spacer()
             }
@@ -203,7 +200,6 @@ struct QuizAttemptView: View {
             Text(question.questionText)
                 .font(.title3)
                 .fontWeight(.medium)
-                .foregroundColor(.dashboardTextPrimary)
             
             // Options
             if let options = question.options {
@@ -229,11 +225,11 @@ struct QuizAttemptView: View {
         } label: {
             HStack {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(isSelected ? .accentPrimary : .dashboardTextSecondary)
+                    .foregroundColor(isSelected ? .ltmsPrimary : .secondary)
                     .font(.title3)
                 
                 Text(option)
-                    .foregroundColor(.dashboardTextPrimary)
+                    .foregroundColor(.primary)
                     .multilineTextAlignment(.leading)
                 
                 Spacer()
@@ -241,11 +237,11 @@ struct QuizAttemptView: View {
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? Color.accentPrimary.opacity(0.15) : Color.dashboardCard)
+                    .fill(isSelected ? Color.ltmsPrimary.opacity(0.1) : Color.ltmsCardBackground)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.accentPrimary : Color.gray.opacity(0.3), lineWidth: isSelected ? 2 : 1)
+                    .stroke(isSelected ? Color.ltmsPrimary : Color.gray.opacity(0.3), lineWidth: isSelected ? 2 : 1)
             )
         }
         .buttonStyle(.plain)
@@ -267,8 +263,8 @@ struct QuizAttemptView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(Color.dashboardCard)
-                .foregroundColor(.dashboardTextPrimary)
+                .background(Color.gray.opacity(0.2))
+                .foregroundColor(.primary)
                 .cornerRadius(12)
             }
             .disabled(currentQuestionIndex == 0)
@@ -285,13 +281,7 @@ struct QuizAttemptView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(
-                        LinearGradient(
-                            colors: [.accentPrimary, .accentSecondary],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
+                    .background(Color.ltmsPrimary)
                     .foregroundColor(.white)
                     .cornerRadius(12)
                 }

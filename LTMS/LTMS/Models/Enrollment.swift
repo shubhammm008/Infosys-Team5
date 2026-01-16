@@ -43,6 +43,10 @@ struct Enrollment: Codable, Identifiable {
     var completedAt: Date?
     var certificateIssued: Bool
     
+    // Supabase timestamps
+    var createdAt: Date?
+    var updatedAt: Date?
+    
     enum CodingKeys: String, CodingKey {
         case id
         case learnerId = "learner_id"
@@ -54,5 +58,7 @@ struct Enrollment: Codable, Identifiable {
         case enrolledBy = "enrolled_by"
         case completedAt = "completed_at"
         case certificateIssued = "certificate_issued"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
     }
 }

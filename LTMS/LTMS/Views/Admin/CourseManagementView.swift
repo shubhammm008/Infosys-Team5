@@ -10,18 +10,39 @@ import Combine
 
 @MainActor
 class CourseManagementViewModel: ObservableObject {
+    enum CourseFilter: String, CaseIterable {
+        case all = "All"
+        case published = "Published"
+        case pending = "Pending Approval"
+    }
+    
     @Published var courses: [Course] = []
     @Published var isLoading = false
     @Published var searchText = ""
+    @Published var selectedFilter: CourseFilter = .all
     
     var filteredCourses: [Course] {
-        if searchText.isEmpty {
-            return courses
+        var filtered = courses
+        
+        // Apply status filter
+        switch selectedFilter {
+        case .all:
+            break
+        case .published:
+            filtered = filtered.filter { $0.isPublished }
+        case .pending:
+            filtered = filtered.filter { !$0.isPublished }
         }
-        return courses.filter {
-            $0.title.localizedCaseInsensitiveContains(searchText) ||
-            $0.courseDescription.localizedCaseInsensitiveContains(searchText)
+        
+        // Apply search filter
+        if !searchText.isEmpty {
+            filtered = filtered.filter {
+                $0.title.localizedCaseInsensitiveContains(searchText) ||
+                $0.courseDescription.localizedCaseInsensitiveContains(searchText)
+            }
         }
+        
+        return filtered
     }
     
     func fetchCourses() async {
@@ -42,11 +63,21 @@ class CourseManagementViewModel: ObservableObject {
         try await SupabaseService.shared.delete(id: id, from: SupabaseConstants.courses)
         courses.removeAll { $0.id == id }
     }
+    
+    func publishCourse(courseId: String) async {
+        do {
+            try await CourseService.shared.publishCourse(courseId: courseId)
+            await fetchCourses() // Refresh the list
+        } catch {
+            print("❌ Error publishing course: \(error)")
+        }
+    }
 }
 
 struct CourseManagementView: View {
     @StateObject private var viewModel = CourseManagementViewModel()
     @State private var showCreateCourse = false
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         NavigationStack {
@@ -61,6 +92,34 @@ struct CourseManagementView: View {
                 .background(Color.dashboardCard)
                 .cornerRadius(12)
                 .padding()
+                
+                // Filter Tabs
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(CourseManagementViewModel.CourseFilter.allCases, id: \.self) { filter in
+                            Button {
+                                viewModel.selectedFilter = filter
+                            } label: {
+                                Text(filter.rawValue)
+                                    .font(.subheadline)
+                                    .fontWeight(viewModel.selectedFilter == filter ? .semibold : .regular)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                    .background(
+                                        viewModel.selectedFilter == filter ?
+                                        Color.accentPrimary : Color.dashboardCard
+                                    )
+                                    .foregroundColor(
+                                        viewModel.selectedFilter == filter ?
+                                        .white : .dashboardTextPrimary
+                                    )
+                                    .cornerRadius(20)
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+                .padding(.bottom, 8)
                 
                 // Course List
                 if viewModel.isLoading {
@@ -96,12 +155,9 @@ struct CourseManagementView: View {
             .background(Color.dashboardBg)
             .navigationTitle("Course Management")
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showCreateCourse = true
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.title3)
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
                     }
                 }
             }
@@ -120,9 +176,13 @@ struct CourseCard: View {
     @ObservedObject var viewModel: CourseManagementViewModel
     @State private var showDeleteAlert = false
     @State private var showEditSheet = false
+    @State private var showCourseDetail = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        Button {
+            showCourseDetail = true
+        } label: {
+            VStack(alignment: .leading, spacing: 12) {
             // Course Header
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 8) {
@@ -182,14 +242,6 @@ struct CourseCard: View {
                 Label("\(course.durationHours)h", systemImage: "clock")
                     .font(.caption)
                     .foregroundColor(.dashboardTextSecondary)
-                
-                Text(course.level.displayName)
-                    .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(levelColor.opacity(0.2))
-                    .foregroundColor(levelColor)
-                    .cornerRadius(6)
                 
                 if course.isPublished {
                     Text("Published")
@@ -268,7 +320,30 @@ struct CourseCard: View {
                 }
                 .padding(.top, 4)
             }
+            
+            // Approve Button for Pending Courses
+            if !course.isPublished {
+                Button {
+                    Task {
+                        await viewModel.publishCourse(courseId: course.id!)
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "checkmark.circle.fill")
+                        Text("Approve & Publish")
+                            .fontWeight(.semibold)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Color.accentSuccess)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                }
+                .padding(.top, 8)
+            }
+            }
         }
+        .buttonStyle(.plain)
         .padding()
         .background(Color.ltmsCardBackground)
         .cornerRadius(16)
@@ -288,6 +363,9 @@ struct CourseCard: View {
                     await viewModel.fetchCourses()
                 }
             }
+        }
+        .sheet(isPresented: $showCourseDetail) {
+            CourseDetailSheet(courseId: course.id ?? "", courseTitle: course.title)
         }
     }
     

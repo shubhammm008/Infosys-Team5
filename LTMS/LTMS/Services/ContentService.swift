@@ -155,6 +155,8 @@ class ContentService: ObservableObject {
     // MARK: - Enrollment Operations (Supabase)
     
     func enrollInCourse(learnerId: String, courseId: String) async throws -> Enrollment {
+        print("📝 [Enrollment] Creating enrollment for learner: \(learnerId) in course: \(courseId)")
+        
         let enrollment = Enrollment(
             id: nil,
             learnerId: learnerId,
@@ -168,7 +170,10 @@ class ContentService: ObservableObject {
             certificateIssued: false
         )
         
-        return try await SupabaseService.shared.create(enrollment, in: SupabaseConstants.enrollments)
+        let createdEnrollment = try await SupabaseService.shared.create(enrollment, in: SupabaseConstants.enrollments)
+        print("✅ [Enrollment] Successfully created enrollment with ID: \(createdEnrollment.id ?? "unknown")")
+        
+        return createdEnrollment
     }
     
     func fetchEnrollmentsByLearner(learnerId: String) async throws -> [Enrollment] {

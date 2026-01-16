@@ -81,6 +81,7 @@ class UserManagementViewModel: ObservableObject {
 struct UserManagementView: View {
     @StateObject private var viewModel = UserManagementViewModel()
     @State private var showCreateUser = false
+    @Environment(\.dismiss) private var dismiss
     @Binding var preselectedRole: UserRole?
     
     init(preselectedRole: Binding<UserRole?> = .constant(nil)) {
@@ -104,13 +105,45 @@ struct UserManagementView: View {
                     // Role Filter
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 12) {
-                            FilterChip(title: "All", isSelected: viewModel.selectedRole == nil) {
+                            // All Filter
+                            Button {
                                 viewModel.selectedRole = nil
+                            } label: {
+                                Text("All")
+                                    .font(.subheadline)
+                                    .fontWeight(viewModel.selectedRole == nil ? .semibold : .regular)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                    .background(
+                                        viewModel.selectedRole == nil ?
+                                        Color.accentPrimary : Color.dashboardCard
+                                    )
+                                    .foregroundColor(
+                                        viewModel.selectedRole == nil ?
+                                        .white : .dashboardTextPrimary
+                                    )
+                                    .cornerRadius(20)
                             }
                             
+                            // Role Filters
                             ForEach(UserRole.allCases, id: \.self) { role in
-                                FilterChip(title: role.displayName, isSelected: viewModel.selectedRole == role) {
+                                Button {
                                     viewModel.selectedRole = role
+                                } label: {
+                                    Text(role.displayName)
+                                        .font(.subheadline)
+                                        .fontWeight(viewModel.selectedRole == role ? .semibold : .regular)
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 8)
+                                        .background(
+                                            viewModel.selectedRole == role ?
+                                            Color.accentPrimary : Color.dashboardCard
+                                        )
+                                        .foregroundColor(
+                                            viewModel.selectedRole == role ?
+                                            .white : .dashboardTextPrimary
+                                        )
+                                        .cornerRadius(20)
                                 }
                             }
                         }
@@ -158,17 +191,15 @@ struct UserManagementView: View {
                 }
             }
             .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        showCreateUser = true
-                    } label: {
-                        Image(systemName: "plus")
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
                     }
                 }
             }
-            .sheet(isPresented: $showCreateUser) {
-                CreateUserView()
-            }
+//            .sheet(isPresented: $showCreateUser) {
+//                CreateUserView()
+//            }
             .task {
                 await viewModel.loadUsers()
             }
