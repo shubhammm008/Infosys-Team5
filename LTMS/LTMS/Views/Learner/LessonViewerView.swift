@@ -1,9 +1,4 @@
-//
-//  LessonViewerView.swift
-//  LTMS
-//
-//  Created for Lesson Content Viewing
-//
+
 
 import SwiftUI
 import Combine

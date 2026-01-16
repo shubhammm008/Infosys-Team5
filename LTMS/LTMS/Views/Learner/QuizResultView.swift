@@ -1,9 +1,4 @@
-//
-//  QuizResultView.swift
-//  LTMS
-//
-//  Created for Quiz Feature - Learner View
-//
+
 
 import SwiftUI
 

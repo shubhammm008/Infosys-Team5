@@ -1,9 +1,4 @@
-//
-//  AddQuestionView.swift
-//  LTMS
-//
-//  Created for Quiz Feature - Educator View
-//
+
 
 import SwiftUI
 
