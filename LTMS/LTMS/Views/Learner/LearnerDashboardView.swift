@@ -440,19 +440,230 @@ struct EnrolledCourseCard: View {
 // MARK: - Progress View
 
 struct LearnerProgressView: View {
+    @StateObject private var viewModel = LearnerProgressViewModel()
+    @StateObject private var authService = SupabaseAuthService.shared
+    
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
-                    Text("Progress tracking coming soon")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
+                VStack(alignment: .leading, spacing: 24) {
+                    // Header
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("My Progress")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(.dashboardTextPrimary)
+                        
+//                        Text("Track your learning journey")
+//                            .font(.subheadline)
+//                            .foregroundColor(.dashboardTextSecondary)
+                    }
+                    .padding(.top, 8)
+                    
+                    // Statistics Cards
+                    if !viewModel.isLoading {
+                        statisticsSection
+                        
+                        // Learning Streak
+                        learningStreakSection
+                        
+                        // Course Progress
+                        courseProgressSection
+                        
+                        // Recent Activity
+                        recentActivitySection
+                    }
+                    
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .tint(.accentPrimary)
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, 40)
+                    }
                 }
                 .padding()
             }
-            .background(Color.ltmsBackground)
-            .navigationTitle("My Progress")
+            .background(Color.dashboardBg)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarBackground(Color.dashboardCard, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .task {
+                await viewModel.loadProgressData(userId: authService.currentUser?.id ?? "")
+            }
         }
+    }
+    
+    // Rest of the implementation continues below...
+    private var statisticsSection: some View {
+        VStack(spacing: 16) {
+            HStack(spacing: 16) {
+                ProgressStatCard(
+                    title: "Total Courses",
+                    value: "\(viewModel.totalCourses)",
+                    icon: "book.fill",
+                    color: .blue
+                )
+                
+                ProgressStatCard(
+                    title: "Completed",
+                    value: "\(viewModel.completedCourses)",
+                    icon: "checkmark.circle.fill",
+                    color: .green
+                )
+            }
+            
+            HStack(spacing: 16) {
+                ProgressStatCard(
+                    title: "In Progress",
+                    value: "\(viewModel.activeCourses)",
+                    icon: "clock.fill",
+                    color: .orange
+                )
+                
+                ProgressStatCard(
+                    title: "Certificates",
+                    value: "\(viewModel.certificatesEarned)",
+                    icon: "medal.fill",
+                    color: .purple
+                )
+            }
+        }
+    }
+    
+    private var learningStreakSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Overall Progress")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.dashboardTextPrimary)
+            
+            VStack(spacing: 20) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Average Completion")
+                            .font(.subheadline)
+                            .foregroundColor(.dashboardTextSecondary)
+                        
+                        Text("\(Int(viewModel.averageCompletion))%")
+                            .font(.system(size: 36, weight: .bold))
+                            .foregroundColor(.accentPrimary)
+                    }
+                    
+                    Spacer()
+                    
+                    ZStack {
+                        Circle()
+                            .stroke(Color.gray.opacity(0.2), lineWidth: 12)
+                            .frame(width: 100, height: 100)
+                        
+                        Circle()
+                            .trim(from: 0, to: viewModel.averageCompletion / 100)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [.accentPrimary, .accentSecondary],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                style: StrokeStyle(lineWidth: 12, lineCap: .round)
+                            )
+                            .frame(width: 100, height: 100)
+                            .rotationEffect(.degrees(-90))
+                    }
+                }
+                
+                Divider()
+                    .background(Color.dashboardTextSecondary.opacity(0.3))
+                
+                HStack {
+                    Image(systemName: "book.pages.fill")
+                        .font(.title2)
+                        .foregroundColor(.blue)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Lessons Completed")
+                            .font(.caption)
+                            .foregroundColor(.dashboardTextSecondary)
+                        Text("\(viewModel.totalLessonsCompleted)")
+                            .font(.title3)
+                            .fontWeight(.bold)
+                            .foregroundColor(.dashboardTextPrimary)
+                    }
+                    
+                    Spacer()
+                }
+            }
+            .padding(24)
+            .background(Color.dashboardCard)
+            .cornerRadius(20)
+            .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+        }
+    }
+    
+    private var courseProgressSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Course Progress")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.dashboardTextPrimary)
+            
+            if viewModel.enrollments.isEmpty {
+                emptyStateView
+            } else {
+                ForEach(viewModel.enrollments) { enrollment in
+                    if let course = viewModel.courses.first(where: { $0.id == enrollment.courseId }) {
+                        CourseProgressCard(enrollment: enrollment, course: course)
+                    }
+                }
+            }
+        }
+    }
+    
+    private var recentActivitySection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Recent Activity")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.dashboardTextPrimary)
+            
+            VStack(spacing: 12) {
+                ForEach(viewModel.recentActivities.prefix(5), id: \.self) { activity in
+                    ActivityRow(activity: activity)
+                }
+                
+                if viewModel.recentActivities.isEmpty {
+                    Text("No recent activity")
+                        .font(.subheadline)
+                        .foregroundColor(.dashboardTextSecondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding()
+                }
+            }
+            .padding(20)
+            .background(Color.dashboardCard)
+            .cornerRadius(20)
+            .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+        }
+    }
+    
+    private var emptyStateView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "chart.bar.fill")
+                .font(.system(size: 50))
+                .foregroundColor(.dashboardTextSecondary)
+            
+            Text("No courses enrolled yet")
+                .font(.headline)
+                .foregroundColor(.dashboardTextPrimary)
+            
+            Text("Start learning to see your progress")
+                .font(.caption)
+                .foregroundColor(.dashboardTextSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(40)
+        .background(Color.dashboardCard)
+        .cornerRadius(20)
     }
 }
 
@@ -509,6 +720,256 @@ struct LearnerProfileView: View {
                 }
             } message: {
                 Text("Are you sure you want to sign out?")
+            }
+        }
+    }
+}
+
+// MARK: - Progress Supporting Views
+
+struct ProgressStatCard: View {
+    let title: String
+    let value: String
+    let icon: String
+    let color: Color
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                ZStack {
+                    Circle()
+                        .fill(color.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    
+                    Image(systemName: icon)
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(color)
+                }
+                
+                Spacer()
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(value)
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundColor(.dashboardTextPrimary)
+                
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(.dashboardTextSecondary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(Color.dashboardCard)
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.15), radius: 6, x: 0, y: 3)
+    }
+}
+
+struct CourseProgressCard: View {
+    let enrollment: Enrollment
+    let course: Course
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(course.title)
+                        .font(.headline)
+                        .foregroundColor(.dashboardTextPrimary)
+                        .lineLimit(2)
+                    
+                    Text(course.level.displayName)
+                        .font(.caption)
+                        .foregroundColor(.dashboardTextSecondary)
+                }
+                
+                Spacer()
+                
+                if enrollment.status == .completed {
+                    HStack(spacing: 4) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.caption)
+                        Text("Completed")
+                            .font(.caption2)
+                            .fontWeight(.semibold)
+                    }
+                    .foregroundColor(.green)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.green.opacity(0.15))
+                    .cornerRadius(8)
+                }
+            }
+            
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("Progress")
+                        .font(.caption2)
+                        .foregroundColor(.dashboardTextSecondary)
+                    
+                    Spacer()
+                    
+                    let displayPercentage = enrollment.status == .completed ? 100 : min(Int(enrollment.completionPercentage), 99)
+                    Text("\(displayPercentage)%")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(enrollment.status == .completed ? .green : .accentPrimary)
+                }
+                
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.gray.opacity(0.2))
+                        
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(
+                                LinearGradient(
+                                    colors: enrollment.status == .completed ? [.green, .green] : [.accentPrimary, .accentSecondary],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(width: geometry.size.width * min(enrollment.completionPercentage / 100, 1.0))
+                    }
+                }
+                .frame(height: 6)
+            }
+            
+            if let lastAccessed = enrollment.lastAccessed {
+                HStack(spacing: 4) {
+                    Image(systemName: "clock")
+                        .font(.caption2)
+                    Text("Last accessed \(timeAgo(from: lastAccessed))")
+                        .font(.caption2)
+                }
+                .foregroundColor(.dashboardTextSecondary)
+            }
+        }
+        .padding(16)
+        .background(Color.dashboardCard)
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.15), radius: 6, x: 0, y: 3)
+    }
+    
+    private func timeAgo(from date: Date) -> String {
+        let calendar = Calendar.current
+        let now = Date()
+        let components = calendar.dateComponents([.day, .hour, .minute], from: date, to: now)
+        
+        if let days = components.day, days > 0 {
+            return days == 1 ? "1 day ago" : "\(days) days ago"
+        } else if let hours = components.hour, hours > 0 {
+            return hours == 1 ? "1 hour ago" : "\(hours) hours ago"
+        } else if let minutes = components.minute, minutes > 0 {
+            return minutes == 1 ? "1 min ago" : "\(minutes) mins ago"
+        } else {
+            return "Just now"
+        }
+    }
+}
+
+struct ActivityRow: View {
+    let activity: String
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(Color.accentPrimary.opacity(0.2))
+                    .frame(width: 32, height: 32)
+                
+                Image(systemName: "checkmark")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.accentPrimary)
+            }
+            
+            Text(activity)
+                .font(.subheadline)
+                .foregroundColor(.dashboardTextPrimary)
+            
+            Spacer()
+        }
+    }
+}
+
+@MainActor
+class LearnerProgressViewModel: ObservableObject {
+    @Published var isLoading = false
+    @Published var enrollments: [Enrollment] = []
+    @Published var courses: [Course] = []
+    @Published var recentActivities: [String] = []
+    
+    var totalCourses: Int {
+        enrollments.count
+    }
+    
+    var completedCourses: Int {
+        enrollments.filter { $0.status == .completed }.count
+    }
+    
+    var activeCourses: Int {
+        enrollments.filter { $0.status == .active }.count
+    }
+    
+    var certificatesEarned: Int {
+        enrollments.filter { $0.certificateIssued }.count
+    }
+    
+    var averageCompletion: Double {
+        guard !enrollments.isEmpty else { return 0 }
+        let total = enrollments.reduce(0.0) { $0 + $1.completionPercentage }
+        return total / Double(enrollments.count)
+    }
+    
+    var totalLessonsCompleted: Int {
+        let estimate = enrollments.reduce(0) { result, enrollment in
+            result + Int(enrollment.completionPercentage / 10)
+        }
+        return estimate
+    }
+    
+    func loadProgressData(userId: String) async {
+        isLoading = true
+        defer { isLoading = false }
+        
+        do {
+            enrollments = try await ContentService.shared.fetchEnrollmentsByLearner(learnerId: userId)
+            
+            for enrollment in enrollments {
+                if let courseId = enrollment.courseId as String?,
+                   let course = try? await CourseService.shared.fetchCourse(id: courseId) {
+                    if !courses.contains(where: { $0.id == course.id }) {
+                        courses.append(course)
+                    }
+                }
+            }
+            
+            generateRecentActivities()
+            
+        } catch {
+            print("Error loading progress data: \(error)")
+        }
+    }
+    
+    private func generateRecentActivities() {
+        recentActivities = []
+        
+        let sortedEnrollments = enrollments.sorted {
+            ($0.lastAccessed ?? Date.distantPast) > ($1.lastAccessed ?? Date.distantPast)
+        }
+        
+        for enrollment in sortedEnrollments.prefix(5) {
+            if let course = courses.first(where: { $0.id == enrollment.courseId }) {
+                if enrollment.status == .completed {
+                    recentActivities.append("Completed \(course.title)")
+                } else if let lastAccessed = enrollment.lastAccessed {
+                    let calendar = Calendar.current
+                    if calendar.isDateInToday(lastAccessed) {
+                        recentActivities.append("Studied \(course.title)")
+                    }
+                }
             }
         }
     }
