@@ -20,6 +20,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		050A80DE2F1A5775000C95A1 /* LTMS.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = LTMS.xcodeproj; sourceTree = "<group>"; };
 		05CA506A2F1A0B0200952D6E /* LTMS.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = LTMS.xcodeproj; sourceTree = "<group>"; };
 		F32DDCDB2F19F6CE00C99C2A /* LTMS.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = LTMS.xcodeproj; sourceTree = "<group>"; };
 		F3AA6CB02F0957CB00B04A63 /* LTMS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LTMS.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -54,6 +55,11 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		050A80E12F1A5775000C95A1 /* Products */ = {
+			isa = PBXGroup;
+			name = Products;
+			sourceTree = "<group>";
+		};
 		05CA506D2F1A0B0200952D6E /* Products */ = {
 			isa = PBXGroup;
 			name = Products;
@@ -147,6 +153,10 @@
 			productRefGroup = F3AA6CB12F0957CB00B04A63 /* Products */;
 			projectDirPath = "";
 			projectReferences = (
+				{
+					ProductGroup = 050A80E12F1A5775000C95A1 /* Products */;
+					ProjectRef = 050A80DE2F1A5775000C95A1 /* LTMS.xcodeproj */;
+				},
 				{
 					ProductGroup = 05CA506D2F1A0B0200952D6E /* Products */;
 					ProjectRef = 05CA506A2F1A0B0200952D6E /* LTMS.xcodeproj */;
@@ -311,6 +321,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2Q7FXAJ2A9;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -324,7 +335,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.shubham.LTMS;
+				PRODUCT_BUNDLE_IDENTIFIER = com.shubham.iOS.LTMS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -343,6 +354,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2Q7FXAJ2A9;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -356,7 +368,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.shubham.LTMS;
+				PRODUCT_BUNDLE_IDENTIFIER = com.shubham.iOS.LTMS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
