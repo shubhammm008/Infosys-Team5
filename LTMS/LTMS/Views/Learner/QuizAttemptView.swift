@@ -201,9 +201,10 @@ struct QuizAttemptView: View {
             
             // Question Text
             Text(question.questionText)
-                .font(.title3)
-                .fontWeight(.medium)
+                .font(.system(size: 22, weight: .semibold))
                 .foregroundColor(.dashboardTextPrimary)
+                .lineSpacing(6)
+                .fixedSize(horizontal: false, vertical: true)
             
             // Options
             if let options = question.options {
@@ -249,6 +250,7 @@ struct QuizAttemptView: View {
             )
         }
         .buttonStyle(.plain)
+        .shadow(color: isSelected ? Color.accentPrimary.opacity(0.2) : Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
     }
     
     // MARK: - Navigation Buttons

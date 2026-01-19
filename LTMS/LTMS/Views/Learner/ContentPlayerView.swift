@@ -11,7 +11,7 @@ struct ContentPlayerView: View {
     
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 24) {
                 // Content Header
                 contentHeader
                 
@@ -20,32 +20,54 @@ struct ContentPlayerView: View {
             }
             .padding()
         }
-        .background(Color.ltmsBackground)
+        .background(Color.dashboardBg)
         .navigationTitle(content.title)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarBackground(Color.dashboardBg, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
     }
     
     // MARK: - Content Header
     
     private var contentHeader: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Image(systemName: content.contentType.icon)
-                    .font(.title2)
-                    .foregroundColor(content.contentType.color)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(content.contentType.color.opacity(0.15))
+                        .frame(width: 50, height: 50)
+                    
+                    Image(systemName: content.contentType.icon)
+                        .font(.title2)
+                        .foregroundStyle(content.contentType.color)
+                }
                 
-                Text(content.contentType.displayName)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(content.contentType.displayName)
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .textCase(.uppercase)
+                        .foregroundColor(content.contentType.color)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(content.contentType.color.opacity(0.1))
+                        .cornerRadius(8)
+                }
+                
+                Spacer()
             }
             
             Text(content.title)
-                .font(.title3)
-                .fontWeight(.semibold)
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.dashboardTextPrimary)
+                .lineLimit(2)
         }
-        .padding()
-        .background(Color.ltmsCardBackground)
-        .cornerRadius(12)
+        .padding(20)
+        .background(Color.dashboardCard)
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
     }
     
     // MARK: - Content Player
@@ -87,8 +109,12 @@ struct ContentPlayerView: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: 300)
-        .background(Color.ltmsCardBackground)
-        .cornerRadius(12)
+        .background(Color.dashboardCard)
+        .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+        )
     }
 }
 
@@ -127,7 +153,11 @@ struct VideoPlayerView: View {
             }
             .padding()
             .background(Color.purple.opacity(0.1))
-            .cornerRadius(12)
+            .cornerRadius(16)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.purple.opacity(0.2), lineWidth: 1)
+            )
             .padding(.top)
         }
         .onAppear {
@@ -192,7 +222,11 @@ struct PDFViewerView: View {
                 }
                 .padding()
                 .background(Color.red.opacity(0.1))
-                .cornerRadius(12)
+                .cornerRadius(16)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.red.opacity(0.2), lineWidth: 1)
+                )
             }
         }
         .task {
@@ -244,28 +278,46 @@ struct TextContentView: View {
     let text: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Text Content
-            Text(text)
-                .font(.body)
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.ltmsCardBackground)
-                .cornerRadius(12)
+        VStack(alignment: .leading, spacing: 20) {
+            // Text Content Card
+            VStack(alignment: .leading, spacing: 16) {
+                Text(text)
+                    .font(.body)
+                    .foregroundColor(.dashboardTextPrimary)
+                    .lineSpacing(8)
+            }
+            .padding(24)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.dashboardCard)
+            .cornerRadius(20)
+            .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
             
             // Text Info
-            VStack(alignment: .leading, spacing: 12) {
-                Label("Text Content", systemImage: "doc.text")
-                    .font(.headline)
-                    .foregroundColor(.blue)
+            HStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .fill(Color.blue.opacity(0.2))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "book.fill")
+                        .foregroundColor(.blue)
+                        .font(.system(size: 20))
+                }
                 
-                Text("Read through the content at your own pace.")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Reading Material")
+                        .font(.headline)
+                        .foregroundColor(.dashboardTextPrimary)
+                    
+                    Text("Read at your own pace")
+                        .font(.caption)
+                        .foregroundColor(.dashboardTextSecondary)
+                }
+                
+                Spacer()
             }
-            .padding()
-            .background(Color.blue.opacity(0.1))
-            .cornerRadius(12)
+            .padding(20)
+            .background(Color.dashboardCard)
+            .cornerRadius(20)
         }
     }
 }

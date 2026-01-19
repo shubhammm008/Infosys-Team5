@@ -467,8 +467,8 @@ struct LearnerProgressView: View {
                         // Learning Streak
                         learningStreakSection
                         
-                        // Course Progress
-                        courseProgressSection
+                        // Quiz Performance
+                        quizPerformanceSection
                         
                         // Recent Activity
                         recentActivitySection
@@ -600,23 +600,38 @@ struct LearnerProgressView: View {
         }
     }
     
-    private var courseProgressSection: some View {
+    private var quizPerformanceSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Course Progress")
+            Text("Quiz Performance")
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(.dashboardTextPrimary)
             
-            if viewModel.enrollments.isEmpty {
-                emptyStateView
+            if viewModel.quizSubmissions.isEmpty {
+                emptyQuizStateView
             } else {
-                ForEach(viewModel.enrollments) { enrollment in
-                    if let course = viewModel.courses.first(where: { $0.id == enrollment.courseId }) {
-                        CourseProgressCard(enrollment: enrollment, course: course)
+                ForEach(viewModel.quizSubmissions) { submission in
+                    if let quiz = viewModel.quizzes[submission.assessmentId] {
+                        QuizPerformanceCard(quiz: quiz, submission: submission)
                     }
                 }
             }
         }
+    }
+    
+    private var emptyQuizStateView: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "doc.questionmark")
+                .font(.system(size: 40))
+                .foregroundColor(.dashboardTextSecondary)
+            Text("No quizzes attempted yet")
+                .font(.subheadline)
+                .foregroundColor(.dashboardTextSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(24)
+        .background(Color.dashboardCard)
+        .cornerRadius(16)
     }
     
     private var recentActivitySection: some View {
@@ -767,108 +782,79 @@ struct ProgressStatCard: View {
     }
 }
 
-struct CourseProgressCard: View {
-    let enrollment: Enrollment
-    let course: Course
+struct QuizPerformanceCard: View {
+    let quiz: Quiz
+    let submission: QuizSubmission
+    
+    var passed: Bool {
+        submission.passed ?? false
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
+                ZStack {
+                    Circle()
+                        .fill(passed ? Color.green.opacity(0.15) : Color.red.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: passed ? "trophy.fill" : "xmark.seal.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(passed ? .green : .red)
+                }
+                
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(course.title)
+                    Text(quiz.title)
                         .font(.headline)
                         .foregroundColor(.dashboardTextPrimary)
-                        .lineLimit(2)
-                    
-                    Text(course.level.displayName)
+                    Text(passed ? "Passed" : "Failed")
                         .font(.caption)
-                        .foregroundColor(.dashboardTextSecondary)
+                        .fontWeight(.bold)
+                        .foregroundColor(passed ? .green : .red)
                 }
                 
                 Spacer()
                 
-                if enrollment.status == .completed {
-                    HStack(spacing: 4) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.caption)
-                        Text("Completed")
-                            .font(.caption2)
-                            .fontWeight(.semibold)
-                    }
-                    .foregroundColor(.green)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.green.opacity(0.15))
-                    .cornerRadius(8)
-                }
-            }
-            
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text("Progress")
-                        .font(.caption2)
-                        .foregroundColor(.dashboardTextSecondary)
-                    
-                    Spacer()
-                    
-                    let displayPercentage = enrollment.status == .completed ? 100 : min(Int(enrollment.completionPercentage), 99)
-                    Text("\(displayPercentage)%")
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text(submission.scoreDisplay)
+                        .font(.title3)
+                        .fontWeight(.bold)
+                        .foregroundColor(passed ? .green : .red)
+                    Text("Score")
                         .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundColor(enrollment.status == .completed ? .green : .accentPrimary)
+                        .foregroundColor(.dashboardTextSecondary)
                 }
-                
-                GeometryReader { geometry in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.gray.opacity(0.2))
-                        
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(
-                                LinearGradient(
-                                    colors: enrollment.status == .completed ? [.green, .green] : [.accentPrimary, .accentSecondary],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .frame(width: geometry.size.width * min(enrollment.completionPercentage / 100, 1.0))
-                    }
-                }
-                .frame(height: 6)
             }
             
-            if let lastAccessed = enrollment.lastAccessed {
-                HStack(spacing: 4) {
-                    Image(systemName: "clock")
-                        .font(.caption2)
-                    Text("Last accessed \(timeAgo(from: lastAccessed))")
-                        .font(.caption2)
+            // Progress Bar
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.gray.opacity(0.2))
+                    
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(passed ? Color.green : Color.red)
+                        .frame(width: geometry.size.width * ((submission.score ?? 0) / 100))
+                    
+                    // Passing marker
+                    if let passing = quiz.passingScore {
+                        Rectangle()
+                            .fill(Color.orange)
+                            .frame(width: 2, height: 8)
+                            .offset(x: geometry.size.width * (passing / 100))
+                    }
                 }
-                .foregroundColor(.dashboardTextSecondary)
             }
+            .frame(height: 8)
         }
         .padding(16)
         .background(Color.dashboardCard)
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.15), radius: 6, x: 0, y: 3)
     }
-    
-    private func timeAgo(from date: Date) -> String {
-        let calendar = Calendar.current
-        let now = Date()
-        let components = calendar.dateComponents([.day, .hour, .minute], from: date, to: now)
-        
-        if let days = components.day, days > 0 {
-            return days == 1 ? "1 day ago" : "\(days) days ago"
-        } else if let hours = components.hour, hours > 0 {
-            return hours == 1 ? "1 hour ago" : "\(hours) hours ago"
-        } else if let minutes = components.minute, minutes > 0 {
-            return minutes == 1 ? "1 min ago" : "\(minutes) mins ago"
-        } else {
-            return "Just now"
-        }
-    }
 }
+    
+
+
 
 struct ActivityRow: View {
     let activity: String
@@ -900,6 +886,8 @@ class LearnerProgressViewModel: ObservableObject {
     @Published var enrollments: [Enrollment] = []
     @Published var courses: [Course] = []
     @Published var recentActivities: [String] = []
+    @Published var quizSubmissions: [QuizSubmission] = []
+    @Published var quizzes: [String: Quiz] = [:] // quizId -> Quiz
     
     var totalCourses: Int {
         enrollments.count
@@ -946,6 +934,20 @@ class LearnerProgressViewModel: ObservableObject {
                 }
             }
             
+            
+            // Fetch quiz submissions
+            let submissions = try await QuizService.shared.fetchSubmissionsByUser(userId: userId)
+            quizSubmissions = submissions.sorted(by: { ($0.submittedAt) > ($1.submittedAt) })
+            
+            // Fetch quiz details for submissions
+            for submission in submissions {
+                if quizzes[submission.assessmentId] == nil {
+                     if let quiz = try? await QuizService.shared.fetchQuiz(id: submission.assessmentId) {
+                         quizzes[submission.assessmentId] = quiz
+                     }
+                }
+            }
+            
             generateRecentActivities()
             
         } catch {
@@ -970,6 +972,14 @@ class LearnerProgressViewModel: ObservableObject {
                         recentActivities.append("Studied \(course.title)")
                     }
                 }
+            }
+        }
+        
+        // Add quiz activities
+        for submission in quizSubmissions.prefix(3) {
+            if let quiz = quizzes[submission.assessmentId] {
+                let status = (submission.passed ?? false) ? "Passed" : "Attempted"
+                recentActivities.append("\(status) \(quiz.title)")
             }
         }
     }

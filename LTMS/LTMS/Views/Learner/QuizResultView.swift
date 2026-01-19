@@ -41,7 +41,8 @@ struct QuizResultView: View {
                 }
                 .padding()
             }
-            .background(Color.ltmsBackground)
+
+            .background(Color.dashboardBg)
             .navigationTitle("Quiz Results")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -60,125 +61,153 @@ struct QuizResultView: View {
     // MARK: - Result Header
     
     private var resultHeader: some View {
-        VStack(spacing: 16) {
-            // Animated Icon
+        VStack(spacing: 24) {
+            // Animated Icon with Glow
             ZStack {
                 Circle()
-                    .fill(passed ? Color.green.opacity(0.2) : Color.red.opacity(0.2))
+                    .fill(passed ? Color.green.opacity(0.1) : Color.red.opacity(0.1))
+                    .frame(width: 120, height: 120)
+                    .blur(radius: 10)
+                
+                Circle()
+                    .stroke(
+                        LinearGradient(
+                            colors: passed ? [.green.opacity(0.6), .green.opacity(0.1)] : [.red.opacity(0.6), .red.opacity(0.1)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 4
+                    )
                     .frame(width: 100, height: 100)
                 
-                Image(systemName: passed ? "checkmark.seal.fill" : "xmark.seal.fill")
+                Image(systemName: passed ? "trophy.fill" : "xmark.seal.fill")
                     .font(.system(size: 50))
-                    .foregroundColor(passed ? .green : .red)
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: passed ? [.green, .mint] : [.red, .orange],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
             }
+            .shadow(color: passed ? Color.green.opacity(0.3) : Color.red.opacity(0.3), radius: 15)
             
-            Text(passed ? "Congratulations!" : "Keep Trying!")
-                .font(.title)
-                .fontWeight(.bold)
-            
-            Text(passed ? "You passed the quiz" : "You didn't pass this time")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+            VStack(spacing: 8) {
+                Text(passed ? "Congratulations!" : "Keep Learning")
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundColor(.dashboardTextPrimary)
+                
+                Text(passed ? "You've successfully mastered this topic" : "Don't give up! Review the material and try again")
+                    .font(.subheadline)
+                    .foregroundColor(.dashboardTextSecondary)
+                    .multilineTextAlignment(.center)
+            }
         }
-        .padding(.vertical)
+        .padding(.vertical, 20)
     }
     
     // MARK: - Score Card
     
     private var scoreCard: some View {
-        VStack(spacing: 16) {
-            // Score Display
-            HStack(spacing: 20) {
-                VStack {
-                    Text(String(format: "%.0f%%", score))
-                        .font(.system(size: 48, weight: .bold))
-                        .foregroundColor(passed ? .green : .red)
-                    Text("Your Score")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                Divider()
-                    .frame(height: 60)
-                
-                VStack {
-                    Text(quiz.passingScoreDisplay)
-                        .font(.system(size: 32, weight: .semibold))
-                        .foregroundColor(.secondary)
-                    Text("Passing Score")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
-            
-            // Score Progress Bar
-            VStack(alignment: .leading, spacing: 8) {
-                GeometryReader { geometry in
-                    ZStack(alignment: .leading) {
-                        // Background
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.gray.opacity(0.2))
-                        
-                        // Score Progress
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(passed ? Color.green : Color.red)
-                            .frame(width: geometry.size.width * (score / 100))
-                        
-                        // Passing Score Marker
-                        if let passingScore = quiz.passingScore {
-                            Rectangle()
-                                .fill(Color.orange)
-                                .frame(width: 3)
-                                .offset(x: geometry.size.width * (passingScore / 100) - 1.5)
-                        }
+        VStack(spacing: 24) {
+            // Score Display with Circular Progress
+            HStack(spacing: 30) {
+                // Circular Progress
+                ZStack {
+                    Circle()
+                        .stroke(Color.white.opacity(0.1), lineWidth: 12)
+                        .frame(width: 120, height: 120)
+                    
+                    Circle()
+                        .trim(from: 0, to: score / 100)
+                        .stroke(
+                            LinearGradient(
+                                colors: passed ? [.green, .mint] : [.red, .orange],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            style: StrokeStyle(lineWidth: 12, lineCap: .round)
+                        )
+                        .frame(width: 120, height: 120)
+                        .rotationEffect(.degrees(-90))
+                    
+                    VStack(spacing: 2) {
+                        Text(String(format: "%.0f%%", score))
+                            .font(.system(size: 32, weight: .bold))
+                            .foregroundColor(.dashboardTextPrimary)
+                        Text("Score")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.dashboardTextSecondary)
                     }
                 }
-                .frame(height: 12)
                 
-                // Legend
-                HStack {
-                    Circle()
-                        .fill(passed ? Color.green : Color.red)
-                        .frame(width: 8, height: 8)
-                    Text("Your score")
-                        .font(.caption2)
+                // Stats
+                VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("Passing Score")
+                            .font(.caption)
+                            .foregroundColor(.dashboardTextSecondary)
+                        Text(quiz.passingScoreDisplay)
+                            .font(.title3)
+                            .fontWeight(.bold)
+                            .foregroundColor(.dashboardTextPrimary)
+                    }
                     
-                    Spacer()
-                    
-                    Circle()
-                        .fill(Color.orange)
-                        .frame(width: 8, height: 8)
-                    Text("Passing threshold")
-                        .font(.caption2)
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("Status")
+                            .font(.caption)
+                            .foregroundColor(.dashboardTextSecondary)
+                        HStack {
+                            Image(systemName: passed ? "checkmark.circle.fill" : "xmark.circle.fill")
+                            Text(passed ? "PASSED" : "FAILED")
+                        }
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundColor(passed ? .green : .red)
+                    }
                 }
-                .foregroundColor(.secondary)
             }
         }
-        .padding()
-        .background(Color.ltmsCardBackground)
-        .cornerRadius(16)
+        .padding(24)
+        .frame(maxWidth: .infinity)
+        .background(Color.dashboardCard)
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
     }
     
     // MARK: - Feedback Card
     
     private func feedbackCard(_ feedback: String) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: "lightbulb.fill")
-                .foregroundColor(.yellow)
+        HStack(alignment: .top, spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(Color.yellow.opacity(0.2))
+                    .frame(width: 44, height: 44)
+                Image(systemName: "lightbulb.fill")
+                    .foregroundColor(.yellow)
+                    .font(.system(size: 20))
+            }
             
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Feedback")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Instructor Feedback")
+                    .font(.headline)
+                    .foregroundColor(.dashboardTextPrimary)
                 Text(feedback)
                     .font(.subheadline)
+                    .foregroundColor(.dashboardTextSecondary)
+                    .lineSpacing(4)
             }
             
             Spacer()
         }
-        .padding()
-        .background(Color.yellow.opacity(0.1))
-        .cornerRadius(12)
+        .padding(20)
+        .background(Color.dashboardCard)
+        .cornerRadius(20)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
+        )
     }
     
     // MARK: - Questions Review
@@ -186,7 +215,9 @@ struct QuizResultView: View {
     private var questionsReview: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Question Review")
-                .font(.headline)
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.dashboardTextPrimary)
             
             ForEach(Array(questions.enumerated()), id: \.element.id) { index, question in
                 questionReviewCard(question, number: index + 1)
@@ -198,31 +229,45 @@ struct QuizResultView: View {
         let userAnswer = submission.answers?[question.id ?? ""]
         let isCorrect = question.isCorrect(userAnswer ?? "")
         
-        return VStack(alignment: .leading, spacing: 12) {
+        return VStack(alignment: .leading, spacing: 16) {
             // Question Header
             HStack {
-                Text("Q\(number)")
-                    .font(.caption)
-                    .fontWeight(.bold)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(isCorrect ? Color.green.opacity(0.2) : Color.red.opacity(0.2))
-                    .foregroundColor(isCorrect ? .green : .red)
-                    .cornerRadius(6)
+                HStack(spacing: 12) {
+                    Text("Q\(number)")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .frame(width: 40, height: 40)
+                        .background(isCorrect ? Color.green : Color.red)
+                        .clipShape(Circle())
+                    
+                    Text(isCorrect ? "Correct" : "Incorrect")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(isCorrect ? .green : .red)
+                }
                 
                 Spacer()
                 
-                Image(systemName: isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
-                    .foregroundColor(isCorrect ? .green : .red)
+                Text("\(question.points) pts")
+                    .font(.caption)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color.white.opacity(0.1))
+                    .foregroundColor(.dashboardTextSecondary)
+                    .cornerRadius(8)
             }
             
             // Question Text
             Text(question.questionText)
-                .font(.subheadline)
+                .font(.title3)
+                .fontWeight(.medium)
+                .foregroundColor(.dashboardTextPrimary)
+                .padding(.vertical, 4)
             
             // Options with highlighting
             if let options = question.options {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 12) {
                     ForEach(options, id: \.self) { option in
                         optionReviewRow(
                             option: option,
@@ -233,57 +278,88 @@ struct QuizResultView: View {
                 }
             }
         }
-        .padding()
-        .background(Color.ltmsCardBackground)
-        .cornerRadius(12)
+        .padding(20)
+        .background(Color.dashboardCard)
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
     }
     
     private func optionReviewRow(option: String, isUserAnswer: Bool, isCorrectAnswer: Bool) -> some View {
-        HStack(spacing: 8) {
+        var backgroundColor: Color = Color.dashboardBg.opacity(0.5)
+        if isCorrectAnswer {
+            backgroundColor = Color.green.opacity(0.05)
+        } else if isUserAnswer {
+            backgroundColor = Color.red.opacity(0.05)
+        }
+        
+        var borderColor: Color = .clear
+        if isCorrectAnswer {
+            borderColor = Color.green.opacity(0.3)
+        } else if isUserAnswer {
+            borderColor = Color.red.opacity(0.3)
+        }
+        
+        var textColor: Color = .dashboardTextPrimary
+        if isCorrectAnswer {
+            textColor = .green
+        } else if isUserAnswer {
+            textColor = .red
+        }
+        
+        return HStack(spacing: 12) {
             // Icon
             if isCorrectAnswer {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundColor(.green)
+                    .font(.title3)
             } else if isUserAnswer {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundColor(.red)
+                    .font(.title3)
             } else {
                 Image(systemName: "circle")
-                    .foregroundColor(.secondary.opacity(0.5))
+                    .foregroundColor(.dashboardTextSecondary)
+                    .font(.title3)
             }
             
             // Option Text
             Text(option)
-                .font(.caption)
-                .foregroundColor(
-                    isCorrectAnswer ? .green :
-                    isUserAnswer ? .red : .secondary
-                )
-                .fontWeight(isCorrectAnswer || isUserAnswer ? .medium : .regular)
+                .font(.body)
+                .foregroundColor(textColor)
+                .fontWeight(isCorrectAnswer || isUserAnswer ? .semibold : .regular)
             
             Spacer()
             
             // Labels
             if isCorrectAnswer {
-                Text("Correct")
+                Text("Correct Answer")
                     .font(.caption2)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Color.green.opacity(0.2))
+                    .fontWeight(.bold)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.green.opacity(0.15))
                     .foregroundColor(.green)
-                    .cornerRadius(4)
-            }
-            
-            if isUserAnswer && !isCorrectAnswer {
-                Text("Your answer")
+                    .cornerRadius(6)
+            } else if isUserAnswer {
+                Text("You Selected")
                     .font(.caption2)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Color.red.opacity(0.2))
+                    .fontWeight(.bold)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.red.opacity(0.15))
                     .foregroundColor(.red)
-                    .cornerRadius(4)
+                    .cornerRadius(6)
             }
         }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(backgroundColor)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(borderColor, lineWidth: 1)
+        )
     }
     
     // MARK: - Load Questions
