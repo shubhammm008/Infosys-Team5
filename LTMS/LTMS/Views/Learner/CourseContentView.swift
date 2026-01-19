@@ -9,6 +9,8 @@ class CourseContentViewModel: ObservableObject {
     @Published var lessonsByModule: [String: [Lesson]] = [:]
     @Published var enrollment: Enrollment?
     @Published var progressMap: [String: Progress] = [:] // lessonId -> Progress
+    @Published var quizzesByLesson: [String: [Quiz]] = [:] // lessonId -> [Quiz]
+    @Published var quizSubmissions: [QuizSubmission] = [] // All quiz submissions for this learner
     @Published var isLoading = false
     @Published var expandedModules: Set<String> = []
     
@@ -45,6 +47,14 @@ class CourseContentViewModel: ObservableObject {
                 if let moduleId = module.id {
                     let lessons = try await CourseService.shared.fetchLessonsByModule(moduleId: moduleId)
                     lessonsByModule[moduleId] = lessons
+                    
+                    // Load quizzes for each lesson in this module
+                    for lesson in lessons {
+                        if let lessonId = lesson.id {
+                            let quizzes = try await ContentService.shared.fetchQuizzesByLesson(lessonId: lessonId)
+                            quizzesByLesson[lessonId] = quizzes
+                        }
+                    }
                 }
             }
             
@@ -54,6 +64,17 @@ class CourseContentViewModel: ObservableObject {
                 progressMap = Dictionary(uniqueKeysWithValues: allProgress.compactMap { progress in
                     (progress.lessonId, progress)
                 })
+                
+                // Load quiz submissions for this learner
+                quizSubmissions = try await ContentService.shared.fetchQuizSubmissionsByUser(userId: learnerId, courseId: courseId)
+                
+                // Recalculate progress to ensure it includes quiz completion
+                // This updates the enrollment with the new quiz-aware calculation
+                try await ContentService.shared.updateEnrollmentProgress(enrollmentId: enrollmentId)
+                
+                // Reload enrollment to get updated progress percentage
+                let updatedEnrollments = try await ContentService.shared.fetchEnrollmentsByLearner(learnerId: learnerId)
+                enrollment = updatedEnrollments.first { $0.courseId == courseId }
             }
             
             // Expand first module by default
@@ -85,11 +106,62 @@ class CourseContentViewModel: ObservableObject {
             return 0
         }
         
-        let completedCount = lessons.filter { lesson in
+        // Count completed lessons
+        let completedLessons = lessons.filter { lesson in
             isLessonCompleted(lesson.id ?? "")
         }.count
         
-        return Double(completedCount) / Double(lessons.count)
+        // Count total quizzes and passed quizzes for this module
+        var totalQuizzes = 0
+        var passedQuizzes = 0
+        
+        for lesson in lessons {
+            if let lessonId = lesson.id, let quizzes = quizzesByLesson[lessonId] {
+                totalQuizzes += quizzes.count
+                for quiz in quizzes {
+                    if let quizId = quiz.id, isQuizPassed(quizId) {
+                        passedQuizzes += 1
+                    }
+                }
+            }
+        }
+        
+        // Calculate overall completion: (completed lessons + passed quizzes) / (total lessons + total quizzes)
+        let totalItems = lessons.count + totalQuizzes
+        if totalItems == 0 { return 0 }
+        
+        let completedItems = completedLessons + passedQuizzes
+        return Double(completedItems) / Double(totalItems)
+    }
+    
+    func isModuleCompleted(_ moduleId: String) -> Bool {
+        guard let lessons = lessonsByModule[moduleId], !lessons.isEmpty else {
+            return false
+        }
+        
+        // Check if all lessons are completed
+        let allLessonsCompleted = lessons.allSatisfy { lesson in
+            isLessonCompleted(lesson.id ?? "")
+        }
+        
+        // Check if all quizzes are passed
+        var allQuizzesPassed = true
+        for lesson in lessons {
+            if let lessonId = lesson.id, let quizzes = quizzesByLesson[lessonId] {
+                for quiz in quizzes {
+                    if let quizId = quiz.id, !isQuizPassed(quizId) {
+                        allQuizzesPassed = false
+                        break
+                    }
+                }
+            }
+        }
+        
+        return allLessonsCompleted && allQuizzesPassed
+    }
+    
+    func isQuizPassed(_ quizId: String) -> Bool {
+        return quizSubmissions.first(where: { $0.assessmentId == quizId })?.passed == true
     }
 }
 
@@ -103,40 +175,81 @@ struct CourseContentView: View {
     }
     
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                // Course Header
-                courseHeader
-                
-                // Course Overview
-                if !viewModel.isLoading {
-                    courseOverview
+        VStack(spacing: 0) {
+            // Course Title Header
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(viewModel.course.title)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.dashboardTextPrimary)
+                    
+                    if let enrollment = viewModel.enrollment {
+                        Text("\(Int(enrollment.completionPercentage))% Complete")
+                            .font(.subheadline)
+                            .foregroundColor(.ltmsPrimary)
+                    }
                 }
-                
-                // Quizzes Section
-                if !viewModel.isLoading {
-                    quizzesSection
-                }
-                
-                // Course Content (Modules & Lessons)
-                if viewModel.isLoading {
-                    ProgressView()
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                } else if viewModel.modules.isEmpty {
-                    emptyState
-                } else {
-                    courseSyllabus
-                }
+                Spacer()
             }
             .padding()
+            .background(Color.dashboardCard)
+            
+            Divider()
+            
+            // Course Content (Modules & Lessons)
+            if viewModel.isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
+                    .padding()
+            } else if viewModel.modules.isEmpty {
+                emptyState
+            } else {
+                ScrollView {
+                    VStack(spacing: 0) {
+                        ForEach(Array(viewModel.modules.enumerated()), id: \.element.id) { index, module in
+                            ModuleSection(
+                                module: module,
+                                moduleNumber: index + 1,
+                                isExpanded: viewModel.expandedModules.contains(module.id ?? ""),
+                                lessons: viewModel.lessonsByModule[module.id ?? ""] ?? [],
+                                quizzes: getQuizzesForModule(module),
+                                viewModel: viewModel,
+                                onToggle: {
+                                    viewModel.toggleModule(module.id ?? "")
+                                }
+                            )
+                            
+                            if index < viewModel.modules.count - 1 {
+                                Divider()
+                            }
+                        }
+                    }
+                }
+            }
         }
         .background(Color.ltmsBackground)
-        .navigationTitle(viewModel.course.title)
-        .navigationBarTitleDisplayMode(.large)
+        .navigationTitle("Course Material")
+        .navigationBarTitleDisplayMode(.inline)
         .task {
             await viewModel.loadCourseContent()
         }
+    }
+    
+    private func getQuizzesForModule(_ module: Module) -> [Quiz] {
+        guard let moduleId = module.id,
+              let lessons = viewModel.lessonsByModule[moduleId] else {
+            return []
+        }
+        
+        var quizzes: [Quiz] = []
+        for lesson in lessons {
+            if let lessonId = lesson.id,
+               let lessonQuizzes = viewModel.quizzesByLesson[lessonId] {
+                quizzes.append(contentsOf: lessonQuizzes)
+            }
+        }
+        return quizzes
     }
     
     // MARK: - Course Header
@@ -259,31 +372,7 @@ struct CourseContentView: View {
         .buttonStyle(.plain)
     }
     
-    // MARK: - Course Syllabus
-    
-    private var courseSyllabus: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Course Syllabus")
-                .font(.title3)
-                .fontWeight(.bold)
-            
-            VStack(spacing: 12) {
-                ForEach(Array(viewModel.modules.enumerated()), id: \.element.id) { index, module in
-                    ModuleAccordion(
-                        module: module,
-                        moduleNumber: index + 1,
-                        isExpanded: viewModel.expandedModules.contains(module.id ?? ""),
-                        lessons: viewModel.lessonsByModule[module.id ?? ""] ?? [],
-                        completionPercentage: viewModel.completionPercentage(for: module),
-                        viewModel: viewModel,
-                        onToggle: {
-                            viewModel.toggleModule(module.id ?? "")
-                        }
-                    )
-                }
-            }
-        }
-    }
+
     
     private var emptyState: some View {
         VStack(spacing: 16) {
@@ -303,14 +392,14 @@ struct CourseContentView: View {
     }
 }
 
-// MARK: - Module Accordion
+// MARK: - Module Section (Coursera Style)
 
-struct ModuleAccordion: View {
+struct ModuleSection: View {
     let module: Module
     let moduleNumber: Int
     let isExpanded: Bool
     let lessons: [Lesson]
-    let completionPercentage: Double
+    let quizzes: [Quiz]
     @ObservedObject var viewModel: CourseContentViewModel
     let onToggle: () -> Void
     
@@ -319,44 +408,32 @@ struct ModuleAccordion: View {
             // Module Header
             Button(action: onToggle) {
                 HStack(spacing: 12) {
-                    // Module number badge
-                    ZStack {
-                        Circle()
-                            .fill(Color.ltmsPrimary.opacity(0.2))
-                            .frame(width: 40, height: 40)
-                        Text("\(moduleNumber)")
-                            .font(.headline)
-                            .foregroundColor(.ltmsPrimary)
-                    }
+                    // Completion checkbox
+                    Image(systemName: viewModel.isModuleCompleted(module.id ?? "") ? "checkmark.circle.fill" : "circle")
+                        .font(.title3)
+                        .foregroundColor(viewModel.isModuleCompleted(module.id ?? "") ? .green : .gray.opacity(0.3))
                     
-                    // Module info
+                    // Module title
                     VStack(alignment: .leading, spacing: 4) {
+                        Text("Module \(moduleNumber)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
                         Text(module.title)
                             .font(.headline)
                             .foregroundColor(.primary)
                             .multilineTextAlignment(.leading)
-                        
-                        HStack(spacing: 8) {
-                            Text("\(lessons.count) lessons")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            
-                            if completionPercentage > 0 {
-                                Text("• \(Int(completionPercentage * 100))% complete")
-                                    .font(.caption)
-                                    .foregroundColor(.green)
-                            }
-                        }
                     }
                     
                     Spacer()
                     
+                    // Expand/collapse icon
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .font(.caption)
                         .foregroundColor(.secondary)
                 }
                 .padding()
-                .background(Color.ltmsCardBackground)
-                .cornerRadius(12)
+                .background(Color.dashboardCard)
             }
             .buttonStyle(.plain)
             
@@ -369,10 +446,12 @@ struct ModuleAccordion: View {
                             courseId: viewModel.course.id ?? "",
                             enrollmentId: viewModel.enrollment?.id
                         )) {
-                            LessonRow(
+                            LessonItem(
                                 lesson: lesson,
                                 lessonNumber: index + 1,
-                                isCompleted: viewModel.isLessonCompleted(lesson.id ?? "")
+                                isCompleted: viewModel.isLessonCompleted(lesson.id ?? ""),
+                                quizzes: viewModel.quizzesByLesson[lesson.id ?? ""] ?? [],
+                                viewModel: viewModel
                             )
                         }
                         .buttonStyle(.plain)
@@ -383,50 +462,52 @@ struct ModuleAccordion: View {
                         }
                     }
                 }
-                .padding(.top, 8)
-                .padding(.horizontal)
-                .padding(.bottom)
-                .background(Color.ltmsCardBackground.opacity(0.5))
-                .cornerRadius(12)
-                .padding(.top, 4)
+                .background(Color.ltmsBackground.opacity(0.3))
             }
         }
     }
 }
 
-// MARK: - Lesson Row
+// MARK: - Lesson Item (Coursera Style)
 
-struct LessonRow: View {
+struct LessonItem: View {
     let lesson: Lesson
     let lessonNumber: Int
     let isCompleted: Bool
+    let quizzes: [Quiz]
+    @ObservedObject var viewModel: CourseContentViewModel
     
     var body: some View {
         HStack(spacing: 12) {
-            // Completion indicator
-            ZStack {
-                Circle()
-                    .stroke(isCompleted ? Color.green : Color.gray.opacity(0.3), lineWidth: 2)
-                    .frame(width: 24, height: 24)
-                
-                if isCompleted {
-                    Image(systemName: "checkmark")
-                        .font(.caption.bold())
-                        .foregroundColor(.green)
-                }
-            }
+            // Completion checkbox
+            Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
+                .font(.body)
+                .foregroundColor(isCompleted ? .green : .gray.opacity(0.3))
             
-            // Lesson info
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Lesson \(lessonNumber): \(lesson.title)")
-                    .font(.subheadline)
-                    .foregroundColor(.primary)
+            // Lesson icon and info
+            HStack(spacing: 12) {
+                Image(systemName: "play.circle")
+                    .font(.title3)
+                    .foregroundColor(.ltmsPrimary)
                 
-                if let objectives = lesson.learningObjectives, !objectives.isEmpty {
-                    Text(objectives)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(lesson.title)
+                        .font(.subheadline)
+                        .foregroundColor(.primary)
+                    
+                    HStack(spacing: 4) {
+                        Text("Lesson \(lessonNumber)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        if !quizzes.isEmpty {
+                            Text("•")
+                                .foregroundColor(.secondary)
+                            Text("\(quizzes.count) quiz\(quizzes.count > 1 ? "zes" : "")")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
                 }
             }
             
@@ -436,7 +517,8 @@ struct LessonRow: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
-        .padding(.vertical, 8)
+        .padding()
+        .background(Color.dashboardCard)
     }
 }
 

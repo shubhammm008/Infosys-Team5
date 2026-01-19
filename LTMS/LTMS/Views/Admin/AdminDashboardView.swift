@@ -7,6 +7,10 @@ import SwiftUI
 import Combine
 
 
+
+
+
+
 // MARK: - Root Dashboard
 
 struct AdminDashboardView: View {
@@ -36,9 +40,14 @@ struct AdminDashboardView: View {
                     Label("Reports", systemImage: "doc.text.fill")
                 }
                 .tag(2)
+            
+            AdminProfileView()
+                .tabItem {
+                    Label("Profile", systemImage: "person.circle.fill")
+                }
+                .tag(3)
         }
         .tint(.accentPrimary)   // ✅ education green
-        .preferredColorScheme(.dark)
     }
 }
 
@@ -51,6 +60,7 @@ class AdminHomeViewModel: ObservableObject {
     @Published var totalEducators = 0
     @Published var totalLearners = 0
     @Published var totalCourses = 0
+    @Published var pendingCourses: [Course] = []
     @Published var isLoading = false
 
     func loadStats() async {
@@ -69,6 +79,10 @@ class AdminHomeViewModel: ObservableObject {
 
             let courses: [Course] = try await SupabaseService.shared.fetchAll(from: SupabaseConstants.courses)
             totalCourses = courses.count
+            
+            // Fetch pending courses for approval
+            pendingCourses = try await CourseService.shared.fetchPendingCourses(organizationId: AppConstants.defaultOrganizationId)
+            print("📊 [Admin] Found \(pendingCourses.count) courses awaiting approval")
         } catch {
             print("❌ Error loading stats: \(error)")
         }
@@ -83,13 +97,10 @@ struct AdminHomeView: View {
 
     @State private var showCreateUser = false
     @State private var showCreateCourse = false
-    @State private var showAdminProfile = false
     @State private var showUserManagement = false
     @State private var showCourseManagement = false
     @State private var showEnrollmentManagement = false
-
-    @State private var pendingPublishCount = 2
-    @State private var draftCoursesCount = 1
+    @State private var showPendingCourses = false
 
     @Binding var selectedTab: Int
     @Binding var selectedUserRole: UserRole?
@@ -105,7 +116,7 @@ struct AdminHomeView: View {
                     .foregroundColor(.dashboardTextPrimary)
                 Spacer()
                 Button {
-                    showAdminProfile = true
+                    selectedTab = 3 // Switch to Profile tab
                 }
                 label: {
                     Image(systemName: "person.circle.fill")
@@ -114,42 +125,60 @@ struct AdminHomeView: View {
                 }
             }
         }
-        .sheet(isPresented: $showAdminProfile) {
-            AdminProfileView()
-        }
         .frame(maxWidth: .infinity, alignment: .leading)
         
 
+
                     // MARK: Needs Attention
-                    if pendingPublishCount > 0 || draftCoursesCount > 0 {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Needs Attention")
-                                .font(.headline)
-                                .foregroundColor(.dashboardTextPrimary)
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Needs Attention")
+                            .font(.headline)
+                            .foregroundColor(.dashboardTextPrimary)
 
-                            VStack(spacing: 10) {
-                                if pendingPublishCount > 0 {
-                                    AttentionRow(
-                                        title: "Courses awaiting approval",
-                                        subtitle: "Publish requests from educators",
-                                        count: pendingPublishCount,
-                                        icon: "clock.fill",
-                                        tint: .accentWarning
-                                    ) {
-                                        showCourseManagement = true
-                                    }
+                        if viewModel.isLoading && viewModel.pendingCourses.isEmpty {
+                            // Loading skeleton
+                            HStack(spacing: 12) {
+                                ProgressView()
+                                    .tint(.accentWarning)
+                                Text("Loading pending courses...")
+                                    .font(.subheadline)
+                                    .foregroundColor(.dashboardTextSecondary)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding()
+                            .background(Color.dashboardCard)
+                            .cornerRadius(16)
+                        } else if viewModel.pendingCourses.isEmpty {
+                            // No pending courses
+                            HStack(spacing: 12) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.title2)
+                                    .foregroundColor(.green)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("All caught up!")
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.dashboardTextPrimary)
+                                    Text("No courses awaiting approval")
+                                        .font(.caption)
+                                        .foregroundColor(.dashboardTextSecondary)
                                 }
-
-                                if draftCoursesCount > 0 {
-                                    AttentionRow(
-                                        title: "Draft courses",
-                                        subtitle: "Created but not published",
-                                        count: draftCoursesCount,
-                                        icon: "doc.text.fill",
-                                        tint: .accentSecondary
-                                    ) {
-                                        showCourseManagement = true
-                                    }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding()
+                            .background(Color.dashboardCard)
+                            .cornerRadius(16)
+                        } else {
+                            // Show pending courses
+                            VStack(spacing: 10) {
+                                AttentionRow(
+                                    title: "Courses awaiting approval",
+                                    subtitle: "Publish requests from educators",
+                                    count: viewModel.pendingCourses.count,
+                                    icon: "clock.fill",
+                                    tint: .accentWarning
+                                ) {
+                                    showPendingCourses = true
                                 }
                             }
                         }
@@ -204,7 +233,7 @@ struct AdminHomeView: View {
                 .padding()
             }
             .background(Color.dashboardBg)
-            .navigationTitle("Dashboard")
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .task { await viewModel.loadStats() }
             .sheet(isPresented: $showCreateUser) { CreateUserView() }
@@ -212,7 +241,9 @@ struct AdminHomeView: View {
             .sheet(isPresented: $showCourseManagement) { CourseManagementView() }
             .sheet(isPresented: $showUserManagement) { UserManagementView() }
             .sheet(isPresented: $showEnrollmentManagement) { EnrollmentManagementView() }
-            .sheet(isPresented: $showAdminProfile) { AdminProfileView() }
+            .sheet(isPresented: $showPendingCourses) { 
+                PendingCoursesView(pendingCourses: viewModel.pendingCourses)
+            }
         }
     }
 }
@@ -337,6 +368,7 @@ struct PrimaryActionButton: View {
 
 struct AdminProfileView: View {
     @StateObject private var authService = SupabaseAuthService.shared
+    @StateObject private var themeManager = ThemeManager.shared
     @State private var showLogoutAlert = false
     @Environment(\.dismiss) var dismiss
 
@@ -371,6 +403,40 @@ struct AdminProfileView: View {
                         }
                     }
                     .padding(.vertical, 4)
+                }
+                
+                // Account Information
+                Section {
+                    HStack {
+                        Label("Full Name", systemImage: "person.fill")
+                        Spacer()
+                        Text(authService.currentUser?.fullName ?? "N/A")
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    HStack {
+                        Label("Email", systemImage: "envelope.fill")
+                        Spacer()
+                        Text(authService.currentUser?.email ?? "N/A")
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    HStack {
+                        Label("Role", systemImage: "person.badge.key.fill")
+                        Spacer()
+                        Text(authService.currentUser?.role.displayName ?? "N/A")
+                            .foregroundColor(.secondary)
+                    }
+                } header: {
+                    Text("Account Information")
+                } footer: {
+                    Text("Your email and role cannot be changed. Contact your system administrator for account modifications.")
+                        .font(.caption)
+                }
+                
+                // Appearance Settings
+                Section("Appearance") {
+                    ThemeToggleRow()
                 }
                 
                 // Support & About
@@ -412,6 +478,8 @@ struct AdminProfileView: View {
             }
             .navigationTitle("Profile")
             .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(Color.dashboardBg)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") {
@@ -574,6 +642,141 @@ struct HelpCenterView: View {
 //    }
 //}
 //
+
+// MARK: - Pending Courses View
+struct PendingCoursesView: View {
+    let pendingCourses: [Course]
+    @Environment(\.dismiss) private var dismiss
+    @State private var courses: [Course]
+    @State private var isRefreshing = false
+    
+    init(pendingCourses: [Course]) {
+        self.pendingCourses = pendingCourses
+        _courses = State(initialValue: pendingCourses)
+    }
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.dashboardBg.ignoresSafeArea()
+                
+                if courses.isEmpty {
+                    VStack(spacing: 16) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 60))
+                            .foregroundColor(.accentSuccess)
+                        Text("All caught up!")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                        Text("No courses awaiting approval")
+                            .foregroundColor(.dashboardTextSecondary)
+                    }
+                } else {
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            ForEach(courses) { course in
+                                PendingCourseCard(course: course) {
+                                    // Refresh the list after approval
+                                    await refreshCourses()
+                                }
+                            }
+                        }
+                        .padding()
+                    }
+                }
+            }
+            .navigationTitle("Courses Awaiting Approval")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+    
+    private func refreshCourses() async {
+        isRefreshing = true
+        do {
+            courses = try await CourseService.shared.fetchPendingCourses(organizationId: AppConstants.defaultOrganizationId)
+        } catch {
+            print("❌ Error refreshing pending courses: \(error)")
+        }
+        isRefreshing = false
+    }
+}
+
+struct PendingCourseCard: View {
+    let course: Course
+    let onApprove: () async -> Void
+    @State private var showCourseDetail = false
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Course Header
+            Button {
+                showCourseDetail = true
+            } label: {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(course.title)
+                        .font(.headline)
+                        .foregroundColor(.dashboardTextPrimary)
+                    
+                    Text(course.courseDescription)
+                        .font(.subheadline)
+                        .foregroundColor(.dashboardTextSecondary)
+                        .lineLimit(2)
+                    
+                    HStack(spacing: 12) {
+                        Label("\(course.durationHours)h", systemImage: "clock")
+                            .font(.caption)
+                            .foregroundColor(.dashboardTextSecondary)
+                        
+                        Text("Draft")
+                            .font(.caption)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.accentWarning.opacity(0.1))
+                            .foregroundColor(.accentWarning)
+                            .cornerRadius(6)
+                    }
+                }
+            }
+            .buttonStyle(.plain)
+            
+            // Approve Button
+            Button {
+                Task {
+                    do {
+                        try await CourseService.shared.publishCourse(courseId: course.id!)
+                        await onApprove()
+                    } catch {
+                        print("❌ Error approving course: \(error)")
+                    }
+                }
+            } label: {
+                HStack {
+                    Image(systemName: "checkmark.circle.fill")
+                    Text("Approve & Publish")
+                        .fontWeight(.semibold)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(Color.accentSuccess)
+                .foregroundColor(.white)
+                .cornerRadius(10)
+            }
+        }
+        .padding()
+        .background(Color.dashboardCard)
+        .cornerRadius(16)
+        .sheet(isPresented: $showCourseDetail) {
+            CourseDetailSheet(courseId: course.id ?? "", courseTitle: course.title)
+        }
+    }
+}
 
 #Preview {
     AdminDashboardView()

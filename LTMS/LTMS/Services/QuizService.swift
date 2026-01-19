@@ -165,6 +165,14 @@ class QuizService: ObservableObject {
         
         print("📊 Score: \(earnedPoints)/\(totalPoints) = \(scorePercentage)% | Passed: \(passed)")
         
+        // Generate AI-powered feedback
+        let aiFeedback = await AIFeedbackService.shared.generateQuizFeedback(
+            score: scorePercentage,
+            passed: passed,
+            courseTitle: quiz.courseId,
+            quizTitle: quiz.title
+        )
+        
         // Create submission
         var submission = QuizSubmission.create(
             assessmentId: assessmentId,
@@ -174,15 +182,24 @@ class QuizService: ObservableObject {
         submission.score = scorePercentage
         submission.passed = passed
         submission.gradedAt = Date()
-        submission.feedback = generateFeedback(
-            correctCount: correctCount,
-            totalCount: questions.count,
-            passed: passed
-        )
+        submission.feedback = aiFeedback
         
         // Save to database
         let saved: QuizSubmission = try await supabase.create(submission, in: SupabaseConstants.assessmentSubmissions)
         print("✅ Submission saved with ID: \(saved.id ?? "unknown")")
+        
+        // Log quiz completion activity
+        do {
+            try await ProgressAnalyticsService.shared.logActivity(
+                userId: userId,
+                activityType: .quizComplete,
+                description: "Completed quiz: \(quiz.title) - Score: \(Int(scorePercentage))%",
+                courseId: quiz.courseId,
+                quizId: assessmentId
+            )
+        } catch {
+            print("⚠️ Failed to log quiz completion activity: \(error)")
+        }
         
         return saved
     }

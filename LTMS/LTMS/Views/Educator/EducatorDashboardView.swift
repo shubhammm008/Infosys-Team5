@@ -28,11 +28,17 @@ struct EducatorDashboardView: View {
                 }
                 .tag(0)
             
+            EducatorAnalyticsView()
+                .tabItem {
+                    Label("Analytics", systemImage: "chart.bar.fill")
+                }
+                .tag(1)
+            
             EducatorProfileView()
                 .tabItem {
                     Label("Profile", systemImage: "person.circle.fill")
                 }
-                .tag(1)
+                .tag(2)
         }
         .tint(.accentBlue)
     }
@@ -43,6 +49,7 @@ struct EducatorHomeView: View {
     @StateObject private var authService = SupabaseAuthService.shared
     @State private var courses: [Course] = []
     @State private var isLoading = false
+    @State private var showCreateCourse = false
     
     var body: some View {
         NavigationStack {
@@ -59,8 +66,21 @@ struct EducatorHomeView: View {
                 }
             }
             .navigationBarHidden(true)
+            .sheet(isPresented: $showCreateCourse) {
+                EducatorCreateCourseView {
+                    // Refresh courses after creation
+                    Task {
+                        await loadCourses()
+                    }
+                }
+            }
             .task {
                 await loadCourses()
+            }
+            .onAppear {
+                Task {
+                    await loadCourses()
+                }
             }
         }
     }
@@ -81,8 +101,9 @@ struct EducatorHomeView: View {
             
             Spacer()
             
-            NavigationLink {
-                CreateCourseView()
+            // Create Course Button
+            Button {
+                showCreateCourse = true
             } label: {
                 Image(systemName: "plus")
                     .font(.system(size: 18, weight: .bold))
@@ -90,12 +111,13 @@ struct EducatorHomeView: View {
                     .frame(width: 44, height: 44)
                     .background(
                         LinearGradient(
-                            colors: [Color.accentBlue, Color.accentPurple],
+                            colors: [.accentBlue, .accentPurple],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
-                    .cornerRadius(14)
+                    .clipShape(Circle())
+                    .shadow(color: .accentBlue.opacity(0.3), radius: 8, x: 0, y: 4)
             }
         }
     }
@@ -200,13 +222,14 @@ struct EducatorHomeView: View {
                 .font(.system(size: 48))
                 .foregroundColor(.dashboardTextSecondary)
             
-            Text("No Courses Assigned")
+            Text("No Courses Yet")
                 .font(.headline)
                 .foregroundColor(.dashboardTextPrimary)
             
-            Text("Tap + to create a course.")
+            Text("Tap the + button above to create your first course.")
                 .font(.subheadline)
                 .foregroundColor(.dashboardTextSecondary)
+                .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40)
@@ -220,7 +243,8 @@ struct EducatorHomeView: View {
         
         do {
             let all: [Course] = try await SupabaseService.shared.fetchAll(from: SupabaseConstants.courses)
-            courses = all.filter { $0.assignedEducatorId == userId }
+            // Show courses that are either assigned to or created by this educator
+            courses = all.filter { $0.assignedEducatorId == userId || $0.createdById == userId }
         } catch {
             courses = []
         }
@@ -247,13 +271,28 @@ struct EducatorCourseCard: View {
                 
                 Spacer()
                 
-                Text(course.level.displayName)
-                    .font(.caption)
+                // Approval Status Badge
+                if course.isPublished {
+                    Text("Published")
+                        .font(.caption)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(Color.green.opacity(0.2))
+                        .foregroundColor(.green)
+                        .cornerRadius(8)
+                } else {
+                    HStack(spacing: 4) {
+                        Image(systemName: "clock.badge.exclamationmark")
+                            .font(.caption2)
+                        Text("Pending Approval")
+                            .font(.caption)
+                    }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
-                    .background(Color.accentBlue.opacity(0.2))
-                    .foregroundColor(.accentBlue)
+                    .background(Color.orange.opacity(0.2))
+                    .foregroundColor(.orange)
                     .cornerRadius(8)
+                }
             }
             .font(.caption)
             .foregroundColor(.dashboardTextSecondary)
@@ -276,7 +315,9 @@ struct EducatorCourseCard: View {
 // MARK: - PROFILE
 struct EducatorProfileView: View {
     @StateObject private var authService = SupabaseAuthService.shared
+    @StateObject private var themeManager = ThemeManager.shared
     @State private var showLogout = false
+    @State private var showEditProfile = false
     
     var body: some View {
         NavigationStack {
@@ -284,7 +325,7 @@ struct EducatorProfileView: View {
                 Color.dashboardBg.ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    // Custom Header to match Home
+                    // Custom Header
                     HStack {
                         Text("Profile")
                             .font(.title)
@@ -298,54 +339,177 @@ struct EducatorProfileView: View {
                     
                     ScrollView {
                         VStack(spacing: 24) {
-                            // User Info Profile Card
+                            // Profile Header with Edit Button
                             VStack(spacing: 16) {
-                                ZStack {
-                                    Circle()
-                                        .fill(Color.accentBlue.opacity(0.1))
-                                        .frame(width: 100, height: 100)
+                                ZStack(alignment: .topTrailing) {
+                                    VStack(spacing: 16) {
+                                        // Profile Picture
+                                        ZStack {
+                                            Circle()
+                                                .fill(
+                                                    LinearGradient(
+                                                        colors: [.accentBlue, .accentPurple],
+                                                        startPoint: .topLeading,
+                                                        endPoint: .bottomTrailing
+                                                    )
+                                                )
+                                                .frame(width: 100, height: 100)
+                                            
+                                            Image(systemName: "person.fill")
+                                                .font(.system(size: 50))
+                                                .foregroundColor(.white)
+                                        }
+                                        
+                                        VStack(spacing: 4) {
+                                            Text(authService.currentUser?.fullName ?? "Educator")
+                                                .font(.title2)
+                                                .fontWeight(.bold)
+                                                .foregroundColor(.dashboardTextPrimary)
+                                            
+                                            Text(authService.currentUser?.email ?? "")
+                                                .font(.subheadline)
+                                                .foregroundColor(.dashboardTextSecondary)
+                                            
+                                            // Role Badge
+                                            HStack(spacing: 4) {
+                                                Image(systemName: "person.badge.key.fill")
+                                                    .font(.caption2)
+                                                Text("Educator")
+                                                    .font(.caption)
+                                                    .fontWeight(.medium)
+                                            }
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 6)
+                                            .background(
+                                                LinearGradient(
+                                                    colors: [.accentBlue.opacity(0.2), .accentPurple.opacity(0.2)],
+                                                    startPoint: .leading,
+                                                    endPoint: .trailing
+                                                )
+                                            )
+                                            .foregroundColor(.accentBlue)
+                                            .cornerRadius(12)
+                                        }
+                                    }
                                     
-                                    Image(systemName: "person.circle.fill")
-                                        .font(.system(size: 80))
-                                        .foregroundColor(.accentBlue)
-                                }
-                                
-                                VStack(spacing: 4) {
-                                    Text(authService.currentUser?.fullName ?? "Educator")
-                                        .font(.title3)
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(.dashboardTextPrimary)
-                                    
-                                    Text(authService.currentUser?.email ?? "")
-                                        .font(.subheadline)
-                                        .foregroundColor(.dashboardTextSecondary)
+                                    // Edit Button
+                                    Button {
+                                        showEditProfile = true
+                                    } label: {
+                                        Image(systemName: "pencil.circle.fill")
+                                            .font(.title2)
+                                            .foregroundColor(.accentBlue)
+                                            .background(
+                                                Circle()
+                                                    .fill(Color.dashboardCard)
+                                                    .frame(width: 36, height: 36)
+                                            )
+                                    }
+                                    .padding(8)
                                 }
                             }
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 32)
+                            .padding(.vertical, 24)
                             .background(Color.dashboardCard)
-                            .cornerRadius(24)
+                            .cornerRadius(20)
                             
-                            // Actions Section
-                            VStack(spacing: 1) {
-                                Button(role: .destructive) {
-                                    showLogout = true
-                                } label: {
-                                    HStack {
-                                        Image(systemName: "rectangle.portrait.and.arrow.right")
-                                            .foregroundColor(.red)
-                                        Text("Sign Out")
-                                            .foregroundColor(.red)
+                            // Profile Information
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text("Profile Information")
+                                    .font(.headline)
+                                    .foregroundColor(.dashboardTextPrimary)
+                                    .padding(.horizontal)
+                                
+                                VStack(spacing: 1) {
+                                    EducatorInfoRow(
+                                        icon: "person.fill",
+                                        label: "Full Name",
+                                        value: authService.currentUser?.fullName ?? "Not set"
+                                    )
+                                    
+                                    Divider()
+                                        .padding(.leading, 52)
+                                    
+                                    EducatorInfoRow(
+                                        icon: "envelope.fill",
+                                        label: "Email",
+                                        value: authService.currentUser?.email ?? "Not set"
+                                    )
+                                    
+                                    Divider()
+                                        .padding(.leading, 52)
+                                    
+                                    EducatorInfoRow(
+                                        icon: "calendar.badge.clock",
+                                        label: "Member Since",
+                                        value: authService.currentUser?.createdAt.formatted(date: .abbreviated, time: .omitted) ?? "Unknown"
+                                    )
+                                }
+                                .background(Color.dashboardCard)
+                                .cornerRadius(16)
+                                .padding(.horizontal)
+                            }
+                            
+                            // Appearance Section
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text("Appearance")
+                                    .font(.headline)
+                                    .foregroundColor(.dashboardTextPrimary)
+                                    .padding(.horizontal)
+                                
+                                VStack(spacing: 1) {
+                                    HStack(spacing: 12) {
+                                        Image(systemName: "paintbrush.fill")
+                                            .foregroundColor(.dashboardTextSecondary)
+                                            .frame(width: 24)
+                                        Text("Theme")
+                                            .foregroundColor(.dashboardTextPrimary)
                                         Spacer()
+                                        Picker("", selection: $themeManager.selectedTheme) {
+                                            ForEach(AppTheme.allCases, id: \.self) { theme in
+                                                Text(theme.displayName).tag(theme)
+                                            }
+                                        }
+                                        .pickerStyle(.menu)
+                                        .tint(.accentBlue)
                                     }
                                     .padding()
                                     .background(Color.dashboardCard)
                                 }
+                                .cornerRadius(16)
+                                .padding(.horizontal)
                             }
-                            .cornerRadius(16)
-                            .padding(.top, 8)
+                            
+                            // Actions Section
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text("Account")
+                                    .font(.headline)
+                                    .foregroundColor(.dashboardTextPrimary)
+                                    .padding(.horizontal)
+                                
+                                VStack(spacing: 1) {
+                                    Button(role: .destructive) {
+                                        showLogout = true
+                                    } label: {
+                                        HStack {
+                                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                                                .foregroundColor(.red)
+                                            Text("Sign Out")
+                                                .foregroundColor(.dashboardTextPrimary)
+                                            Spacer()
+                                            Image(systemName: "chevron.right")
+                                                .font(.caption)
+                                                .foregroundColor(.dashboardTextSecondary)
+                                        }
+                                        .padding()
+                                        .background(Color.dashboardCard)
+                                    }
+                                }
+                                .cornerRadius(16)
+                                .padding(.horizontal)
+                            }
                         }
-                        .padding()
+                        .padding(.vertical)
                     }
                 }
             }
@@ -353,10 +517,75 @@ struct EducatorProfileView: View {
             .alert("Sign Out", isPresented: $showLogout) {
                 Button("Cancel", role: .cancel) {}
                 Button("Sign Out", role: .destructive) {
-                    Task { try? await authService.signOut() }
+                    Task {
+                        try? await authService.signOut()
+                    }
                 }
+            } message: {
+                Text("Are you sure you want to sign out?")
+            }
+            .sheet(isPresented: $showEditProfile) {
+                EditProfileView()
             }
         }
+    }
+}
+
+// MARK: - Supporting Views for Educator Profile
+
+struct EducatorStatCard: View {
+    let icon: String
+    let value: String
+    let label: String
+    let color: Color
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundColor(color)
+            
+            Text(value)
+                .font(.title3)
+                .fontWeight(.bold)
+                .foregroundColor(.dashboardTextPrimary)
+            
+            Text(label)
+                .font(.caption)
+                .foregroundColor(.dashboardTextSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .background(Color.dashboardCard)
+        .cornerRadius(16)
+    }
+}
+
+struct EducatorInfoRow: View {
+    let icon: String
+    let label: String
+    let value: String
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            Image(systemName: icon)
+                .font(.body)
+                .foregroundColor(.accentBlue)
+                .frame(width: 24)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(label)
+                    .font(.caption)
+                    .foregroundColor(.dashboardTextSecondary)
+                
+                Text(value)
+                    .font(.subheadline)
+                    .foregroundColor(.dashboardTextPrimary)
+            }
+            
+            Spacer()
+        }
+        .padding()
     }
 }
 

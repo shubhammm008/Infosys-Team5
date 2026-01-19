@@ -28,6 +28,8 @@ class AnalyticsDashboardViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         
+        print("📊 [Analytics] Starting to load analytics for organization: \(organizationId)")
+        
         do {
             async let metrics = analyticsService.fetchPlatformMetrics(organizationId: organizationId)
             async let completion = analyticsService.fetchAllCourseCompletionStats(organizationId: organizationId)
@@ -40,8 +42,14 @@ class AnalyticsDashboardViewModel: ObservableObject {
             popularCourses = try await popular
             enrollmentTrends = try await trends
 
+            print("📊 [Analytics] Loaded \(popularCourses.count) popular courses")
+            for course in popularCourses {
+                print("   - \(course.courseTitle): \(course.enrollmentCount) enrollments")
+            }
+            print("📊 [Analytics] Loaded \(enrollmentTrends.count) enrollment trends")
             
         } catch {
+            print("❌ [Analytics] Failed to load analytics: \(error)")
             errorMessage = "Failed to load analytics: \(error.localizedDescription)"
         }
         
@@ -57,6 +65,7 @@ struct AnalyticsDashboardView: View {
     @State private var showCourseManagement = false
     @State private var showUserManagement = false
     @State private var selectedUserRole: UserRole? = nil
+    @State private var selectedCourseId: String? = nil
 
     
     var body: some View {
@@ -93,14 +102,10 @@ struct AnalyticsDashboardView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 24) {
-                            // Platform Overview
-                            // Platform Usage (TOP PRIORITY)
+                            // Platform Usage Chart
                             platformUsageChart
-                            if !viewModel.enrollmentTrends.isEmpty {
-                                platformUsageChart
-                            }
                             
-                            // Popular Courses
+                            // Popular Courses (sorted by enrollment count)
                             if !viewModel.popularCourses.isEmpty {
                                 popularCoursesSection
                             }
@@ -116,15 +121,15 @@ struct AnalyticsDashboardView: View {
             }
             .navigationTitle("Analytics")
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        Task {
-                            await loadData()
-                        }
-                    } label: {
-                        Image(systemName: "arrow.clockwise")
-                    }
-                }
+//                ToolbarItem(placement: .navigationBarTrailing) {
+//                    Button {
+//                        Task {
+//                            await loadData()
+//                        }
+//                    } label: {
+//                        Image(systemName: "arrow.clockwise")
+//                    }
+//                }
             }
             .task {
                 await loadData()
@@ -136,14 +141,17 @@ struct AnalyticsDashboardView: View {
     
     private func loadData() async {
         if let organizationId = authService.currentUser?.organizationId {
+            print("📊 [Analytics] Loading data for org: \(organizationId)")
             await viewModel.loadAnalytics(organizationId: organizationId)
+        } else {
+            print("⚠️ [Analytics] No organization ID found for current user!")
         }
     }
     
     @ViewBuilder
     private var platformUsageChart: some View {
         let trends = viewModel.enrollmentTrends
-
+        
         // GUARANTEED drawable dataset
         let chartData: [EnrollmentTrend] = trends.isEmpty
             ? (0..<7).map {
@@ -153,30 +161,63 @@ struct AnalyticsDashboardView: View {
                     completionCount: 0
                 )
             }.reversed()
-            : trends.sorted { $0.date < $1.date }.suffix(7)
-
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Platform Usage")
-                .font(.title2)
-                .fontWeight(.bold)
-
+            : trends.sorted { $0.date < $1.date }.suffix(30)
+        
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Enrollment Trends (Last 30 Days)")
+                .font(.headline)
+                .foregroundColor(.dashboardTextPrimary)
+            
             Chart(chartData, id: \.date) {
+                AreaMark(
+                    x: .value("Date", $0.date),
+                    y: .value("Enrollments", $0.enrollmentCount)
+                )
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [Color.accentBlue.opacity(0.6), Color.accentBlue.opacity(0.1)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                
                 LineMark(
                     x: .value("Date", $0.date),
                     y: .value("Enrollments", $0.enrollmentCount)
                 )
-                .foregroundStyle(Color.accentPrimary)
-
-                LineMark(
-                    x: .value("Date", $0.date),
-                    y: .value("Completions", $0.completionCount)
-                )
-                .foregroundStyle(Color.accentSuccess)
+                .foregroundStyle(Color.accentBlue)
+                .lineStyle(StrokeStyle(lineWidth: 2))
             }
-            .frame(height: 220)
-
+            .chartXAxis {
+                AxisMarks(values: .stride(by: .day, count: 7)) { value in
+                    if let date = value.as(Date.self) {
+                        AxisValueLabel {
+                            Text(formatDate(date))
+                                .font(.caption2)
+                                .foregroundColor(Color.dashboardTextSecondary)
+                        }
+                    }
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                        .foregroundStyle(Color.gray.opacity(0.2))
+                }
+            }
+            .chartYAxis {
+                AxisMarks { value in
+                    AxisValueLabel {
+                        if let intValue = value.as(Int.self) {
+                            Text("\(intValue)")
+                                .font(.caption2)
+                                .foregroundColor(Color.dashboardTextSecondary)
+                        }
+                    }
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 2]))
+                        .foregroundStyle(Color.gray.opacity(0.2))
+                }
+            }
+            .frame(height: 200)
+            
             if trends.isEmpty {
-                Text("No enrollments yet. This chart will update automatically.")
+                Text("No enrollment data yet. This chart will update automatically.")
                     .font(.caption)
                     .foregroundColor(.dashboardTextSecondary)
             }
@@ -301,6 +342,9 @@ struct AnalyticsDashboardView: View {
     
     @ViewBuilder
     private var popularCoursesSection: some View {
+        // Sort courses by enrollment count (highest first)
+        let sortedCourses = viewModel.popularCourses.sorted { $0.enrollmentCount > $1.enrollmentCount }
+        
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Text("Most Popular Courses")
@@ -316,24 +360,36 @@ struct AnalyticsDashboardView: View {
             }
 
             
-            ForEach(viewModel.popularCourses.prefix(3), id: \.courseId) { course in
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(course.courseTitle)
-                            .font(.headline)
-                        Text("\(course.enrollmentCount) enrollments")
-                            .font(.caption)
-                            .foregroundColor(.dashboardTextSecondary)
+            ForEach(sortedCourses.prefix(3), id: \.courseId) { course in
+                Button {
+                    selectedCourseId = course.courseId
+                } label: {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(course.courseTitle)
+                                .font(.headline)
+                                .foregroundColor(.dashboardTextPrimary)
+                            Text("\(course.enrollmentCount) enrollments")
+                                .font(.caption)
+                                .foregroundColor(.dashboardTextSecondary)
+                        }
+                        
+                        Spacer()
+                        
+                        // Show enrollment count badge
+                        Text("\(course.enrollmentCount)")
+                            .font(.title3)
+                            .fontWeight(.bold)
+                            .foregroundColor(.accentPrimary)
+                        
+                        Image(systemName: "person.3.fill")
+                            .foregroundColor(.accentPrimary)
                     }
-                    
-                    Spacer()
-                    
-                    Image(systemName: "person.3.fill")
-                        .foregroundColor(.accentPrimary)
+                    .padding()
+                    .background(Color.dashboardCardAlt)
+                    .cornerRadius(12)
                 }
-                .padding()
-                .background(Color.dashboardCardAlt)
-                .cornerRadius(12)
+                .buttonStyle(.plain)
             }
         }
         .padding()
@@ -341,6 +397,14 @@ struct AnalyticsDashboardView: View {
         .cornerRadius(16)
         .sheet(isPresented: $showCourseManagement) {
             CourseManagementView()
+        }
+        .sheet(item: Binding(
+            get: { selectedCourseId.flatMap { id in CourseIdentifier(id: id) } },
+            set: { selectedCourseId = $0?.id }
+        )) { courseIdentifier in
+            if let course = viewModel.popularCourses.first(where: { $0.courseId == courseIdentifier.id }) {
+                CourseDetailSheet(courseId: course.courseId, courseTitle: course.courseTitle)
+            }
         }
 
     }
@@ -461,6 +525,116 @@ struct MetricCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(.secondarySystemBackground))
         .cornerRadius(12)
+    }
+}
+
+// Helper struct for sheet presentation
+struct CourseIdentifier: Identifiable {
+    let id: String
+}
+
+// Course Detail Sheet
+struct CourseDetailSheet: View {
+    let courseId: String
+    let courseTitle: String
+    @Environment(\.dismiss) private var dismiss
+    @State private var course: Course?
+    @State private var isLoading = true
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.dashboardBg.ignoresSafeArea()
+                
+                if isLoading {
+                    ProgressView()
+                        .tint(.accentPrimary)
+                } else if let course = course {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 20) {
+                            // Course Header
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text(course.title)
+                                    .font(.title)
+                                    .fontWeight(.bold)
+                                
+                                Text(course.courseDescription)
+                                    .font(.body)
+                                    .foregroundColor(.dashboardTextSecondary)
+                            }
+                            .padding()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color.dashboardCard)
+                            .cornerRadius(16)
+                            
+                            // Course Details
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text("Course Details")
+                                    .font(.headline)
+                                
+                                DetailRow(icon: "clock", label: "Duration", value: "\(course.durationHours) hours")
+                                DetailRow(icon: "chart.bar", label: "Level", value: course.level.displayName)
+                                DetailRow(icon: "checkmark.circle", label: "Status", value: course.isPublished ? "Published" : "Draft")
+                                
+                                if let maxEnrollments = course.maxEnrollments {
+                                    DetailRow(icon: "person.2", label: "Max Enrollments", value: "\(maxEnrollments)")
+                                }
+                            }
+                            .padding()
+                            .background(Color.dashboardCard)
+                            .cornerRadius(16)
+                        }
+                        .padding()
+                    }
+                } else {
+                    Text("Course not found")
+                        .foregroundColor(.dashboardTextSecondary)
+                }
+            }
+            .navigationTitle("Course Details")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+            .task {
+                await loadCourse()
+            }
+        }
+    }
+    
+    private func loadCourse() async {
+        do {
+            course = try await CourseService.shared.fetchCourse(id: courseId)
+        } catch {
+            print("❌ Error loading course: \(error)")
+        }
+        isLoading = false
+    }
+}
+
+struct DetailRow: View {
+    let icon: String
+    let label: String
+    let value: String
+    
+    var body: some View {
+        HStack {
+            Image(systemName: icon)
+                .foregroundColor(.accentPrimary)
+                .frame(width: 24)
+            
+            Text(label)
+                .foregroundColor(.dashboardTextSecondary)
+            
+            Spacer()
+            
+            Text(value)
+                .fontWeight(.semibold)
+        }
     }
 }
 

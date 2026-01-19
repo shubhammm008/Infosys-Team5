@@ -173,21 +173,71 @@ class AnalyticsService {
     }
     
     func fetchAllCourseCompletionStats(organizationId: String) async throws -> [CourseCompletionStats] {
+        // Fetch all courses for the organization
         let courses: [Course] = try await supabaseService.query(
             from: SupabaseConstants.courses,
             where: "organization_id",
             equals: organizationId
         )
         
-        var stats: [CourseCompletionStats] = []
-        for course in courses {
-            if let courseId = course.id {
-                let courseStat = try await fetchCourseCompletionStats(courseId: courseId)
-                stats.append(courseStat)
-            }
-        }
+        // Fetch ALL enrollments once instead of per-course
+        let allEnrollments: [Enrollment] = try await supabaseService.fetchAll(from: SupabaseConstants.enrollments)
         
-        return stats
+        // Process courses in parallel using TaskGroup
+        return try await withThrowingTaskGroup(of: CourseCompletionStats?.self) { group in
+            for course in courses {
+                guard let courseId = course.id else { continue }
+                
+                group.addTask {
+                    // Filter enrollments for this course from the already-fetched list
+                    let enrollments = allEnrollments.filter { $0.courseId == courseId }
+                    
+                    let totalEnrollments = enrollments.count
+                    let completedEnrollments = enrollments.filter { $0.status == .completed }.count
+                    let activeEnrollments = enrollments.filter { $0.status == .active }.count
+                    let droppedEnrollments = enrollments.filter { $0.status == .dropped }.count
+                    
+                    let completionRate = totalEnrollments > 0 ? (Double(completedEnrollments) / Double(totalEnrollments)) * 100 : 0
+                    
+                    let completionSum = enrollments.reduce(0.0) { $0 + $1.completionPercentage }
+                    let averageCompletionPercentage = totalEnrollments > 0 ? completionSum / Double(totalEnrollments) : 0
+                    
+                    // Calculate average time to complete
+                    var totalTimeToComplete: Double = 0
+                    var completedCount = 0
+                    
+                    for enrollment in enrollments where enrollment.status == .completed {
+                        if let completedAt = enrollment.completedAt {
+                            let timeInterval = completedAt.timeIntervalSince(enrollment.enrollmentDate)
+                            totalTimeToComplete += timeInterval / 86400 // Convert to days
+                            completedCount += 1
+                        }
+                    }
+                    
+                    let averageTimeToComplete = completedCount > 0 ? totalTimeToComplete / Double(completedCount) : nil
+                    
+                    return CourseCompletionStats(
+                        courseId: courseId,
+                        courseTitle: course.title,
+                        totalEnrollments: totalEnrollments,
+                        completedEnrollments: completedEnrollments,
+                        activeEnrollments: activeEnrollments,
+                        droppedEnrollments: droppedEnrollments,
+                        completionRate: completionRate,
+                        averageCompletionPercentage: averageCompletionPercentage,
+                        averageTimeToComplete: averageTimeToComplete
+                    )
+                }
+            }
+            
+            var stats: [CourseCompletionStats] = []
+            for try await stat in group {
+                if let stat = stat {
+                    stats.append(stat)
+                }
+            }
+            return stats
+        }
     }
     
     // MARK: - Enrollment Trends
@@ -195,6 +245,8 @@ class AnalyticsService {
     func fetchEnrollmentTrends(organizationId: String, days: Int = 30) async throws -> [EnrollmentTrend] {
         let allEnrollments: [Enrollment] = try await supabaseService.fetchAll(from: SupabaseConstants.enrollments)
         let enrollments = allEnrollments // For now, include all
+        
+        print("📊 [Analytics] Fetched \(enrollments.count) total enrollments for trends")
         
         let calendar = Calendar.current
         let now = Date()
@@ -227,28 +279,42 @@ class AnalyticsService {
             EnrollmentTrend(date: date, enrollmentCount: counts.enrollments, completionCount: counts.completions)
         }.sorted { $0.date < $1.date }
         
+        print("📊 [Analytics] Generated \(trends.count) trend data points from enrollments")
+        
         return trends
     }
     
     // MARK: - Popular Courses
     
     func fetchPopularCourses(organizationId: String, limit: Int = 10) async throws -> [PopularCourse] {
-        let courses: [Course] = try await supabaseService.query(
+        var courses: [Course] = try await supabaseService.query(
             from: SupabaseConstants.courses,
             where: "organization_id",
             equals: organizationId
         )
+        
+        print("📊 [Analytics] Found \(courses.count) courses for organization: \(organizationId)")
+        
+        // If no courses found for this org, try fetching all courses (for mock auth scenarios)
+        if courses.isEmpty {
+            print("📊 [Analytics] No courses for org, fetching all courses...")
+            courses = try await supabaseService.fetchAll(from: SupabaseConstants.courses)
+            print("📊 [Analytics] Found \(courses.count) total courses in database")
+        }
+        
+        // Fetch ALL enrollments once instead of per-course
+        let allEnrollments: [Enrollment] = try await supabaseService.fetchAll(from: SupabaseConstants.enrollments)
+        print("📊 [Analytics] Fetched \(allEnrollments.count) total enrollments")
         
         var popularCourses: [PopularCourse] = []
         
         for course in courses {
             guard let courseId = course.id else { continue }
             
-            let enrollments: [Enrollment] = try await supabaseService.query(
-                from: SupabaseConstants.enrollments,
-                where: "course_id",
-                equals: courseId
-            )
+            // Filter enrollments for this course from the already-fetched list
+            let enrollments = allEnrollments.filter { $0.courseId == courseId }
+            
+            print("📊 [Analytics] Course '\(course.title)' (ID: \(courseId)) has \(enrollments.count) enrollments")
             
             popularCourses.append(PopularCourse(
                 courseId: courseId,
@@ -259,7 +325,10 @@ class AnalyticsService {
         }
         
         // Sort by enrollment count and limit
-        return popularCourses.sorted { $0.enrollmentCount > $1.enrollmentCount }.prefix(limit).map { $0 }
+        let sorted = popularCourses.sorted { $0.enrollmentCount > $1.enrollmentCount }.prefix(limit).map { $0 }
+        print("📊 [Analytics] Returning \(sorted.count) popular courses, top course has \(sorted.first?.enrollmentCount ?? 0) enrollments")
+        
+        return sorted
     }
     
     // MARK: - User Activity Metrics

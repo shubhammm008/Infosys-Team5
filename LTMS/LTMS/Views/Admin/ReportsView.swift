@@ -370,7 +370,7 @@ struct ReportsView: View {
 
                         .transition(.opacity)
 
-                        .onChange(of: viewModel.startDate) { newValue in
+                        .onChange(of: viewModel.startDate) { oldValue, newValue in
 
                             // Ensure end date is not before start date
 

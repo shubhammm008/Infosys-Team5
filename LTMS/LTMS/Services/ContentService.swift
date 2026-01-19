@@ -155,6 +155,8 @@ class ContentService: ObservableObject {
     // MARK: - Enrollment Operations (Supabase)
     
     func enrollInCourse(learnerId: String, courseId: String) async throws -> Enrollment {
+        print("📝 [Enrollment] Creating enrollment for learner: \(learnerId) in course: \(courseId)")
+        
         let enrollment = Enrollment(
             id: nil,
             learnerId: learnerId,
@@ -168,7 +170,23 @@ class ContentService: ObservableObject {
             certificateIssued: false
         )
         
-        return try await SupabaseService.shared.create(enrollment, in: SupabaseConstants.enrollments)
+        let createdEnrollment = try await SupabaseService.shared.create(enrollment, in: SupabaseConstants.enrollments)
+        print("✅ [Enrollment] Successfully created enrollment with ID: \(createdEnrollment.id ?? "unknown")")
+        
+        // Log enrollment activity
+        do {
+            let course = try await CourseService.shared.fetchCourse(id: courseId)
+            try await ProgressAnalyticsService.shared.logActivity(
+                userId: learnerId,
+                activityType: .enrollment,
+                description: "Enrolled in \(course.title)",
+                courseId: courseId
+            )
+        } catch {
+            print("⚠️ Failed to log enrollment activity: \(error)")
+        }
+        
+        return createdEnrollment
     }
     
     func fetchEnrollmentsByLearner(learnerId: String) async throws -> [Enrollment] {
@@ -201,6 +219,42 @@ class ContentService: ObservableObject {
             .execute()
             .value
         return !enrollments.isEmpty
+    }
+    
+    // MARK: - Quiz Operations (Supabase)
+    
+    func fetchQuizzesByLesson(lessonId: String) async throws -> [Quiz] {
+        return try await SupabaseService.shared.query(
+            from: SupabaseConstants.assessments,
+            where: "lesson_id",
+            equals: lessonId
+        )
+    }
+    
+    func fetchQuizSubmissionsByUser(userId: String, courseId: String) async throws -> [QuizSubmission] {
+        // Get all quizzes for the course first
+        let quizzes: [Quiz] = try await SupabaseService.shared.query(
+            from: SupabaseConstants.assessments,
+            where: "course_id",
+            equals: courseId
+        )
+        
+        let quizIds = quizzes.compactMap { $0.id }
+        
+        // Fetch submissions for these quizzes by this user
+        var submissions: [QuizSubmission] = []
+        for quizId in quizIds {
+            let quizSubmissions: [QuizSubmission] = try await SupabaseService.shared.queryMultiple(
+                from: SupabaseConstants.assessmentSubmissions,
+                filters: [
+                    ("assessment_id", quizId),
+                    ("user_id", userId)
+                ]
+            )
+            submissions.append(contentsOf: quizSubmissions)
+        }
+        
+        return submissions
     }
     
     // MARK: - Progress Operations (Supabase)
@@ -291,6 +345,29 @@ class ContentService: ObservableObject {
             try await createOrUpdateProgress(newProgress)
         }
         
+        // Log lesson completion activity
+        do {
+            let enrollments: [Enrollment] = try await SupabaseService.shared.client
+                .from(SupabaseConstants.enrollments)
+                .select()
+                .eq("id", value: enrollmentId)
+                .execute()
+                .value
+            
+            if let enrollment = enrollments.first {
+                let lesson = try await CourseService.shared.fetchLessonsByModule(moduleId: "").first { $0.id == lessonId }
+                try await ProgressAnalyticsService.shared.logActivity(
+                    userId: enrollment.learnerId,
+                    activityType: .lessonComplete,
+                    description: "Completed lesson: \(lesson?.title ?? "Lesson")",
+                    courseId: enrollment.courseId,
+                    lessonId: lessonId
+                )
+            }
+        } catch {
+            print("⚠️ Failed to log lesson completion activity: \(error)")
+        }
+        
         // Update enrollment completion percentage
         try await updateEnrollmentProgress(enrollmentId: enrollmentId)
     }
@@ -323,22 +400,56 @@ class ContentService: ObservableObject {
         
         let completedLessonIds = Set(allProgress.map { $0.lessonId })
         
-        // Count completed modules (where ALL lessons in the module are completed)
-        var completedModules = 0
+        // Get all quizzes for the course
+        let allQuizzes: [Quiz] = try await SupabaseService.shared.client
+            .from(SupabaseConstants.assessments)
+            .select()
+            .eq("course_id", value: courseId)
+            .execute()
+            .value
+        
+        // Get all passed quiz submissions for this user
+        let passedSubmissions: [QuizSubmission] = try await SupabaseService.shared.client
+            .from(SupabaseConstants.assessmentSubmissions)
+            .select()
+            .eq("user_id", value: enrollment.learnerId)
+            .eq("passed", value: true)
+            .execute()
+            .value
+        
+        let passedQuizIds = Set(passedSubmissions.map { $0.assessmentId })
+        
+        // Count total items (lessons + quizzes) and completed items
+        var totalItems = 0
+        var completedItems = 0
         
         for module in modules {
             guard let moduleId = module.id else { continue }
             let lessons = try await CourseService.shared.fetchLessonsByModule(moduleId: moduleId)
             
-            // Check if all lessons in this module are completed
+            // Get lesson IDs for this module
             let lessonIds = lessons.compactMap { $0.id }
-            if !lessonIds.isEmpty && lessonIds.allSatisfy({ completedLessonIds.contains($0) }) {
-                completedModules += 1
+            
+            // Get quizzes for lessons in this module
+            let moduleQuizzes = allQuizzes.filter { quiz in
+                if let quizLessonId = quiz.lessonId {
+                    return lessonIds.contains(quizLessonId)
+                }
+                return false
             }
+            
+            // Count lessons
+            totalItems += lessonIds.count
+            completedItems += lessonIds.filter { completedLessonIds.contains($0) }.count
+            
+            // Count quizzes
+            let quizIds = moduleQuizzes.compactMap { $0.id }
+            totalItems += quizIds.count
+            completedItems += quizIds.filter { passedQuizIds.contains($0) }.count
         }
         
-        // Calculate percentage based on modules
-        let percentage = (Double(completedModules) / Double(modules.count)) * 100.0
+        // Calculate percentage based on individual items
+        let percentage = totalItems > 0 ? (Double(completedItems) / Double(totalItems)) * 100.0 : 0.0
         
         // Update enrollment
         var updatedEnrollment = enrollment
@@ -351,10 +462,23 @@ class ContentService: ObservableObject {
             updatedEnrollment.completedAt = Date()
             updatedEnrollment.certificateIssued = true
             print("🎉 Course completed! Certificate issued.")
+            
+            // Log course completion activity
+            do {
+                let course = try await CourseService.shared.fetchCourse(id: courseId)
+                try await ProgressAnalyticsService.shared.logActivity(
+                    userId: enrollment.learnerId,
+                    activityType: .courseComplete,
+                    description: "Completed \(course.title)",
+                    courseId: courseId
+                )
+            } catch {
+                print("⚠️ Failed to log course completion activity: \(error)")
+            }
         }
         
         try await updateEnrollment(updatedEnrollment)
         
-        print("✅ Updated enrollment progress: \(completedModules)/\(modules.count) modules = \(percentage)%")
+        print("✅ Updated enrollment progress: \(completedItems)/\(totalItems) items = \(String(format: "%.1f", percentage))%")
     }
 }

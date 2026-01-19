@@ -263,11 +263,17 @@ struct CreateUserView: View {
                     organizationId: AppConstants.defaultOrganizationId
 
                 )
-
                 
-
-                // Assume backend/email service sends credentials
-
+                print("🔵 User created, now sending credentials email...")
+                
+                // Send credentials email via Edge Function
+                try await EmailService.shared.sendEducatorCredentials(
+                    to: email,
+                    password: generatedPassword,
+                    firstName: firstName,
+                    lastName: lastName
+                )
+                
                 showSuccess = true
 
                 

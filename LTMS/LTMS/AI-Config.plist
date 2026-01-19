@@ -2,13 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>SchemeUserState</key>
-	<dict>
-		<key>LTMS.xcscheme_^#shared#^_</key>
-		<dict>
-			<key>orderHint</key>
-			<integer>0</integer>
-		</dict>
-	</dict>
+	<key>GROQ_API_KEY</key>
+	<string>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</string>
 </dict>
 </plist>

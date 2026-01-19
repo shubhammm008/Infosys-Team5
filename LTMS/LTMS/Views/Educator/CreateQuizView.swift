@@ -277,6 +277,7 @@ struct AddQuestionsFlowView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var questions: [QuizQuestion] = []
     @State private var showAddQuestion = false
+    @State private var showAIGenerator = false  // NEW: AI generator state
     
     var body: some View {
         ZStack {
@@ -327,12 +328,45 @@ struct AddQuestionsFlowView: View {
                 
                 // Bottom Buttons
                 VStack(spacing: 16) {
+                    // NEW: AI Generator Button
+                    Button {
+                        showAIGenerator = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "sparkles")
+                            Text("Generate with AI")
+                        }
+                        .fontWeight(.semibold)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(
+                            LinearGradient(
+                                colors: [Color.accentPurple.opacity(0.2), Color.accentBlue.opacity(0.2)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .foregroundColor(.accentPurple)
+                        .cornerRadius(16)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [Color.accentPurple, Color.accentBlue],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    ),
+                                    lineWidth: 1
+                                )
+                        )
+                    }
+                    
                     Button {
                         showAddQuestion = true
                     } label: {
                         HStack {
                             Image(systemName: "plus.circle.fill")
-                            Text("Add Question")
+                            Text("Add Question Manually")
                         }
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity)
@@ -383,6 +417,14 @@ struct AddQuestionsFlowView: View {
                 }
             }
         }
+        .sheet(isPresented: $showAIGenerator) {
+            // NEW: AI Generator Sheet
+            AIQuestionGeneratorView(quiz: quiz) { generatedQuestions in
+                Task {
+                    await saveGeneratedQuestions(generatedQuestions)
+                }
+            }
+        }
         .task {
             await loadQuestions()
         }
@@ -396,7 +438,20 @@ struct AddQuestionsFlowView: View {
             print("Error loading questions: \(error)")
         }
     }
+    
+    // NEW: Save AI-generated questions
+    private func saveGeneratedQuestions(_ generatedQuestions: [QuizQuestion]) async {
+        for question in generatedQuestions {
+            do {
+                _ = try await QuizService.shared.createQuestion(question)
+            } catch {
+                print("Error saving AI-generated question: \(error)")
+            }
+        }
+        await loadQuestions()
+    }
 }
+
 
 struct QuestionCardView: View {
     let question: QuizQuestion

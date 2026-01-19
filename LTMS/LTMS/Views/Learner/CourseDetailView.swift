@@ -56,14 +56,16 @@ struct CourseDetailView: View {
                     Text("Course Details")
                         .font(.headline)
                     
-                    HStack(spacing: 20) {
+                    HStack {
                         DetailItem(icon: "clock.fill", title: "Duration", value: "\(course.durationHours) hours")
+                        Spacer()
                         DetailItem(icon: "chart.bar.fill", title: "Level", value: course.level.displayName)
+                            .padding(.trailing, 28) // Balance the icon width on the left
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
                 .background(Color.ltmsCardBackground)
-                .cornerRadius(16)
                 
                 // Enrollment Button
                 if !isEnrolled {

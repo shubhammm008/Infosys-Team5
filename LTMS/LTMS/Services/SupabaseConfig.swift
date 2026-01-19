@@ -30,6 +30,7 @@ class SupabaseConfig {
     
     let client: SupabaseClient
     private let configuredURL: String
+    private let configuredAnonKey: String
     
     private init() {
         // Try to load from Supabase-Info.plist
@@ -38,9 +39,10 @@ class SupabaseConfig {
             // Fallback to test configuration for development
             print("⚠️ Supabase-Info.plist not found, using test mode")
             self.configuredURL = "https://placeholder.supabase.co"
+            self.configuredAnonKey = "placeholder-key"
             self.client = SupabaseClient(
                 supabaseURL: URL(string: self.configuredURL)!,
-                supabaseKey: "placeholder-key",
+                supabaseKey: self.configuredAnonKey,
                 options: .init(
                     auth: .init(
                         emitLocalSessionAsInitialSession: true
@@ -64,6 +66,7 @@ class SupabaseConfig {
         
         // Initialize Supabase client
         self.configuredURL = urlString
+        self.configuredAnonKey = anonKey
         self.client = SupabaseClient(
             supabaseURL: url,
             supabaseKey: anonKey,
@@ -81,5 +84,10 @@ class SupabaseConfig {
     // Helper to check if Supabase is properly configured
     var isConfigured: Bool {
         return configuredURL != "https://placeholder.supabase.co"
+    }
+    
+    // Expose anon key for Edge Function authentication
+    var anonKey: String {
+        return configuredAnonKey
     }
 }

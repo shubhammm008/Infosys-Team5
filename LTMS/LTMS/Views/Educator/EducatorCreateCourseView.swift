@@ -1,16 +1,18 @@
 //
-//  CreateCourseView.swift
+//  EducatorCreateCourseView.swift
 //  LTMS
 //
-//  Created by Shubham Singh on 07/01/26.
+//  Created for Educator Course Creation
 //
 
 import SwiftUI
 import Combine
 
-struct CreateCourseView: View {
+struct EducatorCreateCourseView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var authService = SupabaseAuthService.shared
+    
+    var onCourseCreated: () -> Void
     
     @State private var title = ""
     @State private var description = ""
@@ -20,6 +22,7 @@ struct CreateCourseView: View {
     @State private var isLoading = false
     @State private var showError = false
     @State private var errorMessage = ""
+    @State private var showSuccess = false
     
     // Scheduling fields
     @State private var enableScheduling = false
@@ -36,11 +39,6 @@ struct CreateCourseView: View {
     @State private var showStartDatePicker = false
     @State private var showEndDatePicker = false
     @State private var showDeadlinePicker = false
-    
-    // Educator assignment
-    @State private var educators: [User] = []
-    @State private var selectedEducatorId: String?
-
     
     var body: some View {
         NavigationStack {
@@ -70,31 +68,9 @@ struct CreateCourseView: View {
                 }
                 
                 Section {
-                    Picker("Assign to Educator", selection: $selectedEducatorId) {
-                        Text("Unassigned").tag(nil as String?)
-                        ForEach(educators) { educator in
-                            Text(educator.fullName).tag(educator.id as String?)
-                        }
-                    }
-                } header: {
-                    Text("Assignment")
-                } footer: {
-                    if educators.isEmpty {
-                        Text("No educators available. Create educator accounts first to assign courses.")
-                            .foregroundColor(.orange)
-                    }
-                }
-                
-//                Section("Publishing") {
-//                    Toggle("Publish Immediately", isOn: $isPublished)
-//                    Toggle("Visible in Catalog", isOn: $isVisibleInCatalog)
-//                }
-                
-                Section {
                     Toggle("Enable Scheduling", isOn: $enableScheduling)
                     
                     if enableScheduling {
-
                         Button {
                             showStartDatePicker = true
                         } label: {
@@ -127,9 +103,7 @@ struct CreateCourseView: View {
                                 }
                             }
                         }
-
-
-
+                        
                         Button {
                             showEndDatePicker = true
                         } label: {
@@ -161,7 +135,6 @@ struct CreateCourseView: View {
                             }
                         }
                     }
-
                 } header: {
                     Text("Course Scheduling")
                 } footer: {
@@ -260,41 +233,12 @@ struct CreateCourseView: View {
             } message: {
                 Text(errorMessage)
             }
-            .task {
-                await loadEducators()
-            }
-        }
-    }
-    
-    @ViewBuilder
-    private func customTextField(title: String, text: Binding<String>, isMultiline: Bool = false) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.dashboardTextSecondary)
-            
-            if isMultiline {
-                TextEditor(text: text)
-                    .scrollContentBackground(.hidden) // Hide default white background
-                    .frame(minHeight: 100)
-                    .padding(12)
-                    .background(Color.white.opacity(0.05))
-                    .cornerRadius(12)
-                    .foregroundColor(.dashboardTextPrimary)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                    )
-            } else {
-                TextField(title, text: text)
-                    .padding(12)
-                    .background(Color.white.opacity(0.05))
-                    .cornerRadius(12)
-                    .foregroundColor(.dashboardTextPrimary)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                    )
+            .alert("Course Submitted!", isPresented: $showSuccess) {
+                Button("OK") {
+                    dismiss()
+                }
+            } message: {
+                Text("Your course has been submitted for admin approval. Once approved, it will be visible to learners.")
             }
         }
     }
@@ -306,19 +250,9 @@ struct CreateCourseView: View {
         formatter.dateFormat = "dd MMM yyyy, HH:mm"
         return formatter
     }
-
+    
     private var isFormValid: Bool {
         !title.isEmpty && !description.isEmpty
-    }
-    
-    private func loadEducators() async {
-        do {
-            let allUsers: [User] = try await SupabaseService.shared.fetchAll(from: SupabaseConstants.users)
-            educators = allUsers.filter { $0.role == .educator && $0.isActive }
-        } catch {
-            print("❌ Error loading educators: \(error)")
-            educators = []
-        }
     }
     
     private func createCourse() {
@@ -326,18 +260,24 @@ struct CreateCourseView: View {
             isLoading = true
             defer { isLoading = false }
             
+            guard let currentUser = authService.currentUser else {
+                errorMessage = "User not authenticated"
+                showError = true
+                return
+            }
+            
             do {
                 let course = Course(
                     id: nil,
-                    organizationId: authService.currentUser?.organizationId ?? AppConstants.defaultOrganizationId,
+                    organizationId: currentUser.organizationId ?? AppConstants.defaultOrganizationId,
                     title: title,
                     courseDescription: description,
                     level: selectedLevel,
                     durationHours: durationHours,
                     thumbnailURL: nil,
-                    isPublished: isPublished,
-                    createdById: authService.currentUser?.id ?? "",
-                    assignedEducatorId: selectedEducatorId,
+                    isPublished: false, // ⚠️ Course starts as unpublished, needs admin approval
+                    createdById: currentUser.id ?? "",
+                    assignedEducatorId: currentUser.id, // Auto-assign to self
                     prerequisites: nil,
                     learningObjectives: nil,
                     createdAt: Date(),
@@ -352,10 +292,14 @@ struct CreateCourseView: View {
                 // Save to Supabase
                 _ = try await SupabaseService.shared.create(course, in: SupabaseConstants.courses)
                 
-                print("✅ Course created successfully!")
-                print("   - Created by: \(authService.currentUser?.fullName ?? "Unknown") (\(authService.currentUser?.role.displayName ?? ""))")
-                print("   - Assigned to: \(authService.currentUser?.role == .educator ? authService.currentUser?.fullName ?? "Self" : "Unassigned")")
-                dismiss()
+                print("✅ Course created successfully by educator!")
+                print("   - Created by: \(currentUser.fullName)")
+                print("   - Course: \(title)")
+                print("   - Status: Pending admin approval")
+                print("   - Auto-assigned to: \(currentUser.fullName)")
+                
+                onCourseCreated()
+                showSuccess = true // Show success alert instead of dismissing
             } catch {
                 print("❌ Error creating course: \(error)")
                 errorMessage = error.localizedDescription
@@ -366,5 +310,5 @@ struct CreateCourseView: View {
 }
 
 #Preview {
-    CreateCourseView()
+    EducatorCreateCourseView(onCourseCreated: {})
 }

@@ -10,26 +10,30 @@ import SwiftUI
 @main
 struct LTMSApp: App {
     @StateObject private var authService = SupabaseAuthService.shared
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some Scene {
         WindowGroup {
-            if authService.isAuthenticated, let user = authService.currentUser {
-                // Role-based navigation
-                switch user.role {
-                case .admin:
-                    AdminDashboardView()
-                        .environmentObject(authService)
-                case .educator:
-                    EducatorDashboardView()
-                        .environmentObject(authService)
-                case .learner:
-                    LearnerDashboardView()
+            Group {
+                if authService.isAuthenticated, let user = authService.currentUser {
+                    // Role-based navigation
+                    switch user.role {
+                    case .admin:
+                        AdminDashboardView()
+                            .environmentObject(authService)
+                    case .educator:
+                        EducatorDashboardView()
+                            .environmentObject(authService)
+                    case .learner:
+                        LearnerDashboardView()
+                            .environmentObject(authService)
+                    }
+                } else {
+                    UnifiedAuthView()
                         .environmentObject(authService)
                 }
-            } else {
-                UnifiedAuthView()
-                    .environmentObject(authService)
             }
+            .preferredColorScheme(themeManager.colorScheme)
         }
     }
 }

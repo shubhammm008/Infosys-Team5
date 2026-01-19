@@ -159,9 +159,10 @@ struct LessonViewerView: View {
     // MARK: - Lesson Header
     
     private var lessonHeader: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
+            // Completion Badge
             if let isCompleted = viewModel.currentProgress?.isCompleted, isCompleted {
-                HStack {
+                HStack(spacing: 6) {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(.green)
                     Text("Completed")
@@ -169,18 +170,29 @@ struct LessonViewerView: View {
                         .foregroundColor(.green)
                         .fontWeight(.semibold)
                 }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Color.green.opacity(0.1))
+                .cornerRadius(8)
             }
             
+            // Lesson Title
             Text(viewModel.lesson.title)
                 .font(.title2)
                 .fontWeight(.bold)
+                .foregroundColor(.dashboardTextPrimary)
             
-            Text(viewModel.lesson.lessonDescription)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+            // Lesson Description
+            if !viewModel.lesson.lessonDescription.isEmpty {
+                Text(viewModel.lesson.lessonDescription)
+                    .font(.body)
+                    .foregroundColor(.dashboardTextSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
-        .background(Color.ltmsCardBackground)
+        .background(Color.dashboardCard)
         .cornerRadius(16)
     }
     
@@ -188,42 +200,70 @@ struct LessonViewerView: View {
     
     private func objectivesSection(_ objectives: String) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("Learning Objectives", systemImage: "target")
-                .font(.headline)
-                .foregroundColor(.ltmsPrimary)
+            HStack(spacing: 8) {
+                Image(systemName: "target")
+                    .font(.title3)
+                    .foregroundColor(.accentBlue)
+                Text("What You'll Learn")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.dashboardTextPrimary)
+            }
             
             Text(objectives)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+                .font(.body)
+                .foregroundColor(.dashboardTextSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .lineSpacing(4)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
-        .background(Color.blue.opacity(0.1))
-        .cornerRadius(12)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.accentBlue.opacity(0.1))
+        )
     }
     
     // MARK: - Prerequisites Section
     
     private func prerequisitesSection(_ prerequisites: String) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("Prerequisites", systemImage: "checkmark.circle")
-                .font(.headline)
-                .foregroundColor(.orange)
+            HStack(spacing: 8) {
+                Image(systemName: "info.circle.fill")
+                    .font(.title3)
+                    .foregroundColor(.orange)
+                Text("Before You Start")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.dashboardTextPrimary)
+            }
             
             Text(prerequisites)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+                .font(.body)
+                .foregroundColor(.dashboardTextSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .lineSpacing(4)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
-        .background(Color.orange.opacity(0.1))
-        .cornerRadius(12)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.orange.opacity(0.1))
+        )
     }
     
     // MARK: - Materials Section
     
     private var materialsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Learning Materials")
-                .font(.headline)
+            HStack(spacing: 8) {
+                Image(systemName: "book.fill")
+                    .font(.title3)
+                    .foregroundColor(.ltmsPrimary)
+                Text("Study Materials")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+            }
             
             VStack(spacing: 12) {
                 ForEach(viewModel.contents) { content in
@@ -240,13 +280,18 @@ struct LessonViewerView: View {
     }
     
     private var emptyContentState: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
             Image(systemName: "doc.text")
                 .font(.system(size: 50))
                 .foregroundColor(.secondary)
-            Text("No materials available yet")
-                .font(.headline)
+            Text("No Materials Yet")
+                .font(.title3)
+                .fontWeight(.semibold)
+                .foregroundColor(.primary)
+            Text("Your instructor will add study materials soon")
+                .font(.subheadline)
                 .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40)
@@ -256,9 +301,14 @@ struct LessonViewerView: View {
     
     private var quizzesSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Label("Quizzes", systemImage: "questionmark.circle.fill")
-                .font(.headline)
-                .foregroundColor(.purple)
+            HStack(spacing: 8) {
+                Image(systemName: "questionmark.circle.fill")
+                    .font(.title3)
+                    .foregroundColor(.purple)
+                Text("Practice Quizzes")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+            }
             
             VStack(spacing: 12) {
                 ForEach(viewModel.quizzes) { quiz in

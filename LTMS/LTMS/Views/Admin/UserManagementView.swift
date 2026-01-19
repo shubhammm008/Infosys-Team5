@@ -81,6 +81,7 @@ class UserManagementViewModel: ObservableObject {
 struct UserManagementView: View {
     @StateObject private var viewModel = UserManagementViewModel()
     @State private var showCreateUser = false
+    @Environment(\.dismiss) private var dismiss
     @Binding var preselectedRole: UserRole?
     
     init(preselectedRole: Binding<UserRole?> = .constant(nil)) {
@@ -104,13 +105,45 @@ struct UserManagementView: View {
                     // Role Filter
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 12) {
-                            FilterChip(title: "All", isSelected: viewModel.selectedRole == nil) {
+                            // All Filter
+                            Button {
                                 viewModel.selectedRole = nil
+                            } label: {
+                                Text("All")
+                                    .font(.subheadline)
+                                    .fontWeight(viewModel.selectedRole == nil ? .semibold : .regular)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                    .background(
+                                        viewModel.selectedRole == nil ?
+                                        Color.accentPrimary : Color.dashboardCard
+                                    )
+                                    .foregroundColor(
+                                        viewModel.selectedRole == nil ?
+                                        .white : .dashboardTextPrimary
+                                    )
+                                    .cornerRadius(20)
                             }
                             
+                            // Role Filters
                             ForEach(UserRole.allCases, id: \.self) { role in
-                                FilterChip(title: role.displayName, isSelected: viewModel.selectedRole == role) {
+                                Button {
                                     viewModel.selectedRole = role
+                                } label: {
+                                    Text(role.displayName)
+                                        .font(.subheadline)
+                                        .fontWeight(viewModel.selectedRole == role ? .semibold : .regular)
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 8)
+                                        .background(
+                                            viewModel.selectedRole == role ?
+                                            Color.accentPrimary : Color.dashboardCard
+                                        )
+                                        .foregroundColor(
+                                            viewModel.selectedRole == role ?
+                                            .white : .dashboardTextPrimary
+                                        )
+                                        .cornerRadius(20)
                                 }
                             }
                         }
@@ -139,7 +172,12 @@ struct UserManagementView: View {
                 } else {
                     List {
                         ForEach(viewModel.filteredUsers) { user in
-                            UserRow(user: user, viewModel: viewModel)
+                            NavigationLink {
+                                UserDetailView(user: user)
+                            } label: {
+                                UserRow(user: user, viewModel: viewModel)
+                            }
+                            .listRowBackground(Color.dashboardBg)
                         }
                     }
                     .listStyle(.plain)
@@ -158,17 +196,15 @@ struct UserManagementView: View {
                 }
             }
             .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        showCreateUser = true
-                    } label: {
-                        Image(systemName: "plus")
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
                     }
                 }
             }
-            .sheet(isPresented: $showCreateUser) {
-                CreateUserView()
-            }
+//            .sheet(isPresented: $showCreateUser) {
+//                CreateUserView()
+//            }
             .task {
                 await viewModel.loadUsers()
             }
@@ -286,6 +322,111 @@ struct UserRow: View {
         } message: {
             Text("Are you sure you want to delete \(user.fullName)?")
         }
+    }
+    
+    private var roleColor: Color {
+        switch user.role {
+        case .admin: return .accentPrimary
+        case .educator: return .accentSecondary
+        case .learner: return .accentSuccess
+        }
+    }
+}
+
+// MARK: - User Detail View
+
+struct UserDetailView: View {
+    let user: User
+    
+    var body: some View {
+        List {
+            // Profile Header
+            Section {
+                HStack(spacing: 16) {
+                    Circle()
+                        .fill(roleColor.opacity(0.2))
+                        .frame(width: 80, height: 80)
+                        .overlay(
+                            Text(user.firstName.prefix(1) + user.lastName.prefix(1))
+                                .font(.title)
+                                .fontWeight(.bold)
+                                .foregroundColor(roleColor)
+                        )
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(user.fullName)
+                            .font(.title2)
+                            .fontWeight(.bold)
+                        
+                        Text(user.email)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        
+                        Text(user.role.displayName)
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(roleColor.opacity(0.2))
+                            .foregroundColor(roleColor)
+                            .cornerRadius(8)
+                    }
+                }
+                .padding(.vertical, 8)
+            }
+            
+            // Account Information
+            Section("Account Information") {
+                HStack {
+                    Label("Full Name", systemImage: "person.fill")
+                    Spacer()
+                    Text(user.fullName)
+                        .foregroundColor(.secondary)
+                }
+                
+                HStack {
+                    Label("Email", systemImage: "envelope.fill")
+                    Spacer()
+                    Text(user.email)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                }
+                
+                HStack {
+                    Label("Role", systemImage: "person.badge.key.fill")
+                    Spacer()
+                    Text(user.role.displayName)
+                        .foregroundColor(.secondary)
+                }
+                
+                HStack {
+                    Label("Joined", systemImage: "calendar.badge.plus")
+                    Spacer()
+                    Text(user.createdAt.formatted(date: .abbreviated, time: .omitted))
+                        .foregroundColor(.secondary)
+                }
+                
+                HStack {
+                    Label("Last Login", systemImage: "clock.arrow.circlepath")
+                    Spacer()
+                    Text(user.lastLogin?.formatted(date: .abbreviated, time: .shortened) ?? user.createdAt.formatted(date: .abbreviated, time: .omitted))
+                        .foregroundColor(.secondary)
+                }
+                
+                HStack {
+                    Label("Status", systemImage: user.isActive ? "checkmark.circle.fill" : "xmark.circle.fill")
+                    Spacer()
+                    Text(user.isActive ? "Active" : "Inactive")
+                        .foregroundColor(user.isActive ? .green : .red)
+                }
+            }
+        }
+        .navigationTitle("User Details")
+        .navigationBarTitleDisplayMode(.inline)
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(Color.dashboardBg)
     }
     
     private var roleColor: Color {
